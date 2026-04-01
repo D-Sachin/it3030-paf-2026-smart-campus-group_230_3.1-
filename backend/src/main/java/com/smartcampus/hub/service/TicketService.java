@@ -19,5 +19,7 @@ public interface TicketService {
     TicketResponseDTO assignTechnician(Long id, Long technicianId);
     AttachmentResponseDTO uploadAttachment(Long ticketId, MultipartFile file);
     List<CommentResponseDTO> addComment(Long ticketId, CommentRequestDTO dto);
+    void updateComment(Long commentId, CommentRequestDTO dto);
     void deleteComment(Long commentId);
+    TicketResponseDTO updateResolutionNotes(Long id, String notes);
 }

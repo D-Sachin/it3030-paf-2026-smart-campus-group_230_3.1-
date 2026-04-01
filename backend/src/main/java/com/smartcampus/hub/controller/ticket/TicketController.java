@@ -65,6 +65,11 @@ public class TicketController {
         return ResponseEntity.ok(updatedTicket);
     }
 
+    @PutMapping("/{id}/resolution")
+    public ResponseEntity<TicketResponseDTO> updateResolutionNotes(@PathVariable Long id, @RequestBody String notes) {
+        return ResponseEntity.ok(ticketService.updateResolutionNotes(id, notes));
+    }
+
     @PostMapping("/{id}/attachments")
     public ResponseEntity<AttachmentResponseDTO> uploadAttachment(
             @PathVariable Long id,

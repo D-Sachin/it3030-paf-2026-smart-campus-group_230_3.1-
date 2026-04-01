@@ -24,4 +24,8 @@ public class TicketResponseDTO {
     private String technicianName;
     private List<AttachmentResponseDTO> attachments;
     private List<CommentResponseDTO> comments;
+
+    private String resourceLocation;
+    private String preferredContactDetails;
+    private String resolutionNotes;
 }

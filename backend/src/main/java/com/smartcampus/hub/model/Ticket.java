@@ -46,6 +46,12 @@ public class Ticket {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+    private String resourceLocation;
+    private String preferredContactDetails;
+
+    @Column(columnDefinition = "TEXT")
+    private String resolutionNotes;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

@@ -21,4 +21,7 @@ public class TicketRequestDTO {
 
     @NotNull(message = "Priority is required")
     private Priority priority;
+
+    private String resourceLocation;
+    private String preferredContactDetails;
 }

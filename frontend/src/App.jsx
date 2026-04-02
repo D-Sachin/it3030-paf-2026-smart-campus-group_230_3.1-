@@ -4,8 +4,12 @@ import {
   Routes,
   Route,
   Navigate,
+  Link,
 } from "react-router-dom";
 import MemberOneResourceList from "./pages/MemberOne/ResourceListPage";
+import TicketList from "./pages/Tickets/TicketList";
+import CreateTicket from "./pages/Tickets/CreateTicket";
+import TicketDetails from "./pages/Tickets/TicketDetails";
 
 /**
  * Main App Component
@@ -24,8 +28,13 @@ function App() {
                 Smart Campus Hub
               </h1>
             </div>
-            <div className="text-sm text-gray-600">
-              Member 1 - Facilities & Assets Catalogue
+            <div className="flex items-center gap-6">
+              <Link to="/resources" className="text-sm font-medium text-gray-600 hover:text-indigo-600 transition-colors">
+                Resources (M1)
+              </Link>
+              <Link to="/tickets" className="text-sm font-medium text-gray-600 hover:text-indigo-600 transition-colors">
+                Tickets (M3)
+              </Link>
             </div>
           </div>
         </nav>
@@ -35,6 +44,11 @@ function App() {
           {/* Member 1 - Resource Management */}
           <Route path="/" element={<MemberOneResourceList />} />
           <Route path="/resources" element={<MemberOneResourceList />} />
+
+          {/* Member 3 - Incident Ticketing */}
+          <Route path="/tickets" element={<TicketList />} />
+          <Route path="/tickets/new" element={<CreateTicket />} />
+          <Route path="/tickets/:id" element={<TicketDetails />} />
 
           {/* Redirect unknown routes to home */}
           <Route path="*" element={<Navigate to="/" replace />} />

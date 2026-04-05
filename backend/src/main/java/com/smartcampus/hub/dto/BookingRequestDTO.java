@@ -36,6 +36,11 @@ public class BookingRequestDTO {
     @Schema(type = "string", format = "time", example = "10:00")
     private LocalTime startTime;
 
+    //     @NotNull(message = "Start time is required")
+    // @JsonDeserialize(using = FlexibleLocalTimeDeserializer.class)
+    // @Schema(type = "string", format = "time", example = "10:00")
+    // private LocalTime startTime;
+
     @NotNull(message = "End time is required")
     @JsonDeserialize(using = FlexibleLocalTimeDeserializer.class)
     @Schema(type = "string", format = "time", example = "11:00")

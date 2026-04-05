@@ -11,6 +11,10 @@ import ResourceList from "./pages/Resources/ResourceListPage";
 import TicketList from "./pages/Tickets/TicketList";
 import CreateTicket from "./pages/Tickets/CreateTicket";
 import TicketDetails from "./pages/Tickets/TicketDetails";
+import CreateBooking from "./pages/Bookings/CreateBooking";
+import MyBookings from "./pages/Bookings/MyBookings";
+import AdminBookings from "./pages/Bookings/AdminBookings";
+import BookingDetails from "./pages/Bookings/BookingDetails";
 
 /**
  * Main App Component
@@ -31,6 +35,13 @@ function App() {
           <Route path="/tickets" element={<TicketList />} />
           <Route path="/tickets/new" element={<CreateTicket />} />
           <Route path="/tickets/:id" element={<TicketDetails />} />
+
+          {/* Member 2 - Booking Management */}
+          <Route path="/bookings" element={<Navigate to="/bookings/my" replace />} />
+          <Route path="/bookings/new" element={<CreateBooking />} />
+          <Route path="/bookings/my" element={<MyBookings />} />
+          <Route path="/bookings/admin" element={<AdminBookings />} />
+          <Route path="/bookings/:id" element={<BookingDetails />} />
 
           {/* Redirect unknown routes */}
           <Route path="*" element={<Navigate to="/tickets" replace />} />

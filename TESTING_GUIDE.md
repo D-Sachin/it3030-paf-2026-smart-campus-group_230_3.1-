@@ -218,6 +218,46 @@ Invoke-RestMethod -Uri "http://localhost:8080/api/resources/1" `
 - Create environment variable: `{{baseUrl}}` = `http://localhost:8080`
 - Create environment variable: `{{token}}` = Your JWT token
 
+---
+
+## Part 5: Module B - Booking Management Testing
+
+### Booking API Base
+
+Use the booking base URL:
+
+```text
+http://localhost:8080/api/bookings
+```
+
+### Booking Workflow Test Cases
+
+1. Create a booking request (status should be `PENDING`).
+2. Attempt overlapping booking for same resource/time (expect `409 Conflict`).
+3. Admin fetch pending queue using `/api/bookings/admin?status=PENDING`.
+4. Admin approve booking with `PUT /api/bookings/{id}/approve`.
+5. Admin reject booking with reason using `PUT /api/bookings/{id}/reject`.
+6. User fetch own bookings using `/api/bookings/my`.
+7. User cancels approved booking using `PUT /api/bookings/{id}/cancel`.
+
+### PowerShell Test Script
+
+Run the dedicated booking test script:
+
+```bash
+.\TEST_API_BOOKINGS.ps1
+```
+
+Update the `TOKEN` variable in `TEST_API_BOOKINGS.ps1` before running.
+
+### Expected Booking Status Transitions
+
+- `PENDING` -> `APPROVED`
+- `PENDING` -> `REJECTED`
+- `APPROVED` -> `CANCELLED`
+
+Any invalid transition should return a `400` with a meaningful message.
+
 ### Test Endpoints
 
 1. **Create Resource** - POST `/api/resources`

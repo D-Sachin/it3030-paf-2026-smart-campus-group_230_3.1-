@@ -1,11 +1,11 @@
 /**
- * API Service for Member 1 Resource Management
+ * API Service for Resource Management
  * Handles all API calls to the backend for resource operations
  */
 
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:8080/api/member1/resources";
+const API_BASE_URL = "http://localhost:8080/api/resources";
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -23,7 +23,7 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-const memberOneResourceService = {
+const resourceService = {
   // GET - Fetch all resources with pagination
   getAllResources: (
     page = 0,
@@ -118,4 +118,4 @@ const memberOneResourceService = {
   },
 };
 
-export default memberOneResourceService;
+export default resourceService;

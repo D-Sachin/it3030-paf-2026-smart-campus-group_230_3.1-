@@ -1,7 +1,7 @@
 package com.smartcampus.hub.model;
 
-import com.smartcampus.hub.enums.MemberOneResourceType;
-import com.smartcampus.hub.enums.MemberOneResourceStatus;
+import com.smartcampus.hub.enums.ResourceType;
+import com.smartcampus.hub.enums.ResourceStatus;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -10,12 +10,12 @@ import java.time.LocalTime;
 import java.time.LocalDateTime;
 
 /**
- * Resource Entity - Member 1 Module (Facilities & Assets Catalogue)
+ * Resource Entity - Facilities & Assets Catalogue
  * Represents a physical resource that can be booked (lecture halls, labs, equipment, etc.)
  */
 @Entity
-@Table(name = "member_one_resources")
-public class MemberOneResource {
+@Table(name = "resources")
+public class Resource {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,7 +26,7 @@ public class MemberOneResource {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private MemberOneResourceType type;
+    private ResourceType type;
 
     @Column(nullable = false)
     private Integer capacity;
@@ -39,7 +39,7 @@ public class MemberOneResource {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private MemberOneResourceStatus status;
+    private ResourceStatus status;
 
     @Column(name = "available_from")
     private LocalTime availableFrom;
@@ -56,11 +56,11 @@ public class MemberOneResource {
     private LocalDateTime updatedAt;
 
     // Default Constructor
-    public MemberOneResource() {}
+    public Resource() {}
 
     // All Args Constructor
-    public MemberOneResource(Long id, String name, MemberOneResourceType type, Integer capacity,
-                            String location, String description, MemberOneResourceStatus status,
+    public Resource(Long id, String name, ResourceType type, Integer capacity,
+                            String location, String description, ResourceStatus status,
                             LocalTime availableFrom, LocalTime availableTo,
                             LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
@@ -79,11 +79,11 @@ public class MemberOneResource {
     //Getters
     public Long getId() { return id; }
     public String getName() { return name; }
-    public MemberOneResourceType getType() { return type; }
+    public ResourceType getType() { return type; }
     public Integer getCapacity() { return capacity; }
     public String getLocation() { return location; }
     public String getDescription() { return description; }
-    public MemberOneResourceStatus getStatus() { return status; }
+    public ResourceStatus getStatus() { return status; }
     public LocalTime getAvailableFrom() { return availableFrom; }
     public LocalTime getAvailableTo() { return availableTo; }
     public LocalDateTime getCreatedAt() { return createdAt; }
@@ -92,11 +92,11 @@ public class MemberOneResource {
     // Setters
     public void setId(Long id) { this.id = id; }
     public void setName(String name) { this.name = name; }
-    public void setType(MemberOneResourceType type) { this.type = type; }
+    public void setType(ResourceType type) { this.type = type; }
     public void setCapacity(Integer capacity) { this.capacity = capacity; }
     public void setLocation(String location) { this.location = location; }
     public void setDescription(String description) { this.description = description; }
-    public void setStatus(MemberOneResourceStatus status) { this.status = status; }
+    public void setStatus(ResourceStatus status) { this.status = status; }
     public void setAvailableFrom(LocalTime availableFrom) { this.availableFrom = availableFrom; }
     public void setAvailableTo(LocalTime availableTo) { this.availableTo = availableTo; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
@@ -105,7 +105,7 @@ public class MemberOneResource {
     @PrePersist
     protected void onCreate() {
         if (status == null) {
-            status = MemberOneResourceStatus.ACTIVE;
+            status = ResourceStatus.ACTIVE;
         }
     }
 }

@@ -1,29 +1,35 @@
+/**
+ * Utility functions for Ticket Styling
+ */
+
 export const getPriorityColor = (priority) => {
-  switch (priority) {
-    case 'LOW':
-      return 'bg-green-100 text-green-800 border-green-200';
-    case 'MEDIUM':
-      return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-    case 'HIGH':
-      return 'bg-orange-100 text-orange-800 border-orange-200';
+  switch (priority?.toUpperCase()) {
     case 'CRITICAL':
-      return 'bg-red-100 text-red-800 border-red-200 animate-pulse'; // CRITICAL pulses
+      return 'bg-red-50 text-red-700 border-red-100';
+    case 'HIGH':
+      return 'bg-orange-50 text-orange-700 border-orange-100';
+    case 'MEDIUM':
+      return 'bg-blue-50 text-blue-700 border-blue-100';
+    case 'LOW':
+      return 'bg-slate-50 text-slate-600 border-slate-100';
     default:
-      return 'bg-gray-100 text-gray-800 border-gray-200';
+      return 'bg-slate-50 text-slate-600 border-slate-100';
   }
 };
 
 export const getStatusColor = (status) => {
-  switch (status) {
+  switch (status?.toUpperCase()) {
     case 'OPEN':
-      return 'bg-blue-100 text-blue-800 border-blue-200';
+      return 'bg-blue-50 text-blue-700 border-blue-100';
     case 'IN_PROGRESS':
-      return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      return 'bg-amber-50 text-amber-700 border-amber-100';
     case 'RESOLVED':
-      return 'bg-green-100 text-green-800 border-green-200';
+      return 'bg-emerald-50 text-emerald-700 border-emerald-100';
     case 'CLOSED':
-      return 'bg-gray-100 text-gray-800 border-gray-200';
+      return 'bg-slate-100 text-slate-600 border-slate-200';
+    case 'REJECTED':
+      return 'bg-red-50 text-red-700 border-red-100';
     default:
-      return 'bg-gray-100 text-gray-800 border-gray-200';
+      return 'bg-slate-50 text-slate-600 border-slate-100';
   }
 };

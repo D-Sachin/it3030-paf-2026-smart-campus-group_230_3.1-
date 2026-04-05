@@ -3,6 +3,7 @@ package com.smartcampus.hub.dto;
 import com.smartcampus.hub.enums.Priority;
 import com.smartcampus.hub.enums.TicketStatus;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -12,6 +13,7 @@ import java.util.List;
 
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class TicketResponseDTO {

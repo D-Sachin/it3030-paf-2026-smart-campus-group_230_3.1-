@@ -3,7 +3,7 @@ package com.smartcampus.hub.enums;
 /**
  * Resource Type Enum - Member 1 Module (Facilities & Assets Catalogue)
  */
-public enum MemberOneResourceType {
+public enum ResourceType {
     LECTURE_HALL("Lecture Hall"),
     LAB("Laboratory"),
     MEETING_ROOM("Meeting Room"),
@@ -11,7 +11,7 @@ public enum MemberOneResourceType {
 
     private final String displayName;
 
-    MemberOneResourceType(String displayName) {
+    ResourceType(String displayName) {
         this.displayName = displayName;
     }
 

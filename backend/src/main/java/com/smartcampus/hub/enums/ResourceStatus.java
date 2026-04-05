@@ -3,14 +3,14 @@ package com.smartcampus.hub.enums;
 /**
  * Resource Status Enum - Member 1 Module (Facilities & Assets Catalogue)
  */
-public enum MemberOneResourceStatus {
+public enum ResourceStatus {
     ACTIVE("Active", "Resource is available for booking"),
     OUT_OF_SERVICE("Out of Service", "Resource is temporarily unavailable");
 
     private final String displayName;
     private final String description;
 
-    MemberOneResourceStatus(String displayName, String description) {
+    ResourceStatus(String displayName, String description) {
         this.displayName = displayName;
         this.description = description;
     }

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Calendar, Clock, AlertCircle } from 'lucide-react';
 import { getPriorityColor, getStatusColor } from '../../utils/ticketUtils';
 
 const TicketCard = ({ ticket }) => {
@@ -13,29 +14,33 @@ const TicketCard = ({ ticket }) => {
 
   return (
     <div 
-      className="bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow cursor-pointer"
+      className="premium-card p-6 flex flex-col h-full cursor-pointer group"
       onClick={() => navigate(`/tickets/${ticket.id}`)}
     >
-      <div className="flex justify-between items-start mb-3">
-        <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">{ticket.title}</h3>
-        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(ticket.status)}`}>
+      <div className="flex justify-between items-start mb-4">
+        <div className={`px-3 py-1 rounded-lg text-xs font-bold border transition-colors ${getPriorityColor(ticket.priority)}`}>
+          {ticket.priority}
+        </div>
+        <span className={`px-3 py-1 rounded-lg text-xs font-bold border ${getStatusColor(ticket.status)}`}>
           {ticket.status?.replace('_', ' ')}
         </span>
       </div>
       
-      <p className="text-gray-600 text-sm mb-4 line-clamp-2">{ticket.description}</p>
+      <h3 className="text-lg font-bold text-slate-900 group-hover:text-primary-600 transition-colors mb-2 line-clamp-1">
+        {ticket.title}
+      </h3>
       
-      <div className="flex justify-between items-center text-sm">
-        <div className="flex items-center gap-3">
-          <span className={`px-2 py-1 rounded text-xs font-medium ${getPriorityColor(ticket.priority)}`}>
-            {ticket.priority}
-          </span>
-          <span className="text-gray-500">
-            ID: #{ticket.id}
-          </span>
-        </div>
-        <div className="text-gray-500">
+      <p className="text-slate-500 text-sm mb-6 line-clamp-2 flex-1">
+        {ticket.description}
+      </p>
+      
+      <div className="flex items-center justify-between pt-4 border-t border-slate-50 mt-auto">
+        <div className="flex items-center gap-2 text-slate-400 text-xs font-medium">
+          <Calendar className="w-3.5 h-3.5" />
           {formattedDate}
+        </div>
+        <div className="text-slate-400 text-xs font-bold bg-slate-50 px-2 py-1 rounded">
+          #{ticket.id}
         </div>
       </div>
     </div>

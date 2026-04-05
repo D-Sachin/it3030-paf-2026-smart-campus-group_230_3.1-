@@ -1,4 +1,4 @@
-# Member 1 Module - Testing & Running Guide
+# Resource Module - Testing & Running Guide
 
 ## Prerequisites
 
@@ -44,7 +44,6 @@ app.jwt.expiration=86400000
 ### Step 2: Build the Backend
 
 ```bash
-cd "d:\PAF PROJECT\PAF-Assignment\backend"
 mvn clean install -DskipTests
 ```
 
@@ -58,7 +57,6 @@ mvn clean install -DskipTests
 ### Step 3: Run Backend Server
 
 ```bash
-cd "d:\PAF PROJECT\PAF-Assignment\backend"
 mvn spring-boot:run
 ```
 
@@ -77,24 +75,22 @@ The backend will be available at: **http://localhost:8080**
 ### Step 1: Install Dependencies
 
 ```bash
-cd "d:\PAF PROJECT\PAF-Assignment\frontend"
 npm install
 ```
 
 ### Step 2: Configure API Base URL
 
-**File:** `frontend/src/services/memberOneResourceService.js`
+**File:** `frontend/src/services/resourceService.js`
 
 Verify the base URL matches your backend:
 
 ```javascript
-const BASE_URL = "http://localhost:8080/api/member1/resources";
+const BASE_URL = "http://localhost:8080/api/resources";
 ```
 
 ### Step 3: Start Development Server
 
 ```bash
-cd "d:\PAF PROJECT\PAF-Assignment\frontend"
 npm run dev
 ```
 
@@ -134,7 +130,7 @@ $body = @{
     availableTo = "17:00:00"
 } | ConvertTo-Json
 
-Invoke-RestMethod -Uri "http://localhost:8080/api/member1/resources" `
+Invoke-RestMethod -Uri "http://localhost:8080/api/resources" `
     -Method POST `
     -Headers $headers `
     -Body $body
@@ -147,7 +143,7 @@ $headers = @{
     "Authorization" = "Bearer $token"
 }
 
-Invoke-RestMethod -Uri "http://localhost:8080/api/member1/resources?page=0&size=10&sort=id,desc" `
+Invoke-RestMethod -Uri "http://localhost:8080/api/resources?page=0&size=10&sort=id,desc" `
     -Method GET `
     -Headers $headers | ConvertTo-Json
 ```
@@ -155,7 +151,7 @@ Invoke-RestMethod -Uri "http://localhost:8080/api/member1/resources?page=0&size=
 #### Test 3: Search Resources
 
 ```bash
-Invoke-RestMethod -Uri "http://localhost:8080/api/member1/resources/search?term=lecture" `
+Invoke-RestMethod -Uri "http://localhost:8080/api/resources/search?term=lecture" `
     -Method GET `
     -Headers $headers | ConvertTo-Json
 ```
@@ -164,7 +160,7 @@ Invoke-RestMethod -Uri "http://localhost:8080/api/member1/resources/search?term=
 
 ```bash
 # Filter by type and minimum capacity
-Invoke-RestMethod -Uri "http://localhost:8080/api/member1/resources/advanced-search?type=LECTURE_HALL&minCapacity=50" `
+Invoke-RestMethod -Uri "http://localhost:8080/api/resources/advanced-search?type=LECTURE_HALL&minCapacity=50" `
     -Method GET `
     -Headers $headers | ConvertTo-Json
 ```
@@ -172,7 +168,7 @@ Invoke-RestMethod -Uri "http://localhost:8080/api/member1/resources/advanced-sea
 #### Test 5: Get by ID
 
 ```bash
-Invoke-RestMethod -Uri "http://localhost:8080/api/member1/resources/1" `
+Invoke-RestMethod -Uri "http://localhost:8080/api/resources/1" `
     -Method GET `
     -Headers $headers | ConvertTo-Json
 ```
@@ -189,7 +185,7 @@ $body = @{
     status = "ACTIVE"
 } | ConvertTo-Json
 
-Invoke-RestMethod -Uri "http://localhost:8080/api/member1/resources/1" `
+Invoke-RestMethod -Uri "http://localhost:8080/api/resources/1" `
     -Method PUT `
     -Headers $headers `
     -Body $body
@@ -198,7 +194,7 @@ Invoke-RestMethod -Uri "http://localhost:8080/api/member1/resources/1" `
 #### Test 7: Update Status (PATCH)
 
 ```bash
-Invoke-RestMethod -Uri "http://localhost:8080/api/member1/resources/1/status?status=OUT_OF_SERVICE" `
+Invoke-RestMethod -Uri "http://localhost:8080/api/resources/1/status?status=OUT_OF_SERVICE" `
     -Method PATCH `
     -Headers $headers
 ```
@@ -206,7 +202,7 @@ Invoke-RestMethod -Uri "http://localhost:8080/api/member1/resources/1/status?sta
 #### Test 8: Delete Resource
 
 ```bash
-Invoke-RestMethod -Uri "http://localhost:8080/api/member1/resources/1" `
+Invoke-RestMethod -Uri "http://localhost:8080/api/resources/1" `
     -Method DELETE `
     -Headers $headers
 ```
@@ -224,19 +220,19 @@ Invoke-RestMethod -Uri "http://localhost:8080/api/member1/resources/1" `
 
 ### Test Endpoints
 
-1. **Create Resource** - POST `/api/member1/resources`
-2. **List Resources** - GET `/api/member1/resources?page=0&size=10`
-3. **Search** - GET `/api/member1/resources/search?term=lecture`
-4. **Filter by Type** - GET `/api/member1/resources/filter/by-type?type=LECTURE_HALL`
-5. **Filter by Location** - GET `/api/member1/resources/filter/by-location?location=Building`
-6. **Filter by Capacity** - GET `/api/member1/resources/filter/by-capacity?capacity=50`
-7. **Advanced Search** - GET `/api/member1/resources/advanced-search?type=LAB&minCapacity=30`
-8. **Get Resource** - GET `/api/member1/resources/{id}`
-9. **Update Resource** - PUT `/api/member1/resources/{id}`
-10. **Update Status** - PATCH `/api/member1/resources/{id}/status?status=ACTIVE`
-11. **Delete Resource** - DELETE `/api/member1/resources/{id}`
-12. **Location Suggestions** - GET `/api/member1/resources/suggestions/locations?prefix=Build`
-13. **Get Active Resources** - GET `/api/member1/resources/active`
+1. **Create Resource** - POST `/api/resources`
+2. **List Resources** - GET `/api/resources?page=0&size=10`
+3. **Search** - GET `/api/resources/search?term=lecture`
+4. **Filter by Type** - GET `/api/resources/filter/by-type?type=LECTURE_HALL`
+5. **Filter by Location** - GET `/api/resources/filter/by-location?location=Building`
+6. **Filter by Capacity** - GET `/api/resources/filter/by-capacity?capacity=50`
+7. **Advanced Search** - GET `/api/resources/advanced-search?type=LAB&minCapacity=30`
+8. **Get Resource** - GET `/api/resources/{id}`
+9. **Update Resource** - PUT `/api/resources/{id}`
+10. **Update Status** - PATCH `/api/resources/{id}/status?status=ACTIVE`
+11. **Delete Resource** - DELETE `/api/resources/{id}`
+12. **Location Suggestions** - GET `/api/resources/suggestions/locations?prefix=Build`
+13. **Get Active Resources** - GET `/api/resources/active`
 
 ---
 
@@ -251,7 +247,7 @@ Go to: **http://localhost:5173/**
 #### 1. View Resource List
 
 - Page loads and displays resources in paginated grid
-- Pagination controls at bottom (size: 5, 10, 20, 50 items/page)
+- Pagination controls at bottom (size: 5, 10, 20 items/page)
 
 #### 2. Test Search
 
@@ -261,14 +257,14 @@ Go to: **http://localhost:5173/**
 
 #### 3. Test Advanced Filters
 
-- Click "Advanced Filters" toggle
+- Click "Filters" toggle
 - Select Type: "LECTURE_HALL"
 - Enter Min Capacity: "50"
 - View filtered results
 
 #### 4. Create Resource (Admin Only)
 
-- Click "+ Create" button (if logged in as ADMIN)
+- Click "Register Asset" button (if logged in as ADMIN)
 - Fill form:
   - Name: "Lab Room 201"
   - Type: "LAB"
@@ -277,7 +273,7 @@ Go to: **http://localhost:5173/**
   - Status: "ACTIVE"
   - Available From: "08:00"
   - Available To: "18:00"
-- Click "Create"
+- Click "Register Resource"
 - Verify success notification
 - Check resource appears in list
 
@@ -285,7 +281,7 @@ Go to: **http://localhost:5173/**
 
 - Click "Edit" button on a resource
 - Modify any field
-- Click "Update"
+- Click "Save Changes"
 - Verify changes persist
 
 #### 6. Delete Resource (Admin Only)
@@ -293,207 +289,3 @@ Go to: **http://localhost:5173/**
 - Click "Delete" button
 - Confirm deletion
 - Verify resource removed from list
-
-#### 7. Pagination Testing
-
-- Navigate between pages using pagination
-- Change items per page (5 → 10 → 20)
-- Verify correct number of items displayed
-
----
-
-## Part 6: Unit Testing (Backend)
-
-### Run Tests
-
-```bash
-cd "d:\PAF PROJECT\PAF-Assignment\backend"
-mvn test
-```
-
-### Test Key Classes
-
-```bash
-# Test specific class
-mvn test -Dtest=MemberOneResourceServiceTest
-
-# Test with coverage
-mvn test jacoco:report
-```
-
----
-
-## Part 7: Integration Testing
-
-### Test Full Stack
-
-1. Start Backend: `mvn spring-boot:run` (Terminal 1)
-2. Start Frontend: `npm run dev` (Terminal 2)
-3. Open browser: `http://localhost:5173`
-4. Login as admin
-5. Create, search, filter, update, delete resources
-6. Check browser console for API errors
-7. Check backend console for logs
-
----
-
-## Troubleshooting
-
-### Backend Issues
-
-**Port 8080 already in use:**
-
-```bash
-# Change port in application.properties
-server.port=8081
-```
-
-**Database connection error:**
-
-```properties
-# Check MySQL is running
-# Verify credentials in application.properties
-# Create database manually if needed:
-# CREATE DATABASE smartcampus_db CHARACTER SET utf8mb4;
-```
-
-**Compilation errors:**
-
-```bash
-mvn clean compile -X
-```
-
-### Frontend Issues
-
-**Port 5173 already in use:**
-
-```bash
-npm run dev -- --port 3000
-```
-
-**Dependency errors:**
-
-```bash
-rm -r node_modules package-lock.json
-npm install
-```
-
-**API connection error:**
-
-```javascript
-// Check backend URL in memberOneResourceService.js
-// Backend must be running on http://localhost:8080
-console.log("Connecting to:", BASE_URL);
-```
-
----
-
-## Expected Response Examples
-
-### Create Resource (200 Created)
-
-```json
-{
-  "success": true,
-  "message": "Resource created successfully",
-  "data": {
-    "id": 1,
-    "name": "Lecture Hall A101",
-    "type": "LECTURE_HALL",
-    "capacity": 100,
-    "location": "Building A, Floor 1",
-    "description": "Main lecture hall with projector",
-    "status": "ACTIVE",
-    "availableFrom": "09:00:00",
-    "availableTo": "17:00:00",
-    "createdAt": "2026-04-02T14:25:00Z",
-    "updatedAt": "2026-04-02T14:25:00Z"
-  }
-}
-```
-
-### List Resources (200 OK)
-
-```json
-{
-  "success": true,
-  "message": "Resources retrieved successfully",
-  "data": [
-    { "id": 1, "name": "Lecture Hall A101", ... },
-    { "id": 2, "name": "Lab Room 201", ... }
-  ],
-  "pagination": {
-    "currentPage": 0,
-    "totalPages": 2,
-    "totalElements": 15,
-    "pageSize": 10
-  }
-}
-```
-
-### Error Response (400 Bad Request)
-
-```json
-{
-  "success": false,
-  "message": "Resource with name already exists"
-}
-```
-
----
-
-## Quick Start Commands
-
-**Terminal 1 - Backend:**
-
-```bash
-cd "d:\PAF PROJECT\PAF-Assignment\backend"
-mvn clean install -DskipTests
-mvn spring-boot:run
-```
-
-**Terminal 2 - Frontend:**
-
-```bash
-cd "d:\PAF PROJECT\PAF-Assignment\frontend"
-npm install
-npm run dev
-```
-
-**Terminal 3 - Testing:**
-
-```bash
-# Test API endpoints
-curl http://localhost:8080/api/member1/resources
-```
-
-Then open: **http://localhost:5173** in browser
-
----
-
-## Success Checklist
-
-✅ Backend compiles without errors  
-✅ Frontend npm install succeeds  
-✅ Backend starts on port 8080  
-✅ Frontend starts on port 5173  
-✅ Can create resources via API  
-✅ Can list resources with pagination  
-✅ Can search and filter resources  
-✅ Can update resource status  
-✅ Can delete resources  
-✅ Frontend UI loads and displays data  
-✅ Create/Edit/Delete buttons work (admin)  
-✅ Search and filter work in UI  
-✅ No console errors in browser  
-✅ No errors in backend logs
-
----
-
-## Next Steps
-
-1. Integrate with Auth Module for role-based access
-2. Add Unit Tests for Service layer
-3. Add Integration Tests for Controller
-4. Deploy to Azure (if required)
-5. Load testing with sample data

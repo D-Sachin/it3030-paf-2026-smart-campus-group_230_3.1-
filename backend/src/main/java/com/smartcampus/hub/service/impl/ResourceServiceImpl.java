@@ -1,12 +1,12 @@
 package com.smartcampus.hub.service.impl;
 
-import com.smartcampus.hub.dto.MemberOneResourceRequestDTO;
-import com.smartcampus.hub.dto.MemberOneResourceResponseDTO;
-import com.smartcampus.hub.enums.MemberOneResourceType;
-import com.smartcampus.hub.enums.MemberOneResourceStatus;
-import com.smartcampus.hub.model.MemberOneResource;
-import com.smartcampus.hub.repository.MemberOneResourceRepository;
-import com.smartcampus.hub.service.MemberOneResourceService;
+import com.smartcampus.hub.dto.ResourceRequestDTO;
+import com.smartcampus.hub.dto.ResourceResponseDTO;
+import com.smartcampus.hub.enums.ResourceType;
+import com.smartcampus.hub.enums.ResourceStatus;
+import com.smartcampus.hub.model.Resource;
+import com.smartcampus.hub.repository.ResourceRepository;
+import com.smartcampus.hub.service.ResourceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,12 +18,12 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class MemberOneResourceServiceImpl implements MemberOneResourceService {
+public class ResourceServiceImpl implements ResourceService {
 
-    private final MemberOneResourceRepository resourceRepository;
+    private final ResourceRepository resourceRepository;
 
     @Override
-    public MemberOneResourceResponseDTO createResource(MemberOneResourceRequestDTO requestDTO) {
+    public ResourceResponseDTO createResource(ResourceRequestDTO requestDTO) {
         if (resourceRepository.existsByNameIgnoreCase(requestDTO.getName())) {
             throw new IllegalArgumentException("Resource with name already exists");
         }
@@ -34,13 +34,13 @@ public class MemberOneResourceServiceImpl implements MemberOneResourceService {
             }
         }
         
-        MemberOneResource resource = new MemberOneResource();
+        Resource resource = new Resource();
         resource.setName(requestDTO.getName());
         resource.setType(requestDTO.getType());
         resource.setCapacity(requestDTO.getCapacity());
         resource.setLocation(requestDTO.getLocation());
         resource.setDescription(requestDTO.getDescription());
-        resource.setStatus(requestDTO.getStatus() != null ? requestDTO.getStatus() : MemberOneResourceStatus.ACTIVE);
+        resource.setStatus(requestDTO.getStatus() != null ? requestDTO.getStatus() : ResourceStatus.ACTIVE);
         resource.setAvailableFrom(requestDTO.getAvailableFrom());
         resource.setAvailableTo(requestDTO.getAvailableTo());
         
@@ -49,21 +49,21 @@ public class MemberOneResourceServiceImpl implements MemberOneResourceService {
 
     @Override
     @Transactional(readOnly = true)
-    public MemberOneResourceResponseDTO getResourceById(Long id) {
-        MemberOneResource resource = resourceRepository.findById(id)
+    public ResourceResponseDTO getResourceById(Long id) {
+        Resource resource = resourceRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Resource not found"));
         return mapToResponseDTO(resource);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<MemberOneResourceResponseDTO> getAllResources(Pageable pageable) {
+    public Page<ResourceResponseDTO> getAllResources(Pageable pageable) {
         return resourceRepository.findAll(pageable).map(this::mapToResponseDTO);
     }
 
     @Override
-    public MemberOneResourceResponseDTO updateResource(Long id, MemberOneResourceRequestDTO requestDTO) {
-        MemberOneResource resource = resourceRepository.findById(id)
+    public ResourceResponseDTO updateResource(Long id, ResourceRequestDTO requestDTO) {
+        Resource resource = resourceRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Resource not found"));
         resource.setName(requestDTO.getName());
         resource.setType(requestDTO.getType());
@@ -85,8 +85,8 @@ public class MemberOneResourceServiceImpl implements MemberOneResourceService {
     }
 
     @Override
-    public MemberOneResourceResponseDTO updateResourceStatus(Long id, MemberOneResourceStatus status) {
-        MemberOneResource resource = resourceRepository.findById(id)
+    public ResourceResponseDTO updateResourceStatus(Long id, ResourceStatus status) {
+        Resource resource = resourceRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Resource not found"));
         resource.setStatus(status);
         return mapToResponseDTO(resourceRepository.save(resource));
@@ -94,47 +94,47 @@ public class MemberOneResourceServiceImpl implements MemberOneResourceService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<MemberOneResourceResponseDTO> getActiveResources() {
-        return resourceRepository.findByStatus(MemberOneResourceStatus.ACTIVE).stream()
+    public List<ResourceResponseDTO> getActiveResources() {
+        return resourceRepository.findByStatus(ResourceStatus.ACTIVE).stream()
                 .map(this::mapToResponseDTO)
                 .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<MemberOneResourceResponseDTO> searchResources(String term, Pageable pageable) {
+    public Page<ResourceResponseDTO> searchResources(String term, Pageable pageable) {
         return resourceRepository.searchByName(term, pageable).map(this::mapToResponseDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<MemberOneResourceResponseDTO> filterByType(MemberOneResourceType type, Pageable pageable) {
+    public Page<ResourceResponseDTO> filterByType(ResourceType type, Pageable pageable) {
         return resourceRepository.findByType(type, pageable).map(this::mapToResponseDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<MemberOneResourceResponseDTO> filterByLocation(String location, Pageable pageable) {
+    public Page<ResourceResponseDTO> filterByLocation(String location, Pageable pageable) {
         return resourceRepository.findByLocationIgnoreCase(location, pageable).map(this::mapToResponseDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<MemberOneResourceResponseDTO> filterByCapacity(Integer capacity, Pageable pageable) {
+    public Page<ResourceResponseDTO> filterByCapacity(Integer capacity, Pageable pageable) {
         return resourceRepository.findByCapacityGreaterThanEqual(capacity, pageable).map(this::mapToResponseDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<MemberOneResourceResponseDTO> filterByStatus(MemberOneResourceStatus status, Pageable pageable) {
+    public Page<ResourceResponseDTO> filterByStatus(ResourceStatus status, Pageable pageable) {
         return resourceRepository.findByStatus(status, pageable).map(this::mapToResponseDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<MemberOneResourceResponseDTO> advancedSearch(
-            MemberOneResourceType type,
-            MemberOneResourceStatus status,
+    public Page<ResourceResponseDTO> advancedSearch(
+            ResourceType type,
+            ResourceStatus status,
             String location,
             Integer minCapacity,
             Integer maxCapacity,
@@ -150,19 +150,19 @@ public class MemberOneResourceServiceImpl implements MemberOneResourceService {
         return resourceRepository.findLocationsByPrefix(prefix);
     }
 
-    private MemberOneResourceResponseDTO mapToResponseDTO(MemberOneResource resource) {
-        MemberOneResourceResponseDTO dto = new MemberOneResourceResponseDTO();
-        dto.setId(resource.getId());
-        dto.setName(resource.getName());
-        dto.setType(resource.getType());
-        dto.setCapacity(resource.getCapacity());
-        dto.setLocation(resource.getLocation());
-        dto.setDescription(resource.getDescription());
-        dto.setStatus(resource.getStatus());
-        dto.setAvailableFrom(resource.getAvailableFrom());
-        dto.setAvailableTo(resource.getAvailableTo());
-        dto.setCreatedAt(resource.getCreatedAt());
-        dto.setUpdatedAt(resource.getUpdatedAt());
-        return dto;
+    private ResourceResponseDTO mapToResponseDTO(Resource resource) {
+        return ResourceResponseDTO.builder()
+                .id(resource.getId())
+                .name(resource.getName())
+                .type(resource.getType())
+                .capacity(resource.getCapacity())
+                .location(resource.getLocation())
+                .description(resource.getDescription())
+                .status(resource.getStatus())
+                .availableFrom(resource.getAvailableFrom())
+                .availableTo(resource.getAvailableTo())
+                .createdAt(resource.getCreatedAt())
+                .updatedAt(resource.getUpdatedAt())
+                .build();
     }
 }

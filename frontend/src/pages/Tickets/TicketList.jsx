@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { Plus, Search, Filter, AlertCircle, Loader2, Inbox } from 'lucide-react';
 import ticketService from '../../services/ticketService';
 import TicketCard from '../../components/Tickets/TicketCard';
 
@@ -7,6 +8,7 @@ const TicketList = () => {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchTickets();
@@ -15,9 +17,6 @@ const TicketList = () => {
   const fetchTickets = async () => {
     try {
       setLoading(true);
-      // Depending on backend, this might return directly an array or a Page object.
-      // E.g., const response = await ticketService.getAllTickets();
-      // data = response.data.content or response.data
       const response = await ticketService.getAllTickets();
       const content = response.data.content ? response.data.content : response.data;
       setTickets(Array.isArray(content) ? content : []);
@@ -30,62 +29,78 @@ const TicketList = () => {
     }
   };
 
+  const filteredTickets = tickets.filter(ticket => 
+    ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    ticket.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    ticket.id.toString().includes(searchTerm)
+  );
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex justify-between items-center mb-8">
+    <div className="max-w-7xl mx-auto space-y-8">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Incident Tickets</h1>
-          <p className="text-gray-500 mt-1">Manage and track campus facility issues.</p>
+          <h1 className="text-3xl font-bold text-slate-900">Incident Tickets</h1>
+          <p className="text-slate-500 mt-1">Manage and track campus facility issues in one place.</p>
         </div>
         <Link 
           to="/tickets/new" 
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
+          className="premium-button premium-button-primary"
         >
-          <svg className="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-            <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-          </svg>
+          <Plus className="w-5 h-5" />
           New Ticket
         </Link>
       </div>
 
+      {/* Filters & Search */}
+      <div className="flex flex-col sm:flex-row items-center gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+        <div className="relative flex-1 w-full">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input 
+            type="text" 
+            placeholder="Search tickets by title, ID or description..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary-500/20 outline-none transition-all"
+          />
+        </div>
+        <button className="premium-button premium-button-secondary w-full sm:w-auto">
+          <Filter className="w-4 h-4" />
+          Filters
+        </button>
+      </div>
+
       {error && (
-        <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-red-700">{error}</p>
-            </div>
-          </div>
+        <div className="bg-red-50 border border-red-100 rounded-2xl p-4 flex items-center gap-3 text-red-700 animate-fade-in-up">
+          <AlertCircle className="w-5 h-5 shrink-0" />
+          <p className="text-sm font-medium">{error}</p>
         </div>
       )}
 
       {loading ? (
-        <div className="flex justify-center p-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        <div className="flex flex-col items-center justify-center p-24 gap-4">
+          <Loader2 className="w-10 h-10 text-primary-600 animate-spin" />
+          <p className="text-slate-500 font-medium">Fetching tickets...</p>
         </div>
-      ) : tickets.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-          <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No tickets</h3>
-          <p className="mt-1 text-sm text-gray-500">Get started by creating a new ticket.</p>
-          <div className="mt-6">
-            <Link to="/tickets/new" className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
-              <svg className="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-              </svg>
-              New Ticket
-            </Link>
+      ) : filteredTickets.length === 0 ? (
+        <div className="premium-card p-16 flex flex-col items-center text-center max-w-2xl mx-auto">
+          <div className="w-20 h-20 rounded-full bg-slate-50 flex items-center justify-center mb-6">
+            <Inbox className="w-10 h-10 text-slate-300" />
           </div>
+          <h3 className="text-xl font-bold text-slate-900 mb-2">No tickets found</h3>
+          <p className="text-slate-500 mb-8">
+            {searchTerm ? `We couldn't find any tickets matching "${searchTerm}".` : "There are currently no active tickets in the system."}
+          </p>
+          {!searchTerm && (
+            <Link to="/tickets/new" className="premium-button premium-button-primary">
+              <Plus className="w-5 h-5" />
+              Create your first ticket
+            </Link>
+          )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {tickets.map((ticket) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in-up">
+          {filteredTickets.map((ticket) => (
             <TicketCard key={ticket.id} ticket={ticket} />
           ))}
         </div>

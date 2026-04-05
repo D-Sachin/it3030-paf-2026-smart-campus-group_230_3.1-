@@ -1,156 +1,229 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { 
+  ArrowLeft, 
+  Send, 
+  AlertCircle, 
+  Paperclip, 
+  X, 
+  Image as ImageIcon,
+  CheckCircle2,
+  Loader2,
+  Info
+} from 'lucide-react';
 import ticketService from '../../services/ticketService';
-import FileUpload from '../../components/Tickets/FileUpload';
-
-const priorityOptions = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 
 const CreateTicket = () => {
   const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [files, setFiles] = useState([]);
-  const [error, setError] = useState(null);
-  
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    priority: 'MEDIUM',
-    categoryId: 1 // Default category, assuming the backend has a Category 1
+    priority: 'LOW',
+    categoryId: 1, // Defaulting to 1 as per legacy
   });
+  const [attachments, setAttachments] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleChange = (e) => {
+  const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleFileChange = (e) => {
+    const selectedFiles = Array.from(e.target.files);
+    if (attachments.length + selectedFiles.length > 3) {
+      alert("Maximum 3 attachments allowed.");
+      return;
+    }
+    setAttachments(prev => [...prev, ...selectedFiles]);
+  };
+
+  const removeAttachment = (index) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
-    setIsSubmitting(true);
+    if (!formData.title || !formData.description) {
+      setError('Title and Description are required.');
+      return;
+    }
 
     try {
-      // 1. Create the ticket
-      const ticketPayload = {
-        title: formData.title,
-        description: formData.description,
-        priority: formData.priority,
-        categoryId: parseInt(formData.categoryId) || null
-      };
+      setLoading(true);
+      setError(null);
+      
+      const ticketResponse = await ticketService.createTicket({
+        ...formData,
+        categoryId: parseInt(formData.categoryId) || 1
+      });
+      const ticketId = ticketResponse.data.id;
 
-      const response = await ticketService.createTicket(ticketPayload);
-      const createdTicket = response.data;
-
-      // 2. Upload attachments if any
-      if (files.length > 0 && createdTicket.id) {
-        await ticketService.uploadAttachments(createdTicket.id, files);
+      if (attachments.length > 0) {
+        for (const file of attachments) {
+          await ticketService.uploadAttachment(ticketId, file);
+        }
       }
 
-      // 3. Navigate to the new ticket details or list
-      navigate(`/tickets/${createdTicket.id}`);
+      navigate(`/tickets/${ticketId}`);
     } catch (err) {
       console.error('Error creating ticket:', err);
-      setError('Failed to create ticket. Please check your inputs and try again later.');
-      setIsSubmitting(false);
+      setError('Failed to create ticket. Please check your inputs.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Create New Ticket</h1>
-        <p className="text-gray-500 mt-1">Report an incident or request facility support.</p>
+    <div className="max-w-4xl mx-auto space-y-8 animate-fade-in-up">
+      <div className="flex items-center justify-between">
+        <Link to="/tickets" className="flex items-center gap-2 text-slate-500 hover:text-primary-600 transition-colors font-medium">
+          <ArrowLeft className="w-4 h-4" />
+          Back to Tickets
+        </Link>
+        <span className="text-sm font-bold text-slate-400">NEW INCIDENT REPORT</span>
       </div>
 
-      {error && (
-        <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
-          <p className="text-sm text-red-700">{error}</p>
-        </div>
-      )}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="md:col-span-2">
+          <form onSubmit={handleSubmit} className="premium-card p-8 space-y-6">
+            <h1 className="text-2xl font-bold text-slate-900">Report an Incident</h1>
+            <p className="text-slate-500">Provide details about the issue you've encountered.</p>
 
-      <form onSubmit={handleSubmit} className="bg-white shadow-sm border border-gray-200 rounded-lg p-6 space-y-6">
-        
-        <div>
-          <label htmlFor="title" className="block text-sm font-medium text-gray-700">Title <span className="text-red-500">*</span></label>
-          <input
-            type="text"
-            name="title"
-            id="title"
-            required
-            value={formData.title}
-            onChange={handleChange}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            placeholder="E.g., Broken projector in Room 301"
-          />
+            {error && (
+              <div className="bg-red-50 border border-red-100 rounded-xl p-4 flex items-center gap-3 text-red-700 animate-shake">
+                <AlertCircle className="w-5 h-5 shrink-0" />
+                <p className="text-sm font-medium">{error}</p>
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-700 uppercase tracking-wider">Title</label>
+                <input
+                  type="text"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="e.g., Broken AC in Lecture Hall A"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all font-medium"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-700 uppercase tracking-wider">Priority</label>
+                  <select
+                    name="priority"
+                    value={formData.priority}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all font-bold text-slate-700"
+                  >
+                    <option value="LOW">Low</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="HIGH">High</option>
+                    <option value="CRITICAL">Critical</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-700 uppercase tracking-wider">Category ID</label>
+                  <input
+                    type="number"
+                    name="categoryId"
+                    value={formData.categoryId}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all font-medium"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-700 uppercase tracking-wider">Description</label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  required
+                  rows="5"
+                  placeholder="Describe the issue in detail..."
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all font-medium resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="pt-4 flex items-center justify-end gap-4">
+              <button
+                type="button"
+                onClick={() => navigate('/tickets')}
+                className="px-6 py-3 text-slate-500 font-bold hover:text-slate-700 transition-colors"
+                disabled={loading}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="premium-button premium-button-primary px-8"
+                disabled={loading}
+              >
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                {loading ? 'Submitting...' : 'Submit Ticket'}
+              </button>
+            </div>
+          </form>
         </div>
 
-        <div>
-          <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description <span className="text-red-500">*</span></label>
-          <textarea
-            name="description"
-            id="description"
-            required
-            rows="5"
-            value={formData.description}
-            onChange={handleChange}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            placeholder="Provide a detailed description of the issue..."
-          />
-        </div>
+        <div className="space-y-6">
+          <div className="premium-card p-6">
+            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-5 flex items-center gap-2">
+              <Paperclip className="w-4 h-4" />
+              Evidence
+            </h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label htmlFor="priority" className="block text-sm font-medium text-gray-700">Priority</label>
-            <select
-              id="priority"
-              name="priority"
-              value={formData.priority}
-              onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 bg-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            >
-              {priorityOptions.map(p => (
-                <option key={p} value={p}>{p}</option>
+            <div className="space-y-4">
+              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-200 rounded-2xl cursor-pointer hover:border-primary-400 hover:bg-primary-50/30 transition-all group">
+                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                  <ImageIcon className="w-8 h-8 text-slate-300 group-hover:text-primary-500 mb-2 transition-colors" />
+                  <p className="text-xs font-bold text-slate-400 group-hover:text-primary-600 transition-colors text-center px-4">Click to upload files</p>
+                </div>
+                <input 
+                  type="file" 
+                  className="hidden" 
+                  multiple 
+                  onChange={handleFileChange}
+                />
+              </label>
+
+              {attachments.map((file, index) => (
+                <div key={index} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+                  <span className="text-xs font-bold text-slate-700 truncate max-w-[150px]">{file.name}</span>
+                  <button type="button" onClick={() => removeAttachment(index)} className="text-slate-400 hover:text-error transition-colors">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               ))}
-            </select>
+            </div>
           </div>
-          
-          <div>
-            <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700">Category ID</label>
-            <input
-              type="number"
-              name="categoryId"
-              id="categoryId"
-              value={formData.categoryId}
-              onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            />
-            <p className="mt-1 text-xs text-gray-500">Provide a valid Category ID from Member 1's module.</p>
+
+          <div className="premium-card p-6 bg-slate-900 border-none">
+            <h4 className="font-bold text-white mb-2 flex items-center gap-2">
+              <Info className="w-4 h-4 text-primary-400" />
+              Submission Policy
+            </h4>
+            <ul className="space-y-3 mt-4 text-xs text-slate-400">
+              <li className="flex gap-2">
+                <CheckCircle2 className="w-4 h-4 text-primary-500 shrink-0" />
+                Provide clear photos for faster resolution.
+              </li>
+              <li className="flex gap-2">
+                <CheckCircle2 className="w-4 h-4 text-primary-500 shrink-0" />
+                Maximum 3 attachments allowed.
+              </li>
+            </ul>
           </div>
         </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Attachments (Optional)</label>
-          <FileUpload files={files} setFiles={setFiles} maxFiles={3} />
-        </div>
-
-        <div className="pt-5 border-t border-gray-200 flex justify-end gap-3">
-          <button
-            type="button"
-            onClick={() => navigate('/tickets')}
-            disabled={isSubmitting}
-            className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-400"
-          >
-            {isSubmitting ? 'Submitting...' : 'Create Ticket'}
-          </button>
-        </div>
-
-      </form>
+      </div>
     </div>
   );
 };

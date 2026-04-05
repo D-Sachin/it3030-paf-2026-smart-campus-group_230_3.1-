@@ -1,10 +1,10 @@
 package com.smartcampus.hub.controller;
 
-import com.smartcampus.hub.dto.MemberOneResourceRequestDTO;
-import com.smartcampus.hub.dto.MemberOneResourceResponseDTO;
-import com.smartcampus.hub.enums.MemberOneResourceType;
-import com.smartcampus.hub.enums.MemberOneResourceStatus;
-import com.smartcampus.hub.service.MemberOneResourceService;
+import com.smartcampus.hub.dto.ResourceRequestDTO;
+import com.smartcampus.hub.dto.ResourceResponseDTO;
+import com.smartcampus.hub.enums.ResourceType;
+import com.smartcampus.hub.enums.ResourceStatus;
+import com.smartcampus.hub.service.ResourceService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,21 +19,21 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/member1/resources")
+@RequestMapping("/api/resources")
 @CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
-public class MemberOneResourceController {
+public class ResourceController {
 
-    private final MemberOneResourceService resourceService;
+    private final ResourceService resourceService;
 
-    public MemberOneResourceController(MemberOneResourceService resourceService) {
+    public ResourceController(ResourceService resourceService) {
         this.resourceService = resourceService;
     }
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Map<String, Object>> createResource(@Valid @RequestBody MemberOneResourceRequestDTO requestDTO) {
+    public ResponseEntity<Map<String, Object>> createResource(@Valid @RequestBody ResourceRequestDTO requestDTO) {
         try {
-            MemberOneResourceResponseDTO response = resourceService.createResource(requestDTO);
+            ResourceResponseDTO response = resourceService.createResource(requestDTO);
             Map<String, Object> result = new HashMap<>();
             result.put("success", true);
             result.put("message", "Resource created successfully");
@@ -50,7 +50,7 @@ public class MemberOneResourceController {
     @GetMapping
     public ResponseEntity<Map<String, Object>> getAllResources(
             @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<MemberOneResourceResponseDTO> page = resourceService.getAllResources(pageable);
+        Page<ResourceResponseDTO> page = resourceService.getAllResources(pageable);
         Map<String, Object> paginationMap = new HashMap<>();
         paginationMap.put("currentPage", page.getNumber());
         paginationMap.put("totalPages", page.getTotalPages());
@@ -68,7 +68,7 @@ public class MemberOneResourceController {
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> getResourceById(@PathVariable Long id) {
         try {
-            MemberOneResourceResponseDTO response = resourceService.getResourceById(id);
+            ResourceResponseDTO response = resourceService.getResourceById(id);
             Map<String, Object> result = new HashMap<>();
             result.put("success", true);
             result.put("message", "Resource retrieved successfully");
@@ -84,7 +84,7 @@ public class MemberOneResourceController {
 
     @GetMapping("/active")
     public ResponseEntity<Map<String, Object>> getActiveResources() {
-        List<MemberOneResourceResponseDTO> resources = resourceService.getActiveResources();
+        List<ResourceResponseDTO> resources = resourceService.getActiveResources();
         Map<String, Object> result = new HashMap<>();
         result.put("success", true);
         result.put("message", "Active resources retrieved successfully");
@@ -96,7 +96,7 @@ public class MemberOneResourceController {
     public ResponseEntity<Map<String, Object>> searchResources(
             @RequestParam String term,
             @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<MemberOneResourceResponseDTO> page = resourceService.searchResources(term, pageable);
+        Page<ResourceResponseDTO> page = resourceService.searchResources(term, pageable);
         Map<String, Object> paginationMap = new HashMap<>();
         paginationMap.put("currentPage", page.getNumber());
         paginationMap.put("totalPages", page.getTotalPages());
@@ -113,14 +113,14 @@ public class MemberOneResourceController {
 
     @GetMapping("/advanced-search")
     public ResponseEntity<Map<String, Object>> advancedSearch(
-            @RequestParam(required = false) MemberOneResourceType type,
-            @RequestParam(required = false) MemberOneResourceStatus status,
+            @RequestParam(required = false) ResourceType type,
+            @RequestParam(required = false) ResourceStatus status,
             @RequestParam(required = false) String location,
             @RequestParam(required = false) Integer minCapacity,
             @RequestParam(required = false) Integer maxCapacity,
             @RequestParam(required = false) String term,
             @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<MemberOneResourceResponseDTO> page = resourceService.advancedSearch(
+        Page<ResourceResponseDTO> page = resourceService.advancedSearch(
                 type, status, location, minCapacity, maxCapacity, term, pageable);
         Map<String, Object> paginationMap = new HashMap<>();
         paginationMap.put("currentPage", page.getNumber());
@@ -138,9 +138,9 @@ public class MemberOneResourceController {
 
     @GetMapping("/filter/by-type")
     public ResponseEntity<Map<String, Object>> filterByType(
-            @RequestParam MemberOneResourceType type,
+            @RequestParam ResourceType type,
             @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<MemberOneResourceResponseDTO> page = resourceService.filterByType(type, pageable);
+        Page<ResourceResponseDTO> page = resourceService.filterByType(type, pageable);
         Map<String, Object> paginationMap = new HashMap<>();
         paginationMap.put("currentPage", page.getNumber());
         paginationMap.put("totalPages", page.getTotalPages());
@@ -159,7 +159,7 @@ public class MemberOneResourceController {
     public ResponseEntity<Map<String, Object>> filterByLocation(
             @RequestParam String location,
             @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<MemberOneResourceResponseDTO> page = resourceService.filterByLocation(location, pageable);
+        Page<ResourceResponseDTO> page = resourceService.filterByLocation(location, pageable);
         Map<String, Object> paginationMap = new HashMap<>();
         paginationMap.put("currentPage", page.getNumber());
         paginationMap.put("totalPages", page.getTotalPages());
@@ -178,7 +178,7 @@ public class MemberOneResourceController {
     public ResponseEntity<Map<String, Object>> filterByCapacity(
             @RequestParam Integer capacity,
             @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<MemberOneResourceResponseDTO> page = resourceService.filterByCapacity(capacity, pageable);
+        Page<ResourceResponseDTO> page = resourceService.filterByCapacity(capacity, pageable);
         Map<String, Object> paginationMap = new HashMap<>();
         paginationMap.put("currentPage", page.getNumber());
         paginationMap.put("totalPages", page.getTotalPages());
@@ -195,9 +195,9 @@ public class MemberOneResourceController {
 
     @GetMapping("/filter/by-status")
     public ResponseEntity<Map<String, Object>> filterByStatus(
-            @RequestParam MemberOneResourceStatus status,
+            @RequestParam ResourceStatus status,
             @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<MemberOneResourceResponseDTO> page = resourceService.filterByStatus(status, pageable);
+        Page<ResourceResponseDTO> page = resourceService.filterByStatus(status, pageable);
         Map<String, Object> paginationMap = new HashMap<>();
         paginationMap.put("currentPage", page.getNumber());
         paginationMap.put("totalPages", page.getTotalPages());
@@ -226,9 +226,9 @@ public class MemberOneResourceController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> updateResource(
             @PathVariable Long id,
-            @Valid @RequestBody MemberOneResourceRequestDTO requestDTO) {
+            @Valid @RequestBody ResourceRequestDTO requestDTO) {
         try {
-            MemberOneResourceResponseDTO response = resourceService.updateResource(id, requestDTO);
+            ResourceResponseDTO response = resourceService.updateResource(id, requestDTO);
             Map<String, Object> result = new HashMap<>();
             result.put("success", true);
             result.put("message", "Resource updated successfully");
@@ -246,9 +246,9 @@ public class MemberOneResourceController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> updateResourceStatus(
             @PathVariable Long id,
-            @RequestParam MemberOneResourceStatus status) {
+            @RequestParam ResourceStatus status) {
         try {
-            MemberOneResourceResponseDTO response = resourceService.updateResourceStatus(id, status);
+            ResourceResponseDTO response = resourceService.updateResourceStatus(id, status);
             Map<String, Object> result = new HashMap<>();
             result.put("success", true);
             result.put("message", "Resource status updated successfully");

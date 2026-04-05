@@ -2,10 +2,14 @@ package com.smartcampus.hub.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "attachments")
+@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Attachment {
@@ -23,15 +27,4 @@ public class Attachment {
     @JoinColumn(name = "ticket_id", nullable = false)
     private Ticket ticket;
 
-    // Getters
-    public Long getId() { return id; }
-    public String getFileName() { return fileName; }
-    public String getFilePath() { return filePath; }
-    public Ticket getTicket() { return ticket; }
-
-    // Setters
-    public void setId(Long id) { this.id = id; }
-    public void setFileName(String fileName) { this.fileName = fileName; }
-    public void setFilePath(String filePath) { this.filePath = filePath; }
-    public void setTicket(Ticket ticket) { this.ticket = ticket; }
 }

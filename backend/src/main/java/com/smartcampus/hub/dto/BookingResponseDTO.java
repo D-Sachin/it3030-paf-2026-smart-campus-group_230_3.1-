@@ -31,3 +31,19 @@ public class BookingResponseDTO {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
+
+
+    // private Long id;
+    // private Long resourceId;
+    // private String resourceName;
+    // private Long userId;
+    // private String userName;
+    // private LocalDate bookingDate;
+    // private LocalTime startTime;
+    // private LocalTime endTime;
+    // private String purpose;
+    // private Integer expectedAttendees;
+    // private BookingStatus status;
+    // private String decisionReason;
+    // private LocalDateTime createdAt;
+    // private LocalDateTime updatedAt;

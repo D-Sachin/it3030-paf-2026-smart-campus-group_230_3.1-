@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { Plus, Search, Filter, AlertCircle, Loader2, Inbox } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import ticketService from '../../services/ticketService';
 import TicketCard from '../../components/Tickets/TicketCard';
+import TicketForm from '../../components/Tickets/TicketForm';
 
 const TicketList = () => {
+  const navigate = useNavigate();
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   useEffect(() => {
     fetchTickets();
@@ -29,6 +33,30 @@ const TicketList = () => {
     }
   };
 
+  const handleCreateSubmit = async (formData, attachments) => {
+    try {
+      setIsSubmitting(true);
+      setError(null);
+      
+      const ticketResponse = await ticketService.createTicket(formData);
+      const ticketId = ticketResponse.data.id;
+
+      if (attachments.length > 0) {
+        for (const file of attachments) {
+          await ticketService.uploadAttachment(ticketId, file);
+        }
+      }
+
+      setIsCreateModalOpen(false);
+      navigate(`/tickets/${ticketId}`);
+    } catch (err) {
+      console.error('Error creating ticket:', err);
+      setError('Failed to create ticket. Please check your inputs.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const filteredTickets = tickets.filter(ticket => 
     ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     ticket.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -36,20 +64,20 @@ const TicketList = () => {
   );
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8">
+    <div className="space-y-8">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Incident Tickets</h1>
           <p className="text-slate-500 mt-1">Manage and track campus facility issues in one place.</p>
         </div>
-        <Link 
-          to="/tickets/new" 
+        <button 
+          onClick={() => setIsCreateModalOpen(true)}
           className="premium-button premium-button-primary"
         >
           <Plus className="w-5 h-5" />
           New Ticket
-        </Link>
+        </button>
       </div>
 
       {/* Filters & Search */}
@@ -92,10 +120,13 @@ const TicketList = () => {
             {searchTerm ? `We couldn't find any tickets matching "${searchTerm}".` : "There are currently no active tickets in the system."}
           </p>
           {!searchTerm && (
-            <Link to="/tickets/new" className="premium-button premium-button-primary">
+            <button 
+              onClick={() => setIsCreateModalOpen(true)}
+              className="premium-button premium-button-primary"
+            >
               <Plus className="w-5 h-5" />
               Create your first ticket
-            </Link>
+            </button>
           )}
         </div>
       ) : (
@@ -104,6 +135,15 @@ const TicketList = () => {
             <TicketCard key={ticket.id} ticket={ticket} />
           ))}
         </div>
+      )}
+
+      {/* Create Ticket Modal */}
+      {isCreateModalOpen && (
+        <TicketForm 
+          onSubmit={handleCreateSubmit}
+          onCancel={() => setIsCreateModalOpen(false)}
+          isLoading={isSubmitting}
+        />
       )}
     </div>
   );

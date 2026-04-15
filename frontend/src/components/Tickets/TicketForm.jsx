@@ -24,7 +24,14 @@ const TicketForm = ({ onSubmit, onCancel, isLoading }) => {
     description: '',
     priority: 'LOW',
     category: 'Maintenance',
+<<<<<<< HEAD
+    resourceLocation: '',
+    preferredContactDetails: '',
   });
+
+=======
+  });
+>>>>>>> 52e05668ea42f82dbd466a5b1f36cb427188981a
   const [attachments, setAttachments] = useState([]);
   const [error, setError] = useState(null);
 
@@ -121,6 +128,26 @@ const TicketForm = ({ onSubmit, onCancel, isLoading }) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+<<<<<<< HEAD
+                      <Tag className="w-3 h-3" /> Incident Category
+                    </label>
+                    <select
+                      name="category"
+                      value={formData.category}
+                      onChange={handleInputChange}
+                      disabled={isLoading}
+                      className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-primary-500 font-bold text-slate-700 transition-all"
+                    >
+                      {categories.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+=======
+>>>>>>> 52e05668ea42f82dbd466a5b1f36cb427188981a
                       <Flag className="w-3 h-3" /> Priority Level
                     </label>
                     <select
@@ -136,6 +163,39 @@ const TicketForm = ({ onSubmit, onCancel, isLoading }) => {
                       <option value="CRITICAL">Critical Issue</option>
                     </select>
                   </div>
+<<<<<<< HEAD
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                      <Tag className="w-3 h-3" /> Resource Location
+                    </label>
+                    <input
+                      type="text"
+                      name="resourceLocation"
+                      value={formData.resourceLocation}
+                      onChange={handleInputChange}
+                      disabled={isLoading}
+                      placeholder="e.g., Block B, Lab 402"
+                      className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-primary-500 font-bold text-slate-700 transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                      <Tag className="w-3 h-3" /> Preferred Contact
+                    </label>
+                    <input
+                      type="text"
+                      name="preferredContactDetails"
+                      value={formData.preferredContactDetails}
+                      onChange={handleInputChange}
+                      disabled={isLoading}
+                      placeholder="e.g., +94 77 123 4567"
+                      className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-primary-500 font-bold text-slate-700 transition-all"
+                    />
+=======
 
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
@@ -152,6 +212,7 @@ const TicketForm = ({ onSubmit, onCancel, isLoading }) => {
                         <option key={cat} value={cat}>{cat}</option>
                       ))}
                     </select>
+>>>>>>> 52e05668ea42f82dbd466a5b1f36cb427188981a
                   </div>
                 </div>
 
@@ -164,11 +225,19 @@ const TicketForm = ({ onSubmit, onCancel, isLoading }) => {
                     value={formData.description}
                     onChange={handleInputChange}
                     disabled={isLoading}
+<<<<<<< HEAD
+                    rows="4"
+=======
                     rows="6"
+>>>>>>> 52e05668ea42f82dbd466a5b1f36cb427188981a
                     placeholder="Describe exactly what happened, the location, and any other relevant details..."
                     className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-primary-500/5 focus:border-primary-500 transition-all font-medium text-slate-600 resize-none"
                   />
                 </div>
+<<<<<<< HEAD
+
+=======
+>>>>>>> 52e05668ea42f82dbd466a5b1f36cb427188981a
               </div>
             </div>
 

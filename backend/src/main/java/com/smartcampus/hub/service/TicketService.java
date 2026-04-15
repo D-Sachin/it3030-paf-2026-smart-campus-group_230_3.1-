@@ -13,7 +13,10 @@ import java.util.List;
 
 public interface TicketService {
     TicketResponseDTO createTicket(TicketRequestDTO dto);
-    List<TicketResponseDTO> getAllTickets(TicketStatus status, Priority priority);
+    List<TicketResponseDTO> getAllTickets(TicketStatus status, Priority priority, String category, String searchTerm);
+
+    TicketResponseDTO getTicketById(Long id); // Added
+
     List<TicketResponseDTO> getTicketsByUserId(Long userId, TicketStatus status, Priority priority);
     TicketResponseDTO updateTicketStatus(Long id, TicketStatus status);
     TicketResponseDTO assignTechnician(Long id, Long technicianId);

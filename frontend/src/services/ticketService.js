@@ -19,12 +19,31 @@ apiClient.interceptors.request.use((config) => {
 });
 
 const ticketService = {
-  // GET all tickets
-  getAllTickets: (page = 0, size = 10, sortBy = "createdAt", sortDirection = "desc") => {
+  // GET all tickets with enhanced filtering
+  getAllTickets: (params = {}) => {
     return apiClient.get("", {
-      params: { page, size, sortBy, sortDirection },
+      params: { 
+        page: params.page || 0, 
+        size: params.size || 10, 
+        sortBy: params.sortBy || "createdAt", 
+        sortDirection: params.sortDirection || "desc",
+        status: params.status,
+        priority: params.priority,
+        category: params.category,
+        searchTerm: params.searchTerm
+      },
     });
   },
+
+  // GET users by role (for technician assignment)
+  getUsersByRole: (role) => {
+    return axios.get(`http://localhost:8080/api/users/role/${role}`, {
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("authToken")}`
+      }
+    });
+  },
+
 
   // GET ticket by ID
   getTicketById: (id) => {

@@ -12,7 +12,6 @@ import com.smartcampus.hub.repository.CommentRepository;
 import com.smartcampus.hub.repository.TicketRepository;
 import com.smartcampus.hub.repository.UserRepository;
 import com.smartcampus.hub.service.TicketService;
-import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.domain.Specification;
@@ -29,21 +28,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import jakarta.persistence.criteria.Predicate;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
-import java.nio.file.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -85,8 +69,8 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<TicketResponseDTO> getAllTickets(TicketStatus status, Priority priority) {
-        Specification<Ticket> spec = getTicketSpecification(null, status, priority);
+    public List<TicketResponseDTO> getAllTickets(TicketStatus status, Priority priority, String category, String searchTerm) {
+        Specification<Ticket> spec = getTicketSpecification(null, status, priority, category, searchTerm);
         return ticketRepository.findAll(spec).stream()
                 .map(this::mapToResponseDTO)
                 .collect(Collectors.toList());
@@ -95,7 +79,7 @@ public class TicketServiceImpl implements TicketService {
     @Override
     @Transactional(readOnly = true)
     public List<TicketResponseDTO> getTicketsByUserId(Long userId, TicketStatus status, Priority priority) {
-        Specification<Ticket> spec = getTicketSpecification(userId, status, priority);
+        Specification<Ticket> spec = getTicketSpecification(userId, status, priority, null, null);
         return ticketRepository.findAll(spec).stream()
                 .map(this::mapToResponseDTO)
                 .collect(Collectors.toList());
@@ -334,7 +318,7 @@ public class TicketServiceImpl implements TicketService {
         return mapToResponseDTO(updatedTicket);
     }
 
-    private Specification<Ticket> getTicketSpecification(Long userId, TicketStatus status, Priority priority) {
+    private Specification<Ticket> getTicketSpecification(Long userId, TicketStatus status, Priority priority, String category, String searchTerm) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (userId != null) {
@@ -345,6 +329,16 @@ public class TicketServiceImpl implements TicketService {
             }
             if (priority != null) {
                 predicates.add(cb.equal(root.get("priority"), priority));
+            }
+            if (category != null && !category.isEmpty()) {
+                predicates.add(cb.equal(root.get("category"), category));
+            }
+            if (searchTerm != null && !searchTerm.trim().isEmpty()) {
+                String searchPattern = "%" + searchTerm.toLowerCase() + "%";
+                Predicate titleSearch = cb.like(cb.lower(root.get("title")), searchPattern);
+                Predicate descSearch = cb.like(cb.lower(root.get("description")), searchPattern);
+                Predicate locSearch = cb.like(cb.lower(root.get("resourceLocation")), searchPattern);
+                predicates.add(cb.or(titleSearch, descSearch, locSearch));
             }
             return cb.and(predicates.toArray(new Predicate[0]));
         };

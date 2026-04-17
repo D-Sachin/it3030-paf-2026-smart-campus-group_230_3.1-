@@ -30,14 +30,15 @@ const Dashboard = () => {
           ticketService.getAllTickets(0, 1)
         ]);
 
-        const resourceData = resourcesRes.data.data || [];
-        const resourcePagination = resourcesRes.data.pagination || {};
+        const resourceData = resourcesRes?.data?.data || [];
+        const resourcePagination = resourcesRes?.data?.pagination || {};
+        const ticketData = ticketsRes?.data?.content || (Array.isArray(ticketsRes?.data) ? ticketsRes.data : []);
 
         setStats({
           totalResources: resourcePagination.totalElements || 0,
-          activeResources: resourceData.filter(r => r.status === 'ACTIVE').length,
-          totalTickets: ticketsRes.data.totalElements || 0,
-          openTickets: ticketsRes.data.content.filter(t => t.status !== 'RESOLVED').length,
+          activeResources: resourceData.filter(r => r?.status === 'ACTIVE').length,
+          totalTickets: ticketsRes?.data?.totalElements || (Array.isArray(ticketsRes?.data) ? ticketsRes.data.length : 0),
+          openTickets: ticketData.filter(t => t?.status !== 'RESOLVED').length,
           loading: false
         });
       } catch (err) {

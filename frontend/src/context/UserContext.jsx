@@ -39,7 +39,9 @@ export const UserProvider = ({ children }) => {
       console.error('Login failed:', error);
       return { 
         success: false, 
-        message: error.response?.data || 'Connection failed' 
+        message: typeof error.response?.data === 'string' 
+          ? error.response.data 
+          : (error.response?.data?.message || error.response?.data?.error || 'Server error occurred')
       };
     }
   };

@@ -27,7 +27,7 @@ public class User {
     @Column(nullable = false)
     private String role;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String password;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)

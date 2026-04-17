@@ -23,6 +23,7 @@ const TicketList = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [category, setCategory] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const fetchTickets = useCallback(async () => {
@@ -35,6 +36,7 @@ const TicketList = () => {
         response = await ticketService.getAllTickets({
           searchTerm,
           category,
+          status: statusFilter,
           sortBy: "createdAt",
           sortDirection: "desc"
         });
@@ -53,7 +55,7 @@ const TicketList = () => {
     } finally {
       setLoading(false);
     }
-  }, [user.id, user.role, searchTerm, category]);
+  }, [user.id, user.role, searchTerm, category, statusFilter]);
 
   useEffect(() => {
     fetchTickets();
@@ -95,37 +97,48 @@ const TicketList = () => {
     }
   };
 
+  const isAdmin = user.role === 'ADMIN';
+  const isTechnician = user.role === 'TECHNICIAN';
+  const isStudent = user.role === 'USER';
+
+  // Role-based header config
+  const headerConfig = {
+    ADMIN:       { title: 'Incident Management',    subtitle: 'Review, assign, and resolve all campus incident reports.', accent: 'bg-violet-600' },
+    TECHNICIAN:  { title: 'My Work Queue',           subtitle: 'Manage and resolve assigned maintenance incidents.',          accent: 'bg-amber-500' },
+    USER:        { title: 'My Incident Reports',     subtitle: 'Track and manage your submitted campus issues.',             accent: 'bg-primary-600' },
+  };
+  const { title, subtitle, accent } = headerConfig[user.role] || headerConfig.USER;
+
   return (
     <div className="space-y-8 animate-fade-in-up">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-2xl text-white ${accent}`}>
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">
-            {user.role === 'USER' ? 'My Incident Reports' : 'Incident Management'}
-          </h1>
-          <p className="text-slate-500 mt-1">
-            {user.role === 'USER' ? 'Track and manage your submitted campus issues.' : 'Monitor and resolve facility issues across the campus.'}
-          </p>
+          <h1 className="text-3xl font-bold">{title}</h1>
+          <p className="mt-1 opacity-80 text-sm">{subtitle}</p>
         </div>
         <div className="flex gap-3">
           <button 
             onClick={fetchTickets}
-            className="p-3 rounded-xl bg-white border border-slate-100 text-slate-400 hover:text-primary-600 transition-all hover:shadow-md"
-            title="Refresh List"
+            className="p-3 rounded-xl bg-white/20 hover:bg-white/30 transition-all"
+            title="Refresh"
           >
             <RefreshCcw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
           </button>
-          <button 
-            onClick={() => setIsCreateModalOpen(true)}
-            className="premium-button premium-button-primary"
-          >
-            <Plus className="w-5 h-5" />
-            New Ticket
-          </button>
+          {/* Only students and admins can create new tickets */}
+          {(isStudent || isAdmin) && (
+            <button 
+              onClick={() => setIsCreateModalOpen(true)}
+              className="premium-button bg-white text-slate-800 hover:bg-slate-50"
+            >
+              <Plus className="w-5 h-5" />
+              New Ticket
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Filters & Search - Only for Admins/Techs or broad search */}
+      {/* Filters */}
       <div className="flex flex-col lg:flex-row items-center gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
         <div className="relative flex-1 w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -149,6 +162,22 @@ const TicketList = () => {
               <option key={cat} value={cat}>{cat}</option>
             ))}
           </select>
+
+          {/* Status filter — only for Admin and Technician */}
+          {(isAdmin || isTechnician) && (
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="flex-1 lg:w-44 px-4 py-2.5 bg-slate-50 border-none rounded-xl text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-primary-500/20 appearance-none cursor-pointer"
+            >
+              <option value="">All Statuses</option>
+              <option value="OPEN">Open</option>
+              <option value="IN_PROGRESS">In Progress</option>
+              <option value="RESOLVED">Resolved</option>
+              <option value="CLOSED">Closed</option>
+              <option value="REJECTED">Rejected</option>
+            </select>
+          )}
         </div>
       </div>
 
@@ -163,7 +192,7 @@ const TicketList = () => {
       {loading ? (
         <div className="flex flex-col items-center justify-center p-24 gap-4">
           <Loader2 className="w-10 h-10 text-primary-600 animate-spin" />
-          <p className="text-slate-500 font-medium font-bold uppercase tracking-widest text-[10px]">Updating Queue...</p>
+          <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Loading Tickets...</p>
         </div>
       ) : tickets.length === 0 ? (
         <div className="premium-card p-16 flex flex-col items-center text-center max-w-2xl mx-auto">
@@ -172,9 +201,17 @@ const TicketList = () => {
           </div>
           <h3 className="text-xl font-bold text-slate-900 mb-2">No tickets found</h3>
           <p className="text-slate-500 mb-8 max-w-sm font-medium">
-            {searchTerm || category ? `We couldn't find any tickets matching your filters.` : "There are currently no active tickets in your queue."}
+            {searchTerm || category || statusFilter
+              ? `No tickets match your current filters.`
+              : isStudent
+              ? "You haven't reported any incidents yet."
+              : isTechnician
+              ? "There are no tickets assigned to you yet."
+              : "There are currently no incident tickets in the system."
+            }
           </p>
-          {(!searchTerm && !category) && (
+          {/* Only students see 'Report Incident' in empty state */}
+          {isStudent && !searchTerm && !category && (
             <button 
               onClick={() => setIsCreateModalOpen(true)}
               className="premium-button premium-button-primary"

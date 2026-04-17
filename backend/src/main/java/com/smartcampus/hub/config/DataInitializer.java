@@ -25,23 +25,26 @@ public class DataInitializer {
                 admin.setName("John Admin");
                 admin.setEmail("admin@smartcampus.com");
                 admin.setRole("ADMIN");
+                admin.setPassword("password123");
 
                 User technician = new User();
                 technician.setName("Mike Technician");
                 technician.setEmail("tech@smartcampus.com");
                 technician.setRole("TECHNICIAN");
+                technician.setPassword("password123");
 
                 User student = new User();
                 student.setName("Sarah Student");
                 student.setEmail("student@smartcampus.com");
                 student.setRole("USER");
+                student.setPassword("password123");
 
                 userRepository.saveAll(List.of(admin, technician, student));
 
                 System.out.println("Default user accounts initialized successfully.");
-                System.out.println("- Admin: admin@smartcampus.com");
-                System.out.println("- Tech: tech@smartcampus.com");
-                System.out.println("- User: student@smartcampus.com");
+                System.out.println("- Admin: admin@smartcampus.com / password123");
+                System.out.println("- Tech: tech@smartcampus.com / password123");
+                System.out.println("- User: student@smartcampus.com / password123");
             } else {
                 System.out.println("Users already exist in the database, skipping initialization.");
             }

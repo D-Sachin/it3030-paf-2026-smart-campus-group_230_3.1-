@@ -1,32 +1,56 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios';
 
 const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
-  // Predefined users based on the DataInitializer seeding
-  const availableUsers = [
-    { id: 1, name: 'John Admin', email: 'admin@smartcampus.com', role: 'ADMIN', initials: 'JA' },
-    { id: 2, name: 'Mike Technician', email: 'tech@smartcampus.com', role: 'TECHNICIAN', initials: 'MT' },
-    { id: 3, name: 'Sarah Student', email: 'student@smartcampus.com', role: 'USER', initials: 'SS' }
-  ];
-
-  // Try to load user from localStorage, or default to Admin
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('currentUser');
-    return saved ? JSON.parse(saved) : availableUsers[0];
+    return saved ? JSON.parse(saved) : null;
   });
 
+  const [token, setToken] = useState(() => localStorage.getItem('authToken'));
+
   useEffect(() => {
-    localStorage.setItem('currentUser', JSON.stringify(user));
+    if (user) {
+      localStorage.setItem('currentUser', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('currentUser');
+    }
   }, [user]);
 
-  const switchUser = (id) => {
-    const selected = availableUsers.find(u => u.id === id);
-    if (selected) setUser(selected);
+  useEffect(() => {
+    if (token) {
+      localStorage.setItem('authToken', token);
+    } else {
+      localStorage.removeItem('authToken');
+    }
+  }, [token]);
+
+  const login = async (email, password) => {
+    try {
+      const response = await axios.post('http://localhost:8080/api/auth/login', { email, password });
+      const { token: authToken, ...userData } = response.data;
+      
+      setUser(userData);
+      setToken(authToken);
+      return { success: true };
+    } catch (error) {
+      console.error('Login failed:', error);
+      return { 
+        success: false, 
+        message: error.response?.data || 'Connection failed' 
+      };
+    }
+  };
+
+  const logout = () => {
+    setUser(null);
+    setToken(null);
   };
 
   return (
-    <UserContext.Provider value={{ user, availableUsers, switchUser }}>
+    <UserContext.Provider value={{ user, token, login, logout, isAuthenticated: !!user }}>
       {children}
     </UserContext.Provider>
   );

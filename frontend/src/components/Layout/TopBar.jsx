@@ -1,7 +1,11 @@
-import React from 'react';
-import { Bell, Search, User, ChevronDown } from 'lucide-react';
+import React, { useState } from 'react';
+import { Bell, Search, User, ChevronDown, CheckCircle2 } from 'lucide-react';
+import { useUser } from '../../context/UserContext';
 
 const TopBar = () => {
+  const { user, availableUsers, switchUser } = useUser();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   return (
     <header className="h-[72px] bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-40 px-8 flex items-center justify-between">
       {/* Search Bar */}
@@ -25,16 +29,79 @@ const TopBar = () => {
 
         <div className="h-8 w-[1px] bg-slate-100 mx-2"></div>
 
-        <button className="flex items-center gap-3 p-1.5 pr-3 rounded-xl hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100">
-          <div className="w-9 h-9 rounded-lg bg-primary-100 text-primary-700 flex items-center justify-center font-bold">
-            JD
-          </div>
-          <div className="text-left hidden sm:block">
-            <p className="text-sm font-semibold text-slate-900 leading-none">John Doe</p>
-            <p className="text-xs text-slate-500 mt-1">Administrator</p>
-          </div>
-          <ChevronDown className="w-4 h-4 text-slate-400" />
-        </button>
+        {/* User Profile With Role Switcher */}
+        <div className="relative">
+          <button 
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className={`flex items-center gap-3 p-1.5 pr-3 rounded-xl transition-all border ${
+              isMenuOpen ? 'bg-slate-50 border-slate-100 shadow-sm' : 'border-transparent hover:bg-slate-50 hover:border-slate-100'
+            }`}
+          >
+            <div className={`w-9 h-9 rounded-lg flex items-center justify-center font-bold text-white shadow-sm transition-colors ${
+              user.role === 'ADMIN' ? 'bg-primary-600' : 
+              user.role === 'TECHNICIAN' ? 'bg-orange-500' : 'bg-green-500'
+            }`}>
+              {user.initials}
+            </div>
+            <div className="text-left hidden sm:block">
+              <p className="text-sm font-semibold text-slate-900 leading-none">{user.name}</p>
+              <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">{user.role}</p>
+            </div>
+            <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`} />
+          </button>
+
+          {/* Role Switching Dropdown */}
+          {isMenuOpen && (
+            <>
+              <div 
+                className="fixed inset-0 z-10" 
+                onClick={() => setIsMenuOpen(false)}
+              ></div>
+              <div className="absolute right-0 mt-3 w-64 bg-white border border-slate-100 rounded-2xl shadow-xl z-20 overflow-hidden animate-scale-in">
+                <div className="p-4 bg-slate-50 border-b border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Switch Identity (Demo Mode)</p>
+                </div>
+                <div className="p-2">
+                  {availableUsers.map((u) => (
+                    <button
+                      key={u.id}
+                      onClick={() => {
+                        switchUser(u.id);
+                        setIsMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between p-3 rounded-xl transition-all hover:bg-slate-50 group ${
+                        user.id === u.id ? 'bg-primary-50/50' : ''
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs ${
+                          u.role === 'ADMIN' ? 'bg-primary-100 text-primary-700' : 
+                          u.role === 'TECHNICIAN' ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'
+                        }`}>
+                          {u.initials}
+                        </div>
+                        <div className="text-left">
+                          <p className={`text-xs font-bold ${user.id === u.id ? 'text-primary-700' : 'text-slate-700'}`}>
+                            {u.name}
+                          </p>
+                          <p className="text-[10px] text-slate-400 uppercase font-medium">{u.role}</p>
+                        </div>
+                      </div>
+                      {user.id === u.id && (
+                        <CheckCircle2 className="w-4 h-4 text-primary-500" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+                <div className="p-2 border-t border-slate-50">
+                  <button className="w-full p-2.5 text-[11px] font-bold text-slate-400 hover:text-slate-900 transition-colors text-center">
+                    Settings & Security
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </header>
   );

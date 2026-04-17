@@ -40,13 +40,10 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                .requestMatchers("/api/tickets/**").authenticated()
-                .requestMatchers("/api/bookings/**").permitAll()
                 .anyRequest().permitAll()
             )
-            .formLogin(withDefaults())
-            .httpBasic(withDefaults());
+            .formLogin(AbstractHttpConfigurer::disable)
+            .httpBasic(AbstractHttpConfigurer::disable);
 
         return http.build();
     }

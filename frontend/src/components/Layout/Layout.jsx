@@ -5,18 +5,18 @@ import TopBar from './TopBar';
 const Layout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);    
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
+      <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />  
       
       <main 
-        className={`transition-all duration-300 min-h-screen flex flex-col ${
+        className={`transition-all duration-300 min-h-screen flex flex-col ${     
           isSidebarOpen ? 'ml-[280px]' : 'ml-[88px]'
         }`}
       >
-        <TopBar />
+        <TopBar />   
         
         <div className="flex-1 p-8 animate-fade-in-up">
           {children}

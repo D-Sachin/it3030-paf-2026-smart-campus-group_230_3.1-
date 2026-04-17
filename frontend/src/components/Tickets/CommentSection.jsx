@@ -6,7 +6,8 @@ const CommentSection = ({
   onAddComment, 
   onUpdateComment, 
   onDeleteComment, 
-  isSubmitting = false 
+  isSubmitting = false,
+  currentUser = null
 }) => {
   const [newComment, setNewComment] = useState("");
   const [editingCommentId, setEditingCommentId] = useState(null);
@@ -106,22 +107,24 @@ const CommentSection = ({
                   </div>
                 </div>
                 
-                {/* Ownership Actions (Internal requirement: show edit/delete) */}
-                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button 
-                    onClick={() => handleEditStart(comment)}
-                    className="text-[10px] font-bold text-slate-400 hover:text-primary-600 uppercase transition-colors"
-                  >
-                    Edit
-                  </button>
-                  <span className="text-slate-200 text-[10px]">|</span>
-                  <button 
-                    onClick={() => onDeleteComment(comment.id)}
-                    className="text-[10px] font-bold text-slate-400 hover:text-error uppercase transition-colors"
-                  >
-                    Delete
-                  </button>
-                </div>
+                {/* Ownership Actions — only visible to the comment's author */}
+                {currentUser && (comment.authorId === currentUser.id || comment.author?.id === currentUser.id) && (
+                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button 
+                      onClick={() => handleEditStart(comment)}
+                      className="text-[10px] font-bold text-slate-400 hover:text-primary-600 uppercase transition-colors"
+                    >
+                      Edit
+                    </button>
+                    <span className="text-slate-200 text-[10px]">|</span>
+                    <button 
+                      onClick={() => onDeleteComment(comment.id)}
+                      className="text-[10px] font-bold text-slate-400 hover:text-error uppercase transition-colors"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                )}
               </div>
               
               {editingCommentId === comment.id ? (

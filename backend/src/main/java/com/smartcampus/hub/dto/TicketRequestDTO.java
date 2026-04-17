@@ -30,4 +30,6 @@ public class TicketRequestDTO {
 
     @NotBlank(message = "Preferred contact details are required")
     private String preferredContactDetails;
+
+    private Long userId; // For demo/role-switcher support
 }

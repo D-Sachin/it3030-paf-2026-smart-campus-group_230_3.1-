@@ -44,21 +44,10 @@ public class TicketController {
         return ResponseEntity.ok(tickets);
     }
 
-<<<<<<< HEAD
-<<<<<<< Updated upstream
-=======
-
-=======
->>>>>>> 52e05668ea42f82dbd466a5b1f36cb427188981a
     @GetMapping("/{id}")
     public ResponseEntity<TicketResponseDTO> getTicketById(@PathVariable Long id) {
         return ResponseEntity.ok(ticketService.getTicketById(id));
     }
-
-<<<<<<< HEAD
->>>>>>> Stashed changes
-=======
->>>>>>> 52e05668ea42f82dbd466a5b1f36cb427188981a
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<TicketResponseDTO>> getTicketsByUserId(
             @PathVariable Long userId,

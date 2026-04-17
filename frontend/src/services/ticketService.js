@@ -45,6 +45,11 @@ const ticketService = {
   },
 
 
+  // GET tickets by User ID (for Students)
+  getTicketsByUserId: (userId) => {
+    return apiClient.get(`/user/${userId}`);
+  },
+
   // GET ticket by ID
   getTicketById: (id) => {
     return apiClient.get(`/${id}`);

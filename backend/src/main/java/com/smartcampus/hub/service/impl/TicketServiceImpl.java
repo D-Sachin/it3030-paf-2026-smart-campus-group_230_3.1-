@@ -40,17 +40,25 @@ public class TicketServiceImpl implements TicketService {
     @Override
     @Transactional
     public TicketResponseDTO createTicket(TicketRequestDTO dto) {
-        // Get current logged-in user from SecurityContext
-        final String email;
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal instanceof UserDetails) {
-            email = ((UserDetails) principal).getUsername();
+        User user;
+        
+        // Use explicit userId if provided (for demo/role-switcher support)
+        if (dto.getUserId() != null) {
+            user = userRepository.findById(dto.getUserId())
+                    .orElseThrow(() -> new RuntimeException("User not found with id: " + dto.getUserId()));
         } else {
-            email = principal.toString();
-        }
+            // Get current logged-in user from SecurityContext
+            final String email;
+            Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            if (principal instanceof UserDetails) {
+                email = ((UserDetails) principal).getUsername();
+            } else {
+                email = principal.toString();
+            }
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Logged in user not found in database: " + email));
+            user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("Logged in user not found in database: " + email));
+        }
 
         Ticket ticket = new Ticket();
         ticket.setTitle(dto.getTitle());

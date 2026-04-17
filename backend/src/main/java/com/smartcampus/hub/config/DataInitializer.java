@@ -18,36 +18,31 @@ public class DataInitializer {
     @Bean
     public CommandLineRunner initData(UserRepository userRepository) {
         return args -> {
-            if (userRepository.count() == 0) {
-                System.out.println("Initializing default user accounts...");
-
-                User admin = new User();
-                admin.setName("John Admin");
-                admin.setEmail("admin@smartcampus.com");
-                admin.setRole("ADMIN");
-                admin.setPassword("password123");
-
-                User technician = new User();
-                technician.setName("Mike Technician");
-                technician.setEmail("tech@smartcampus.com");
-                technician.setRole("TECHNICIAN");
-                technician.setPassword("password123");
-
-                User student = new User();
-                student.setName("Sarah Student");
-                student.setEmail("student@smartcampus.com");
-                student.setRole("USER");
-                student.setPassword("password123");
-
-                userRepository.saveAll(List.of(admin, technician, student));
-
-                System.out.println("Default user accounts initialized successfully.");
-                System.out.println("- Admin: admin@smartcampus.com / password123");
-                System.out.println("- Tech: tech@smartcampus.com / password123");
-                System.out.println("- User: student@smartcampus.com / password123");
-            } else {
-                System.out.println("Users already exist in the database, skipping initialization.");
-            }
+            // Ensure default users have passwords for demo
+            updateUserWithPassword("admin@smartcampus.com", "John Admin", "ADMIN", "password123", userRepository);
+            updateUserWithPassword("tech@smartcampus.com", "Mike Technician", "TECHNICIAN", "password123", userRepository);
+            updateUserWithPassword("student@smartcampus.com", "Sarah Student", "USER", "password123", userRepository);
         };
+    }
+
+    private void updateUserWithPassword(String email, String name, String role, String password, UserRepository userRepository) {
+        userRepository.findByEmail(email).ifPresentOrElse(
+            user -> {
+                if (user.getPassword() == null || user.getPassword().isEmpty()) {
+                    user.setPassword(password);
+                    userRepository.save(user);
+                    System.out.println("Updated password for: " + email);
+                }
+            },
+            () -> {
+                User user = new User();
+                user.setName(name);
+                user.setEmail(email);
+                user.setRole(role);
+                user.setPassword(password);
+                userRepository.save(user);
+                System.out.println("Created default user: " + email);
+            }
+        );
     }
 }

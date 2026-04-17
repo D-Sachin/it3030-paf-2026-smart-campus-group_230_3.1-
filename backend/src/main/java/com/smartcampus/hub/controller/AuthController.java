@@ -20,7 +20,6 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*") // For demo purposes
 public class AuthController {
 
     private final UserRepository userRepository;
@@ -33,7 +32,7 @@ public class AuthController {
             User user = userOptional.get();
             
             // Simple password check (In a real app, use BCrypt)
-            if (user.getPassword().equals(loginRequest.getPassword())) {
+            if (user.getPassword() != null && user.getPassword().equals(loginRequest.getPassword())) {
                 // Return user details with a mock token
                 AuthResponseDTO response = AuthResponseDTO.builder()
                         .id(user.getId())

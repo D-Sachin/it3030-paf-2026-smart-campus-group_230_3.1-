@@ -74,21 +74,25 @@ const TicketList = () => {
       setIsSubmitting(true);
       setError(null);
       
-      // Inject current user ID into form data
-      const payload = { ...formData, userId: user.id };
+      // Inject current user ID into form data (coerce to int to ensure type safety)
+      const payload = { ...formData, userId: parseInt(user.id) };
       
       const ticketResponse = await ticketService.createTicket(payload);
-      const ticketId = ticketResponse.data.id;
+      const ticketId = ticketResponse?.data?.id;
 
-      if (attachments && attachments.length > 0) {
+      if (ticketId && attachments && attachments.length > 0) {
         for (const file of attachments) {
           await ticketService.uploadAttachment(ticketId, file);
         }
       }
 
       setIsCreateModalOpen(false);
-      // After creation, navigate to details - which is now role-aware
-      navigate(`/tickets/${ticketId}`);
+      // Refresh the ticket list instead of navigating (avoids /tickets/undefined crash)
+      await fetchTickets();
+      // Navigate to ticket detail only if we have a valid ID
+      if (ticketId) {
+        navigate(`/tickets/${ticketId}`);
+      }
     } catch (err) {
       console.error('Error creating ticket:', err);
       setError('Failed to create ticket. Please check your inputs.');

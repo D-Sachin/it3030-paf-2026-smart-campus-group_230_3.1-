@@ -2,6 +2,8 @@ package com.smartcampus.hub.dto;
 
 import com.smartcampus.hub.enums.ResourceStatus;
 import com.smartcampus.hub.enums.ResourceType;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -40,7 +42,12 @@ public class ResourceRequestDTO {
     @NotNull(message = "Status is required")
     private ResourceStatus status;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm:ss")
+    @Schema(type = "string", format = "time", example = "08:00:00")
     private LocalTime availableFrom;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm:ss")
+    @Schema(type = "string", format = "time", example = "18:00:00")
     private LocalTime availableTo;
 }
 

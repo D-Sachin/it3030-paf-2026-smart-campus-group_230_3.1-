@@ -37,8 +37,10 @@ public class TicketController {
     @GetMapping
     public ResponseEntity<List<TicketResponseDTO>> getAllTickets(
             @RequestParam(required = false) TicketStatus status,
-            @RequestParam(required = false) Priority priority) {
-        List<TicketResponseDTO> tickets = ticketService.getAllTickets(status, priority);
+            @RequestParam(required = false) Priority priority,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String searchTerm) {
+        List<TicketResponseDTO> tickets = ticketService.getAllTickets(status, priority, category, searchTerm);
         return ResponseEntity.ok(tickets);
     }
 
@@ -46,7 +48,6 @@ public class TicketController {
     public ResponseEntity<TicketResponseDTO> getTicketById(@PathVariable Long id) {
         return ResponseEntity.ok(ticketService.getTicketById(id));
     }
-
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<TicketResponseDTO>> getTicketsByUserId(
             @PathVariable Long userId,

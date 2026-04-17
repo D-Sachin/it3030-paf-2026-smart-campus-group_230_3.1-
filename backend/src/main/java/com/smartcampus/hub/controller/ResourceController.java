@@ -20,7 +20,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/resources")
-@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
 public class ResourceController {
 
     private final ResourceService resourceService;

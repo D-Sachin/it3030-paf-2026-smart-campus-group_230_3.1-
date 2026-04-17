@@ -13,7 +13,17 @@ import {
   MessageSquare,
   ShieldCheck,
   Send,
-  Loader2
+  Loader2,
+  MapPin,
+  Phone,
+  Zap,
+  Play,
+  CheckCircle,
+  XCircle,
+  Archive,
+  UserPlus,
+  UserCheck,
+  Inbox
 } from 'lucide-react';
 import ticketService from '../../services/ticketService';
 import CommentSection from '../../components/Tickets/CommentSection';
@@ -25,11 +35,20 @@ const TicketDetails = () => {
   const [ticket, setTicket] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [technicians, setTechnicians] = useState([]);
+  const [isAssigning, setIsAssigning] = useState(false);
+  const [selectedTechId, setSelectedTechId] = useState("");
   const [statusUpdateLoading, setStatusUpdateLoading] = useState(false);
   const [commentSubmitting, setCommentSubmitting] = useState(false);
 
+  // Mock roles for UI logic - In a real app, these would come from Auth Context
+  const userRole = localStorage.getItem('userRole') || 'ADMIN'; 
+  const isAdmin = userRole === 'ADMIN';
+  const isTechnician = userRole === 'TECHNICIAN' || userRole === 'ADMIN';
+
   useEffect(() => {
     fetchTicketDetails();
+    fetchTechnicians();
   }, [id]);
 
   const fetchTicketDetails = async () => {
@@ -46,22 +65,32 @@ const TicketDetails = () => {
     }
   };
 
+  const fetchTechnicians = async () => {
+    try {
+      const response = await ticketService.getUsersByRole("ADMIN"); // Fetching admins/technicians
+      setTechnicians(response.data);
+    } catch (err) {
+      console.error('Error fetching technicians:', err);
+    }
+  };
+
   const handleStatusChange = async (newStatus) => {
     try {
-      setStatusUpdateLoading(true);
-      
-      // Update basic status
-      await ticketService.updateTicketStatus(id, newStatus);
-      
-      // Handle Resolution/Rejection Notes
       if (newStatus === "RESOLVED" || newStatus === "REJECTED") {
         const promptMsg = newStatus === "RESOLVED" ? "Enter resolution notes:" : "Enter rejection reason:";
         const notes = prompt(promptMsg) || "";
-        if (notes.trim()) {
-          await ticketService.updateResolutionNotes(id, notes);
+        if (!notes.trim()) {
+          alert("Notes are required for final status transitions.");
+          return;
         }
+        
+        setStatusUpdateLoading(true);
+        await ticketService.updateResolutionNotes(id, notes);
+      } else {
+        setStatusUpdateLoading(true);
       }
       
+      await ticketService.updateTicketStatus(id, newStatus);
       await fetchTicketDetails();
     } catch (err) {
       console.error('Error updating status:', err);
@@ -71,17 +100,17 @@ const TicketDetails = () => {
     }
   };
 
-  const handleAssignTechnician = async () => {
-    const techId = prompt("Enter Technician ID to assign (e.g., 101):");
+  const handleAssignTechnician = async (techId) => {
     if (!techId) return;
     
     try {
       setStatusUpdateLoading(true);
       await ticketService.assignTechnician(id, parseInt(techId));
+      setIsAssigning(false);
       await fetchTicketDetails();
     } catch (err) {
       console.error('Error assigning technician:', err);
-      alert('Failed to assign technician. Ensure the ID is valid.');
+      alert('Failed to assign technician.');
     } finally {
       setStatusUpdateLoading(false);
     }
@@ -111,8 +140,7 @@ const TicketDetails = () => {
   const handleAddComment = async (content) => {
     try {
       setCommentSubmitting(true);
-      // Fixed: Backend expects { content: "..." }
-      await ticketService.addComment(id, content);
+      await ticketService.addComment(id, { content });
       await fetchTicketDetails();
     } catch (err) {
       console.error('Error adding comment:', err);
@@ -124,7 +152,6 @@ const TicketDetails = () => {
 
   const handleDownloadAttachment = async (attachment) => {
     try {
-      // Fixed: downloadAttachment now takes the fileName
       const response = await ticketService.downloadAttachment(attachment.fileName);
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
@@ -197,7 +224,6 @@ const TicketDetails = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column: Content */}
         <div className="lg:col-span-2 space-y-8">
           <div className="premium-card overflow-hidden">
             <div className="p-8">
@@ -209,7 +235,22 @@ const TicketDetails = () => {
                 <span className="text-slate-400 text-sm font-medium">#{ticket.id}</span>
               </div>
               
-              <h2 className="text-3xl font-bold text-slate-900 mb-6">{ticket.title}</h2>
+              <h2 className="text-3xl font-bold text-slate-900 mb-4">{ticket.title}</h2>
+
+              <div className="flex flex-wrap gap-4 mb-6">
+                <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
+                  <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                  <span className="text-xs font-bold text-slate-600">Location: <span className="text-slate-900">{ticket.resourceLocation || "Not specified"}</span></span>
+                </div>
+                <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
+                  <Phone className="w-3.5 h-3.5 text-slate-400" />
+                  <span className="text-xs font-bold text-slate-600">Contact: <span className="text-slate-900">{ticket.preferredContactDetails || "Not specified"}</span></span>
+                </div>
+                <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
+                  <Tag className="w-3.5 h-3.5 text-slate-400" />
+                  <span className="text-xs font-bold text-slate-600">Category: <span className="text-slate-900">{ticket.category}</span></span>
+                </div>
+              </div>
               
               <div className="prose prose-slate max-w-none text-slate-600 leading-relaxed bg-slate-50/50 p-6 rounded-2xl border border-slate-100">
                 <p className="whitespace-pre-wrap">{ticket.description}</p>
@@ -234,90 +275,203 @@ const TicketDetails = () => {
                 <span>Reported: {formattedDate}</span>
               </div>
               <div className="flex items-center gap-2 text-slate-500 text-sm">
-                <Tag className="w-4 h-4" />
-                <span>Category: {ticket.category || 'Maintenance'}</span>
+                <User className="w-4 h-4" />
+                <span>Reported By: {ticket.userName}</span>
               </div>
             </div>
           </div>
 
-          {/* Comments Section */}
-          <CommentSection 
-            comments={ticket.comments || []} 
-            onAddComment={handleAddComment}
-            onUpdateComment={handleUpdateComment}
-            onDeleteComment={handleDeleteComment}
-            isSubmitting={commentSubmitting}
-          />
+          <div className="premium-card p-8">
+            <h3 className="text-xl font-bold text-slate-900 mb-8 flex items-center gap-3">
+              <MessageSquare className="w-5 h-5 text-primary-500" />
+              Resolution Progress
+            </h3>
+            <CommentSection 
+              comments={ticket.comments} 
+              onAddComment={handleAddComment}
+              onUpdateComment={handleUpdateComment}
+              onDeleteComment={handleDeleteComment}
+              isSubmitting={commentSubmitting}
+            />
+          </div>
         </div>
 
-        {/* Right Column: Sidebar */}
-        <div className="space-y-6">
-          {/* Support Team / Technician */}
+        <div className="space-y-8">
           <div className="premium-card p-6">
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4" />
-                Support Engagement
-              </h3>
-              <button 
-                onClick={handleAssignTechnician}
-                className="text-[10px] font-black text-primary-600 hover:text-primary-700 uppercase tracking-widest bg-primary-50 px-2 py-1 rounded-lg transition-colors border border-primary-100"
-              >
-                Assign
-              </button>
-            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 text-primary-500" />
+              Service Status
+            </h3>
             
             <div className="space-y-6">
-              <div>
-                <p className="text-xs font-bold text-slate-400 mb-2 uppercase">Personnel Assigned</p>
-                <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                  <div className="w-8 h-8 rounded-lg bg-primary-600 text-white flex items-center justify-center font-bold text-xs shadow-md shadow-primary-100">
-                    {ticket.technicianName?.substring(0, 2).toUpperCase() || '??'}
+              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className={`w-3 h-3 rounded-full animate-pulse ${getStatusColor(ticket.status).includes('blue') ? 'bg-blue-500' : getStatusColor(ticket.status).includes('emerald') ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                  <span className="text-sm font-bold text-slate-700">{ticket.status}</span>
+                </div>
+                <Clock className="w-4 h-4 text-slate-300" />
+              </div>
+
+              {isAdmin && !ticket.technicianName?.includes("Unassigned") ? (
+                <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center text-primary-600">
+                        <UserCheck className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Assigned Technician</p>
+                        <p className="text-slate-900 font-bold">{ticket.technicianName}</p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => setIsAssigning(true)}
+                      className="text-xs font-bold text-primary-600 hover:text-primary-700 underline"
+                    >
+                      Reassign
+                    </button>
+                  </div>
+                </div>
+              ) : isAdmin ? (
+                <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
+                  {isAssigning ? (
+                    <div className="space-y-4">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Select Technician</label>
+                      <select 
+                        value={selectedTechId}
+                        onChange={(e) => setSelectedTechId(e.target.value)}
+                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 outline-none focus:border-primary-500"
+                      >
+                        <option value="">Choose a technician...</option>
+                        {technicians.map(tech => (
+                          <option key={tech.id} value={tech.id}>{tech.name} ({tech.email})</option>
+                        ))}
+                      </select>
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => handleAssignTechnician(selectedTechId)}
+                          disabled={!selectedTechId || statusUpdateLoading}
+                          className="premium-button premium-button-primary py-2 flex-1"
+                        >
+                          Assign Now
+                        </button>
+                        <button 
+                          onClick={() => setIsAssigning(false)}
+                          className="premium-button premium-button-secondary py-2"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <p className="text-slate-500 text-sm mb-4 font-medium">No technician assigned yet.</p>
+                      <button 
+                        onClick={() => setIsAssigning(true)}
+                        className="premium-button premium-button-primary w-full"
+                      >
+                        <UserPlus className="w-4 h-4" />
+                        Assign Technician
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-slate-200 flex items-center justify-center text-slate-500">
+                    <UserCheck className="w-5 h-5" />
                   </div>
                   <div>
-                    <span className="font-bold text-slate-900 text-sm block leading-none">{ticket.technicianName || 'Standby'}</span>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Certified Personnel</span>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Technician</p>
+                    <p className="text-slate-900 font-bold">{ticket.technicianName || "Unassigned"}</p>
                   </div>
                 </div>
-              </div>
-              
-              <div>
-                <p className="text-xs font-bold text-slate-400 mb-2">REPORTED BY</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs text-uppercase">
-                    {ticket.userName?.substring(0, 2).toUpperCase() || 'AU'}
-                  </div>
-                  <span className="font-bold text-slate-900 text-sm">{ticket.userName || 'Authorized User'}</span>
-                </div>
-              </div>
+              )}
             </div>
           </div>
 
-          {/* Attachments Section */}
-          <div className="premium-card p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                <Paperclip className="w-4 h-4" />
-                Artifacts ({ticket.attachments?.length || 0})
+          {(isAdmin || isTechnician) && ticket.status !== 'CLOSED' && ticket.status !== 'REJECTED' && (
+            <div className="premium-card p-6 overflow-hidden">
+              <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+                <Zap className="w-5 h-5 text-amber-500" />
+                Management Actions
               </h3>
+              
+              <div className="grid grid-cols-2 gap-3">
+                {ticket.status === 'OPEN' && (
+                  <button 
+                    onClick={() => handleStatusChange('IN_PROGRESS')}
+                    disabled={statusUpdateLoading}
+                    className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border border-slate-100 hover:border-blue-200 hover:bg-blue-50/50 transition-all group"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
+                      <Play className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs font-bold text-slate-700">Start Work</span>
+                  </button>
+                )}
+                
+                {(ticket.status === 'IN_PROGRESS' || ticket.status === 'OPEN') && (
+                  <>
+                    <button 
+                      onClick={() => handleStatusChange('RESOLVED')}
+                      disabled={statusUpdateLoading}
+                      className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border border-slate-100 hover:border-emerald-200 hover:bg-emerald-50/50 transition-all group"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform">
+                        <CheckCircle className="w-5 h-5" />
+                      </div>
+                      <span className="text-xs font-bold text-slate-700">Resolve</span>
+                    </button>
+                    
+                    <button 
+                      onClick={() => handleStatusChange('REJECTED')}
+                      disabled={statusUpdateLoading}
+                      className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border border-slate-100 hover:border-rose-200 hover:bg-rose-50/50 transition-all group"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 group-hover:scale-110 transition-transform">
+                        <XCircle className="w-5 h-5" />
+                      </div>
+                      <span className="text-xs font-bold text-slate-700">Reject</span>
+                    </button>
+                  </>
+                )}
+                
+                {ticket.status === 'RESOLVED' && (
+                  <button 
+                    onClick={() => handleStatusChange('CLOSED')}
+                    disabled={statusUpdateLoading}
+                    className="col-span-2 flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border border-slate-100 hover:border-slate-300 hover:bg-slate-50 transition-all group"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 group-hover:scale-110 transition-transform">
+                      <Archive className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs font-bold text-slate-700">Close Ticket Permanently</span>
+                  </button>
+                )}
+              </div>
             </div>
+          )}
+
+          <div className="premium-card p-6">
+            <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+              <Paperclip className="w-5 h-5 text-indigo-500" />
+              Attachments
+            </h3>
             
             {ticket.attachments && ticket.attachments.length > 0 ? (
               <div className="space-y-3">
-                {ticket.attachments.map((attachment) => (
-                  <div key={attachment.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 group">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-primary-600">
+                {ticket.attachments.map((file) => (
+                  <div key={file.id} className="group flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 hover:border-primary-200 transition-all">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-slate-400 group-hover:text-primary-500 transition-colors shadow-sm">
                         <Paperclip className="w-4 h-4" />
                       </div>
-                      <span className="text-sm font-bold text-slate-700 truncate line-clamp-1 pr-2" title={attachment.fileName}>
-                        {attachment.fileName}
-                      </span>
+                      <span className="text-sm font-medium text-slate-600 truncate max-w-[150px]">{file.fileName}</span>
                     </div>
                     <button 
-                      onClick={() => handleDownloadAttachment(attachment)}
-                      className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
-                      title="Download"
+                      onClick={() => handleDownloadAttachment(file)}
+                      className="p-2 text-slate-400 hover:text-primary-600 transition-colors"
                     >
                       <Download className="w-4 h-4" />
                     </button>
@@ -325,23 +479,10 @@ const TicketDetails = () => {
                 ))}
               </div>
             ) : (
-              <div className="bg-slate-50 rounded-xl border border-dashed border-slate-200 p-6 text-center">
-                <p className="text-sm text-slate-400 font-medium italic">No evidence provided.</p>
+              <div className="text-center py-4">
+                <p className="text-slate-400 text-sm italic">No files attached</p>
               </div>
             )}
-          </div>
-
-          <div className="premium-card p-6 bg-primary-900 text-white border-none shadow-primary-100">
-            <h4 className="font-bold mb-2 flex items-center gap-2">
-              <MessageSquare className="w-4 h-4" />
-              Need Assistance?
-            </h4>
-            <p className="text-primary-100 text-xs leading-relaxed opacity-80 mb-4">
-              If this incident requires immediate attention, please contact the campus security office directly.
-            </p>
-            <button className="w-full py-2 bg-white/10 hover:bg-white/20 transition-all rounded-lg text-xs font-bold ring-1 ring-white/20">
-              View Emergency Contacts
-            </button>
           </div>
         </div>
       </div>

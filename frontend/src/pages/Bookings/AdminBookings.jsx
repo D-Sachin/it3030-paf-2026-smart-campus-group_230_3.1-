@@ -64,7 +64,7 @@ const AdminBookings = () => {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 text-sm font-medium"
+          className="bg-slate-50 border border-slate-100 rounded-2xl px-4 py-2 text-sm font-medium"
         >
           <option value="">All</option>
           <option value="PENDING">Pending</option>

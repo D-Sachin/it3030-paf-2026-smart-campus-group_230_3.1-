@@ -14,6 +14,7 @@ import CreateBooking from "./pages/Bookings/CreateBooking";
 import MyBookings from "./pages/Bookings/MyBookings";
 import AdminBookings from "./pages/Bookings/AdminBookings";
 import BookingDetails from "./pages/Bookings/BookingDetails";
+import HelpPage from "./pages/Help/HelpPage";
 
 /**
  * Main App Component
@@ -40,6 +41,9 @@ function App() {
           <Route path="/bookings/my" element={<MyBookings />} />
           <Route path="/bookings/admin" element={<AdminBookings />} />
           <Route path="/bookings/:id" element={<BookingDetails />} />
+
+          {/* Help & Support */}
+          <Route path="/help" element={<HelpPage />} />
 
           {/* Redirect unknown routes */}
           <Route path="*" element={<Navigate to="/tickets" replace />} />

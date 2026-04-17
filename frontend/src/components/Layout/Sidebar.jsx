@@ -62,10 +62,13 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
       {/* Bottom Actions */}
       <div className="p-4 border-t border-slate-100 space-y-2">
-        <button className="sidebar-link w-full text-left">
+        <NavLink
+          to="/help"
+          className={({ isActive }) => `sidebar-link w-full text-left ${isActive ? 'active' : ''}`}
+        >
           <HelpCircle className="w-5 h-5 shrink-0" />
           {isOpen && <span>Help Support</span>}
-        </button>
+        </NavLink>
         <button className="sidebar-link w-full text-left text-error hover:bg-red-50 hover:text-error">
           <LogOut className="w-5 h-5 shrink-0" />
           {isOpen && <span>Logout</span>}

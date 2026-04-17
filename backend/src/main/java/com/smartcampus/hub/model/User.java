@@ -2,11 +2,15 @@ package com.smartcampus.hub.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.util.List;
 
 @Entity
 @Table(name = "users")
+@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
@@ -23,20 +27,9 @@ public class User {
     @Column(nullable = false)
     private String role;
 
+    @Column(nullable = false)
+    private String password;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Ticket> tickets;
-
-    // Getters
-    public Long getId() { return id; }
-    public String getName() { return name; }
-    public String getEmail() { return email; }
-    public String getRole() { return role; }
-    public List<Ticket> getTickets() { return tickets; }
-
-    // Setters
-    public void setId(Long id) { this.id = id; }
-    public void setName(String name) { this.name = name; }
-    public void setEmail(String email) { this.email = email; }
-    public void setRole(String role) { this.role = role; }
-    public void setTickets(List<Ticket> tickets) { this.tickets = tickets; }
 }

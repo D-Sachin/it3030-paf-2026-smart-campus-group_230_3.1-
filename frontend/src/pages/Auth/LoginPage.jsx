@@ -1,0 +1,216 @@
+import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { 
+  LogIn, 
+  Mail, 
+  Lock, 
+  AlertCircle, 
+  Loader2, 
+  ArrowRight,
+  ShieldCheck,
+  Zap,
+  Globe
+} from 'lucide-react';
+import { useUser } from '../../context/UserContext';
+
+const LoginPage = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useUser();
+  
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  // Redirect after login
+  const from = location.state?.from?.pathname || "/dashboard";
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    const result = await login(email, password);
+    
+    if (result.success) {
+      navigate(from, { replace: true });
+    } else {
+      setError(result.message);
+      setIsLoading(false);
+    }
+  };
+
+  // Quick select for demo purposes
+  const quickSelect = (e, p) => {
+    setEmail(e);
+    setPassword(p);
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6 relative overflow-hidden">
+      {/* Dynamic Background Elements */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary-500/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/10 rounded-full blur-[120px]" />
+      </div>
+
+      <div className="w-full max-w-[1100px] grid grid-cols-1 lg:grid-cols-2 bg-white rounded-[40px] shadow-2xl shadow-slate-200/50 overflow-hidden relative z-10 border border-slate-100">
+        
+        {/* Left Side: Branding & Visuals */}
+        <div className="hidden lg:flex flex-col justify-between p-12 bg-slate-900 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary-600/20 to-emerald-600/20" />
+          
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-12">
+              <div className="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/30">
+                <Globe className="text-white w-6 h-6" />
+              </div>
+              <span className="text-xl font-black text-white tracking-tight uppercase">SmartCampus Hub</span>
+            </div>
+
+            <h2 className="text-5xl font-black text-white leading-tight mb-6">
+               Streamlining <br />
+               <span className="text-primary-400">Campus Operations</span> <br />
+               with Intelligence.
+            </h2>
+            <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-md">
+              A centralized platform for facility management, incident reporting, and real-time notifications.
+            </p>
+          </div>
+
+          <div className="relative z-10 space-y-8">
+            <div className="flex items-center gap-6">
+              <div className="flex -space-x-3">
+                {[1, 2, 3, 4].map(i => (
+                  <div key={i} className="w-12 h-12 rounded-full border-4 border-slate-900 bg-slate-700 flex items-center justify-center text-xs font-bold text-white overflow-hidden shadow-lg">
+                    <img src={`https://i.pravatar.cc/150?u=${i+10}`} alt="User" />
+                  </div>
+                ))}
+              </div>
+              <p className="text-sm font-bold text-emerald-400">Join 2,000+ active campus members</p>
+            </div>
+          </div>
+          
+          {/* Abstract Grid Pattern */}
+          <div className="absolute bottom-0 right-0 w-[500px] h-[500px] opacity-10 pointer-events-none translate-x-1/4 translate-y-1/4">
+             <div className="w-full h-full" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+          </div>
+        </div>
+
+        {/* Right Side: Login Form */}
+        <div className="p-10 md:p-16 flex flex-col justify-center">
+          <div className="max-w-md mx-auto w-full">
+            <div className="mb-10 text-center lg:text-left">
+              <h1 className="text-3xl font-black text-slate-900 mb-3">Welcome Back</h1>
+              <p className="font-bold text-slate-400 uppercase tracking-widest text-[10px]">Access your student or staff portal</p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] ml-2">Email Address</label>
+                <div className="relative group">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary-500 transition-colors">
+                    <Mail className="w-5 h-5" />
+                  </div>
+                  <input 
+                    type="email" 
+                    required 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="john@smartcampus.com"
+                    className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-primary-500/5 focus:border-primary-500 transition-all font-bold text-slate-700 placeholder:text-slate-300"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between items-center px-2">
+                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em]">Password</label>
+                  <a href="#" className="text-[10px] font-bold text-primary-600 hover:text-primary-700 uppercase tracking-wider">Forgot?</a>
+                </div>
+                <div className="relative group">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary-500 transition-colors">
+                    <Lock className="w-5 h-5" />
+                  </div>
+                  <input 
+                    type="password" 
+                    required 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-primary-500/5 focus:border-primary-500 transition-all font-bold text-slate-700 placeholder:text-slate-300"
+                  />
+                </div>
+              </div>
+
+              {error && (
+                <div className="flex items-center gap-3 p-4 bg-red-50 text-red-700 rounded-2xl border border-red-100 animate-shake">
+                  <AlertCircle className="w-5 h-5 shrink-0" />
+                  <p className="text-xs font-bold uppercase tracking-widest">{error}</p>
+                </div>
+              )}
+
+              <button 
+                type="submit" 
+                disabled={isLoading}
+                className="w-full premium-button premium-button-primary py-4.5 flex items-center justify-center gap-3 text-sm font-bold shadow-xl shadow-primary-500/20 group translate-y-2"
+              >
+                {isLoading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <>
+                    <LogIn className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    Sign In to Hub
+                  </>
+                )}
+              </button>
+            </form>
+
+            <div className="mt-12">
+              <div className="relative mb-8">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-slate-100"></div>
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="px-4 bg-white text-slate-400 font-bold uppercase tracking-[0.3em]">Demo Accounts</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <button 
+                  onClick={() => quickSelect('admin@smartcampus.com', 'password123')}
+                  className="flex flex-col items-center gap-2 p-3 rounded-2xl border border-slate-100 hover:border-primary-200 hover:bg-primary-50/50 transition-all group"
+                >
+                  <ShieldCheck className="w-4 h-4 text-primary-500" />
+                  <span className="text-[10px] font-black text-slate-600 uppercase tracking-tighter">Admin</span>
+                </button>
+                <button 
+                  onClick={() => quickSelect('tech@smartcampus.com', 'password123')}
+                  className="flex flex-col items-center gap-2 p-3 rounded-2xl border border-slate-100 hover:border-amber-200 hover:bg-amber-50/50 transition-all group"
+                >
+                  <Zap className="w-4 h-4 text-amber-500" />
+                  <span className="text-[10px] font-black text-slate-600 uppercase tracking-tighter">Tech</span>
+                </button>
+                <button 
+                  onClick={() => quickSelect('student@smartcampus.com', 'password123')}
+                  className="flex flex-col items-center gap-2 p-3 rounded-2xl border border-slate-100 hover:border-emerald-200 hover:bg-emerald-50/50 transition-all group"
+                >
+                  <LogIn className="w-4 h-4 text-emerald-500" />
+                  <span className="text-[10px] font-black text-slate-600 uppercase tracking-tighter">Student</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Footer Info */}
+      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 text-[10px] font-bold text-slate-400 uppercase tracking-[0.4em] text-center w-full">
+        &copy; 2026 SmartCampus Hub &bull; All Systems Operational
+      </div>
+    </div>
+  );
+};
+
+export default LoginPage;

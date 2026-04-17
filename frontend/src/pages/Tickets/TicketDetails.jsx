@@ -27,11 +27,14 @@ import {
 } from 'lucide-react';
 import ticketService from '../../services/ticketService';
 import CommentSection from '../../components/Tickets/CommentSection';
+import { useUser } from '../../context/UserContext';
 import { getPriorityColor, getStatusColor } from '../../utils/ticketUtils';
 
 const TicketDetails = () => {
+  const { user: currentUser } = useUser();
   const { id } = useParams();
   const navigate = useNavigate();
+  // ... state ...
   const [ticket, setTicket] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -41,10 +44,9 @@ const TicketDetails = () => {
   const [statusUpdateLoading, setStatusUpdateLoading] = useState(false);
   const [commentSubmitting, setCommentSubmitting] = useState(false);
 
-  // Mock roles for UI logic - In a real app, these would come from Auth Context
-  const userRole = localStorage.getItem('userRole') || 'ADMIN'; 
-  const isAdmin = userRole === 'ADMIN';
-  const isTechnician = userRole === 'TECHNICIAN' || userRole === 'ADMIN';
+  const isAdmin = currentUser?.role === 'ADMIN';
+  const isTechnician = currentUser?.role === 'TECHNICIAN';
+  const isOwner = ticket && currentUser && (ticket.userEmail === currentUser.email || ticket.userId === currentUser.id);
 
   useEffect(() => {
     fetchTicketDetails();

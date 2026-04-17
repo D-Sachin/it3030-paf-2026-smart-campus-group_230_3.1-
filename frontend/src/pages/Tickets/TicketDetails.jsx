@@ -69,7 +69,7 @@ const TicketDetails = () => {
 
   const fetchTechnicians = async () => {
     try {
-      const response = await ticketService.getUsersByRole("ADMIN"); // Fetching admins/technicians
+      const response = await ticketService.getUsersByRole("TECHNICIAN");
       setTechnicians(response.data);
     } catch (err) {
       console.error('Error fetching technicians:', err);
@@ -209,19 +209,27 @@ const TicketDetails = () => {
         
         <div className="flex items-center gap-3">
           <span className="text-sm font-bold text-slate-400">STATUS</span>
-          <select
-            value={ticket.status}
-            onChange={(e) => handleStatusChange(e.target.value)}
-            disabled={statusUpdateLoading}
-            className={`px-4 py-2 rounded-xl text-sm font-bold border outline-none cursor-pointer transition-all ${getStatusColor(ticket.status)} ${statusUpdateLoading ? 'opacity-50' : 'hover:shadow-md'}`}
-          >
-            <option value="OPEN">OPEN</option>
-            <option value="IN_PROGRESS">IN PROGRESS</option>
-            <option value="RESOLVED">RESOLVED</option>
-            <option value="CLOSED">CLOSED</option>
-            <option value="REJECTED">REJECTED</option>
-          </select>
-          {statusUpdateLoading && <Loader2 className="w-4 h-4 text-primary-600 animate-spin" />}
+          {(isAdmin || isTechnician) ? (
+            <>
+              <select
+                value={ticket.status}
+                onChange={(e) => handleStatusChange(e.target.value)}
+                disabled={statusUpdateLoading}
+                className={`px-4 py-2 rounded-xl text-sm font-bold border outline-none cursor-pointer transition-all ${getStatusColor(ticket.status)} ${statusUpdateLoading ? 'opacity-50' : 'hover:shadow-md'}`}
+              >
+                <option value="OPEN">OPEN</option>
+                <option value="IN_PROGRESS">IN PROGRESS</option>
+                <option value="RESOLVED">RESOLVED</option>
+                <option value="CLOSED">CLOSED</option>
+                <option value="REJECTED">REJECTED</option>
+              </select>
+              {statusUpdateLoading && <Loader2 className="w-4 h-4 text-primary-600 animate-spin" />}
+            </>
+          ) : (
+            <span className={`px-4 py-2 rounded-xl text-sm font-bold border ${getStatusColor(ticket.status)}`}>
+              {ticket.status.replace('_', ' ')}
+            </span>
+          )}
         </div>
       </div>
 
@@ -294,6 +302,7 @@ const TicketDetails = () => {
               onUpdateComment={handleUpdateComment}
               onDeleteComment={handleDeleteComment}
               isSubmitting={commentSubmitting}
+              currentUser={currentUser}
             />
           </div>
         </div>

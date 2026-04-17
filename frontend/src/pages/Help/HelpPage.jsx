@@ -135,7 +135,10 @@ const HelpPage = () => {
 
           <div className="space-y-4">
             {faqs.map((item) => (
-              <article key={item.question} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+              <article
+                key={item.question}
+                className="rounded-2xl border border-slate-100 bg-slate-50 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-md hover:shadow-slate-200/70"
+              >
                 <h3 className="text-sm font-bold text-slate-900">{item.question}</h3>
                 <p className="text-sm text-slate-600 mt-2 leading-relaxed">{item.answer}</p>
               </article>

@@ -14,10 +14,13 @@ public class Attachment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "file_name", nullable = false)
     private String fileName;
 
-    @Column(nullable = false)
+    @Column(name = "file_path")
+    private String filePath;
+
+    @Column(name = "file_url")
     private String fileUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -25,5 +28,5 @@ public class Attachment {
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private Ticket ticket;
-
 }
+

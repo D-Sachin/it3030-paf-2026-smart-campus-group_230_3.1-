@@ -39,16 +39,35 @@ public class GlobalExceptionHandler {
         body.put("success", false);
         body.put("message", message);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleAllExceptions(Exception ex) {
+        System.err.println("CRITICAL ERROR: " + ex.getMessage());
+        ex.printStackTrace();
+        
         Map<String, Object> body = new HashMap<>();
         body.put("success", false);
         body.put("message", "Internal Server Error: " + ex.getMessage());
-        body.put("type", ex.getClass().getSimpleName());
+        body.put("type", ex.getClass().getName());
         
-        // Log the exception stack trace
+        // Include causing exception message if exists
+        if (ex.getCause() != null) {
+            body.put("cause", ex.getCause().getMessage());
+        }
+        
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
+    }
+
+    @ExceptionHandler(Throwable.class)
+    public ResponseEntity<Map<String, Object>> handleThrowable(Throwable ex) {
+        System.err.println("FATAL THROWABLE: " + ex.getMessage());
         ex.printStackTrace();
         
+        Map<String, Object> body = new HashMap<>();
+        body.put("success", false);
+        body.put("message", "Fatal Error: " + ex.getMessage());
+        body.put("type", ex.getClass().getName());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
     }
 }

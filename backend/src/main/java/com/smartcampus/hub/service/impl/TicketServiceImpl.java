@@ -201,9 +201,11 @@ public class TicketServiceImpl implements TicketService {
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
             // Save attachment record
+            String fileUrl = "/api/files/uploads/" + fileName;
             Attachment attachment = Attachment.builder()
                     .fileName(fileName)
                     .filePath(filePath.toString())
+                    .fileUrl(fileUrl)
                     .ticket(ticket)
                     .build();
 
@@ -212,7 +214,7 @@ public class TicketServiceImpl implements TicketService {
             return AttachmentResponseDTO.builder()
                     .id(savedAttachment.getId())
                     .fileName(savedAttachment.getFileName())
-                    .fileUrl("/api/files/uploads/" + savedAttachment.getFileName())
+                    .fileUrl(fileUrl)
                     .build();
 
         } catch (IOException e) {
@@ -226,14 +228,15 @@ public class TicketServiceImpl implements TicketService {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + ticketId));
 
-        final String email;
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         User user;
         
         if (dto.getUserId() != null) {
             user = userRepository.findById(dto.getUserId())
                     .orElseThrow(() -> new RuntimeException("User not found with id: " + dto.getUserId()));
-        } else if (authentication != null && authentication.getPrincipal() != null) {
+        } else if (authentication != null && authentication.getPrincipal() != null
+                && !"anonymousUser".equals(authentication.getPrincipal().toString())) {
+            String email;
             Object principal = authentication.getPrincipal();
             if (principal instanceof UserDetails) {
                 email = ((UserDetails) principal).getUsername();

@@ -39,5 +39,16 @@ public class GlobalExceptionHandler {
         body.put("success", false);
         body.put("message", message);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, Object>> handleAllExceptions(Exception ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("success", false);
+        body.put("message", "Internal Server Error: " + ex.getMessage());
+        body.put("type", ex.getClass().getSimpleName());
+        
+        // Log the exception stack trace
+        ex.printStackTrace();
+        
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
     }
 }

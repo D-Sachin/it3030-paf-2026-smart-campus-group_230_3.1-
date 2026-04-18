@@ -13,4 +13,6 @@ import lombok.Setter;
 public class CommentRequestDTO {
     @NotBlank(message = "Comment content cannot be blank")
     private String content;
+
+    private Long userId;
 }

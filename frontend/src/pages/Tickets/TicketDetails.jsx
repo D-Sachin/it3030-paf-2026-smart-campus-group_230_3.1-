@@ -142,7 +142,7 @@ const TicketDetails = () => {
   const handleAddComment = async (content) => {
     try {
       setCommentSubmitting(true);
-      await ticketService.addComment(id, { content });
+      await ticketService.addComment(id, content, currentUser?.id);
       await fetchTicketDetails();
     } catch (err) {
       console.error('Error adding comment:', err);

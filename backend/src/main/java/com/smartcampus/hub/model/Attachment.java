@@ -1,10 +1,7 @@
 package com.smartcampus.hub.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Table(name = "attachments")
@@ -21,10 +18,12 @@ public class Attachment {
     private String fileName;
 
     @Column(nullable = false)
-    private String filePath;
+    private String fileUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ticket_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Ticket ticket;
 
 }

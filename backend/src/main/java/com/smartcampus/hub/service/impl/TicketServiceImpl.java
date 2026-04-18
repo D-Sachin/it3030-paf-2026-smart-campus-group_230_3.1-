@@ -227,15 +227,32 @@ public class TicketServiceImpl implements TicketService {
                 .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + ticketId));
 
         final String email;
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal instanceof UserDetails) {
-            email = ((UserDetails) principal).getUsername();
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user;
+        
+        if (dto.getUserId() != null) {
+            user = userRepository.findById(dto.getUserId())
+                    .orElseThrow(() -> new RuntimeException("User not found with id: " + dto.getUserId()));
+        } else if (authentication != null && authentication.getPrincipal() != null) {
+            Object principal = authentication.getPrincipal();
+            if (principal instanceof UserDetails) {
+                email = ((UserDetails) principal).getUsername();
+            } else {
+                email = principal.toString();
+            }
+            user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("User not found: " + email));
         } else {
-            email = principal.toString();
+            // Fallback for demo/unauthenticated mode
+            user = userRepository.findByEmail("guest@smartcampus.local").orElseGet(() -> {
+                User guest = new User();
+                guest.setName("Guest User");
+                guest.setEmail("guest@smartcampus.local");
+                guest.setRole("USER");
+                guest.setPassword("password");
+                return userRepository.save(guest);
+            });
         }
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found: " + email));
 
         Comment comment = Comment.builder()
                 .content(dto.getContent())

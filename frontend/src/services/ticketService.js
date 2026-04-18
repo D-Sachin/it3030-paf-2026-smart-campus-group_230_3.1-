@@ -94,9 +94,9 @@ const ticketService = {
     return apiClient.put(`/${id}/assign`, { technicianId });
   },
 
-  // POST add a comment (Backend expects { content: "..." })
-  addComment: (ticketId, content) => {
-    return apiClient.post(`/${ticketId}/comments`, { content });
+  // POST add a comment (Backend expects { content: "...", userId: ... })
+  addComment: (ticketId, content, userId) => {
+    return apiClient.post(`/${ticketId}/comments`, { content, userId });
   },
 
   // Comment Management (PUT and DELETE)

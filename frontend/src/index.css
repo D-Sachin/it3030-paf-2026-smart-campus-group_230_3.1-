@@ -57,21 +57,21 @@
     --primary-900: #312e81;
     --primary-950: #1e1b4b;
 
-    /* Inverted slate scale for dark mode */
-    --slate-50: #020617;
-    --slate-100: #0f172a;
-    --slate-200: #1e293b;
-    --slate-300: #334155;
-    --slate-400: #475569;
-    --slate-500: #64748b;
-    --slate-600: #94a3b8;
-    --slate-700: #cbd5e1;
-    --slate-800: #e2e8f0;
-    --slate-900: #f1f5f9;
-    --slate-950: #f8fafc;
+    /* Inverted slate scale for dark mode (friendlier blue-gray) */
+    --slate-50: #0b1220;
+    --slate-100: #111b2e;
+    --slate-200: #1b2840;
+    --slate-300: #2a3a57;
+    --slate-400: #3f5575;
+    --slate-500: #5b7394;
+    --slate-600: #8ea3bf;
+    --slate-700: #b4c3d9;
+    --slate-800: #d3ddec;
+    --slate-900: #e8eef7;
+    --slate-950: #f5f8fd;
 
-    --glass-background: rgba(15, 23, 42, 0.7);
-    --glass-border: rgba(148, 163, 184, 0.22);
+    --glass-background: rgba(14, 21, 36, 0.72);
+    --glass-border: rgba(126, 151, 184, 0.28);
   }
 
   html {

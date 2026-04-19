@@ -15,6 +15,7 @@
     --primary-700: #4338ca;
     --primary-800: #3730a3;
     --primary-900: #312e81;
+    --primary-950: #1e1b4b;
 
     /* Secondary / Slate Grays */
     --slate-50: #f8fafc;
@@ -27,6 +28,7 @@
     --slate-700: #334155;
     --slate-800: #1e293b;
     --slate-900: #0f172a;
+    --slate-950: #020617;
 
     /* Semantic Colors */
     --success: #10b981;
@@ -41,16 +43,51 @@
     --glass-border: rgba(255, 255, 255, 0.125);
   }
 
+  :root.dark {
+    /* Keep brand palette stable across themes */
+    --primary-50: #eef2ff;
+    --primary-100: #e0e7ff;
+    --primary-200: #c7d2fe;
+    --primary-300: #a5b4fc;
+    --primary-400: #818cf8;
+    --primary-500: #6366f1;
+    --primary-600: #4f46e5;
+    --primary-700: #4338ca;
+    --primary-800: #3730a3;
+    --primary-900: #312e81;
+    --primary-950: #1e1b4b;
+
+    /* Inverted slate scale for dark mode (friendlier blue-gray) */
+    --slate-50: #0b1220;
+    --slate-100: #111b2e;
+    --slate-200: #1b2840;
+    --slate-300: #2a3a57;
+    --slate-400: #3f5575;
+    --slate-500: #5b7394;
+    --slate-600: #8ea3bf;
+    --slate-700: #b4c3d9;
+    --slate-800: #d3ddec;
+    --slate-900: #e8eef7;
+    --slate-950: #f5f8fd;
+
+    --glass-background: rgba(14, 21, 36, 0.72);
+    --glass-border: rgba(126, 151, 184, 0.28);
+  }
+
   html {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     scroll-behavior: smooth;
     background-color: var(--slate-50);
     color: var(--slate-800);
+    transition: background-color 0.25s ease, color 0.25s ease;
   }
 
   body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    background-color: var(--slate-50);
+    color: var(--slate-800);
+    transition: background-color 0.25s ease, color 0.25s ease;
   }
 }
 
@@ -62,7 +99,7 @@
   }
 
   .premium-card {
-    @apply bg-white rounded-2xl border border-slate-100 shadow-sm transition-all duration-300;
+    @apply bg-white dark:bg-slate-100 rounded-2xl border border-slate-100 dark:border-slate-300 shadow-sm transition-all duration-300;
   }
 
   .premium-card:hover {
@@ -78,15 +115,15 @@
   }
 
   .premium-button-secondary {
-    @apply bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:border-slate-300;
+    @apply bg-white dark:bg-slate-200 text-slate-700 border border-slate-200 dark:border-slate-400 hover:bg-slate-50 dark:hover:bg-slate-300 hover:border-slate-300;
   }
 
   .premium-input {
-    @apply w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all duration-200 bg-slate-50/50;
+    @apply w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-400 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all duration-200 bg-slate-50/50 dark:bg-slate-200/60 text-slate-700 dark:text-slate-800;
   }
 
   .sidebar-link {
-    @apply flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:text-primary-600 hover:bg-primary-50 transition-all duration-200 font-medium;
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 dark:text-slate-700 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900 transition-all duration-200 font-medium;
   }
 
   .sidebar-link.active {

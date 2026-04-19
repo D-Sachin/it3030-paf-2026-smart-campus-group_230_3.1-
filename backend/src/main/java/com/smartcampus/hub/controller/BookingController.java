@@ -44,7 +44,13 @@ public class BookingController {
     }
 
     @GetMapping("/admin")
-    public ResponseEntity<Map<String, Object>> getAdminBookings(@RequestParam(required = false) BookingStatus status) {
+    public ResponseEntity<Map<String, Object>> getAdminBookings(
+            @RequestHeader(value = "X-User-Role", required = false) String userRole,
+            @RequestParam(required = false) BookingStatus status) {
+        if (!isAdmin(userRole)) {
+            return buildError("Admin access required.", HttpStatus.FORBIDDEN);
+        }
+
         try {
             List<BookingResponseDTO> responses = bookingService.getAdminBookings(status);
             return buildSuccess("Bookings retrieved successfully", responses, HttpStatus.OK);
@@ -68,7 +74,12 @@ public class BookingController {
     @PutMapping("/{id}/approve")
     public ResponseEntity<Map<String, Object>> approveBooking(
             @PathVariable Long id,
+            @RequestHeader(value = "X-User-Role", required = false) String userRole,
             @RequestBody(required = false) BookingDecisionDTO decisionDTO) {
+        if (!isAdmin(userRole)) {
+            return buildError("Admin access required.", HttpStatus.FORBIDDEN);
+        }
+
         try {
             String reason = decisionDTO != null ? decisionDTO.getReason() : null;
             BookingResponseDTO response = bookingService.approveBooking(id, reason);
@@ -87,7 +98,12 @@ public class BookingController {
     @PutMapping("/{id}/reject")
     public ResponseEntity<Map<String, Object>> rejectBooking(
             @PathVariable Long id,
+            @RequestHeader(value = "X-User-Role", required = false) String userRole,
             @Valid @RequestBody BookingDecisionDTO decisionDTO) {
+        if (!isAdmin(userRole)) {
+            return buildError("Admin access required.", HttpStatus.FORBIDDEN);
+        }
+
         try {
             BookingResponseDTO response = bookingService.rejectBooking(id, decisionDTO.getReason());
             return buildSuccess("Booking rejected successfully", response, HttpStatus.OK);
@@ -127,5 +143,9 @@ public class BookingController {
         body.put("success", false);
         body.put("message", message);
         return ResponseEntity.status(status).body(body);
+    }
+
+    private boolean isAdmin(String role) {
+        return role != null && "ADMIN".equalsIgnoreCase(role.trim());
     }
 }

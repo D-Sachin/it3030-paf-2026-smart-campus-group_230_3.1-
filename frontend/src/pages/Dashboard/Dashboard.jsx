@@ -65,7 +65,7 @@ const Dashboard = () => {
       value: stats.totalResources, 
       icon: Building2, 
       color: 'text-primary-600', 
-      bg: 'bg-primary-50',
+      bg: 'bg-primary-50 dark:bg-primary-500/20',
       link: '/resources',
       roles: ['ADMIN']
     },
@@ -75,7 +75,7 @@ const Dashboard = () => {
       value: stats.activeResources, 
       icon: CheckCircle2, 
       color: 'text-success', 
-      bg: 'bg-green-50',
+      bg: 'bg-green-50 dark:bg-green-500/20',
       link: '/resources',
       roles: ['ADMIN']
     },
@@ -85,7 +85,7 @@ const Dashboard = () => {
       value: stats.totalTickets, 
       icon: Ticket, 
       color: 'text-warning', 
-      bg: 'bg-orange-50',
+      bg: 'bg-orange-50 dark:bg-orange-500/20',
       link: '/tickets',
       roles: ['ADMIN', 'TECHNICIAN', 'USER']
     },
@@ -95,7 +95,7 @@ const Dashboard = () => {
       value: stats.openTickets, 
       icon: AlertCircle, 
       color: 'text-error', 
-      bg: 'bg-red-50',
+      bg: 'bg-red-50 dark:bg-red-500/20',
       link: '/tickets',
       roles: ['ADMIN', 'TECHNICIAN', 'USER']
     }
@@ -122,7 +122,7 @@ const Dashboard = () => {
             </Link>
           )}
           {user.role === 'ADMIN' && (
-            <Link to="/resources" className="premium-button bg-white border-slate-200 text-slate-700 hover:bg-slate-50">
+            <Link to="/resources" className="premium-button bg-white dark:bg-slate-300 border-slate-200 dark:border-slate-400 text-slate-700 dark:text-slate-900 hover:bg-slate-50 dark:hover:bg-slate-400">
               Manage Facilities
             </Link>
           )}
@@ -152,24 +152,24 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Quick Actions / Integration Info */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="premium-card p-8 bg-slate-900 border-none text-white overflow-hidden relative">
+          <div className="premium-card p-8 bg-slate-900 dark:bg-slate-200 border-none text-white overflow-hidden relative">
             <div className="relative z-10">
               <h2 className="text-2xl font-bold mb-4">
                 {user.role === 'ADMIN' ? 'System Governance' : 
                  user.role === 'TECHNICIAN' ? 'Field Operations' : 'Campus Support'}
               </h2>
-              <p className="text-slate-400 max-w-lg leading-relaxed">
+              <p className="text-slate-400 dark:text-slate-700 max-w-lg leading-relaxed">
                 {user.role === 'ADMIN' ? 'Monitor all campus facilities and ensure incident resolution times meet institutional standards.' :
                  user.role === 'TECHNICIAN' ? 'Access your assigned tickets and update resolution progress directly from the field.' :
                  'Report maintenance issues in your dorm or classroom and track our progress in real-time.'}
               </p>
               <div className="mt-8 flex flex-wrap gap-4">
                 {user.role === 'ADMIN' && (
-                  <Link to="/resources" className="px-6 py-2.5 bg-white text-slate-900 rounded-xl font-bold flex items-center gap-2 hover:bg-slate-100 transition-colors">
+                  <Link to="/resources" className="px-6 py-2.5 bg-white dark:bg-slate-300 text-slate-900 rounded-xl font-bold flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-400 transition-colors">
                     Facility Map <ArrowRight className="w-4 h-4" />
                   </Link>
                 )}
-                <Link to="/tickets" className="px-6 py-2.5 border border-slate-700 text-white rounded-xl font-bold flex items-center gap-2 hover:bg-slate-800 transition-colors">
+                <Link to="/tickets" className="px-6 py-2.5 border border-slate-700 dark:border-slate-500 text-white rounded-xl font-bold flex items-center gap-2 hover:bg-slate-800 dark:hover:bg-slate-300 transition-colors">
                   {user.role === 'USER' ? 'My Reported Tickets' : 'Ticket Queue'}
                 </Link>
               </div>
@@ -190,13 +190,13 @@ const Dashboard = () => {
                   <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                      <span className="text-sm font-bold text-slate-700">Lab 302</span>
+                      <span className="text-sm font-bold text-slate-700 dark:text-slate-800">Lab 302</span>
                     </div>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                      <span className="text-sm font-bold text-slate-700">Lecture Hall A</span>
+                      <span className="text-sm font-bold text-slate-700 dark:text-slate-800">Lecture Hall A</span>
                     </div>
                   </div>
                 </div>
@@ -212,7 +212,7 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 rounded-full bg-orange-500"></div>
-                    <span className="text-sm font-bold text-slate-700 truncate max-w-[120px]">AC Issue</span>
+                    <span className="text-sm font-bold text-slate-700 dark:text-slate-800 truncate max-w-[120px]">AC Issue</span>
                   </div>
                   <span className="text-[10px] font-bold text-slate-400">2h ago</span>
                 </div>
@@ -223,7 +223,7 @@ const Dashboard = () => {
         </div>
 
         {/* Sidebar Info */}
-        <div className="space-y-6 text-slate-900">
+        <div className="space-y-6 text-slate-900 dark:text-slate-900">
           <div className="premium-card p-6">
             <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-6 flex items-center gap-2">
               <Clock className="w-4 h-4" />
@@ -240,7 +240,7 @@ const Dashboard = () => {
                   <p className="font-black text-slate-900">{user.role}</p>
                 </div>
               </div>
-              <p className="text-[11px] text-slate-400 leading-relaxed italic">
+              <p className="text-[11px] text-slate-400 dark:text-slate-600 leading-relaxed italic">
                 You are currently viewing the system as a {user.role.toLowerCase()}. Switch profiles in the header to see other dashboard views.
               </p>
             </div>

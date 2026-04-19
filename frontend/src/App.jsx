@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import { useUser } from "./context/UserContext";
 import Layout from "./components/Layout/Layout";
+import HelpPage from "./pages/Help/HelpPage";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
 import LoginPage from "./pages/Auth/LoginPage";
 import Dashboard from "./pages/Dashboard/Dashboard";
@@ -67,6 +68,7 @@ function App() {
             }
           />
           <Route path="bookings/:id" element={<BookingDetails />} />
+          <Route path="help" element={<HelpPage />} />
 
           {/* Redirect unknown routes */}
           <Route path="*" element={<Navigate to="/" replace />} />

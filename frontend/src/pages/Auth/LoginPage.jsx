@@ -12,6 +12,7 @@ import {
   Globe
 } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
+import ThemeToggle from '../../components/Theme/ThemeToggle';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -48,14 +49,18 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-50 p-6 relative overflow-hidden">
+      <div className="absolute top-6 right-6 z-20">
+        <ThemeToggle />
+      </div>
+
       {/* Dynamic Background Elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary-500/10 rounded-full blur-[120px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/10 rounded-full blur-[120px]" />
       </div>
 
-      <div className="w-full max-w-[1100px] grid grid-cols-1 lg:grid-cols-2 bg-white rounded-[40px] shadow-2xl shadow-slate-200/50 overflow-hidden relative z-10 border border-slate-100">
+      <div className="w-full max-w-[1100px] grid grid-cols-1 lg:grid-cols-2 bg-white dark:bg-slate-100 rounded-[40px] shadow-2xl shadow-slate-200/50 dark:shadow-slate-950/60 overflow-hidden relative z-10 border border-slate-100 dark:border-slate-300">
         
         {/* Left Side: Branding & Visuals */}
         <div className="hidden lg:flex flex-col justify-between p-12 bg-slate-900 relative overflow-hidden">
@@ -102,7 +107,7 @@ const LoginPage = () => {
         <div className="p-10 md:p-16 flex flex-col justify-center">
           <div className="max-w-md mx-auto w-full">
             <div className="mb-10 text-center lg:text-left">
-              <h1 className="text-3xl font-black text-slate-900 mb-3">Welcome Back</h1>
+              <h1 className="text-3xl font-black text-slate-900 dark:text-slate-900 mb-3">Welcome Back</h1>
               <p className="font-bold text-slate-400 uppercase tracking-widest text-[10px]">Access your student or staff portal</p>
             </div>
 
@@ -119,7 +124,7 @@ const LoginPage = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="john@smartcampus.com"
-                    className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-primary-500/5 focus:border-primary-500 transition-all font-bold text-slate-700 placeholder:text-slate-300"
+                    className="w-full pl-12 pr-6 py-4 bg-slate-50 dark:bg-slate-200 border border-slate-100 dark:border-slate-300 rounded-2xl outline-none focus:ring-4 focus:ring-primary-500/5 focus:border-primary-500 transition-all font-bold text-slate-700 dark:text-slate-800 placeholder:text-slate-300 dark:placeholder:text-slate-600"
                   />
                 </div>
               </div>
@@ -139,7 +144,7 @@ const LoginPage = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-primary-500/5 focus:border-primary-500 transition-all font-bold text-slate-700 placeholder:text-slate-300"
+                    className="w-full pl-12 pr-6 py-4 bg-slate-50 dark:bg-slate-200 border border-slate-100 dark:border-slate-300 rounded-2xl outline-none focus:ring-4 focus:ring-primary-500/5 focus:border-primary-500 transition-all font-bold text-slate-700 dark:text-slate-800 placeholder:text-slate-300 dark:placeholder:text-slate-600"
                   />
                 </div>
               </div>
@@ -170,10 +175,10 @@ const LoginPage = () => {
             <div className="mt-12">
               <div className="relative mb-8">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-100"></div>
+                  <div className="w-full border-t border-slate-100 dark:border-slate-300"></div>
                 </div>
                 <div className="relative flex justify-center text-xs">
-                  <span className="px-4 bg-white text-slate-400 font-bold uppercase tracking-[0.3em]">Demo Accounts</span>
+                  <span className="px-4 bg-white dark:bg-slate-100 text-slate-400 dark:text-slate-600 font-bold uppercase tracking-[0.3em]">Demo Accounts</span>
                 </div>
               </div>
 
@@ -181,26 +186,26 @@ const LoginPage = () => {
                 <button 
                   type="button"
                   onClick={() => quickSelect('admin@smartcampus.com', 'password123')}
-                  className="flex flex-col items-center gap-2 p-3 rounded-2xl border border-slate-100 hover:border-primary-200 hover:bg-primary-50/50 transition-all group"
+                  className="flex flex-col items-center gap-2 p-3 rounded-2xl border border-slate-100 dark:border-slate-300 hover:border-primary-200 hover:bg-primary-50/50 dark:hover:bg-primary-900/20 transition-all group"
                 >
                   <ShieldCheck className="w-4 h-4 text-primary-500" />
-                  <span className="text-[10px] font-black text-slate-600 uppercase tracking-tighter">Admin</span>
+                  <span className="text-[10px] font-black text-slate-600 dark:text-slate-700 uppercase tracking-tighter">Admin</span>
                 </button>
                 <button 
                   type="button"
                   onClick={() => quickSelect('tech@smartcampus.com', 'password123')}
-                  className="flex flex-col items-center gap-2 p-3 rounded-2xl border border-slate-100 hover:border-amber-200 hover:bg-amber-50/50 transition-all group"
+                  className="flex flex-col items-center gap-2 p-3 rounded-2xl border border-slate-100 dark:border-slate-300 hover:border-amber-200 hover:bg-amber-50/50 dark:hover:bg-amber-900/10 transition-all group"
                 >
                   <Zap className="w-4 h-4 text-amber-500" />
-                  <span className="text-[10px] font-black text-slate-600 uppercase tracking-tighter">Tech</span>
+                  <span className="text-[10px] font-black text-slate-600 dark:text-slate-700 uppercase tracking-tighter">Tech</span>
                 </button>
                 <button 
                   type="button"
                   onClick={() => quickSelect('student@smartcampus.com', 'password123')}
-                  className="flex flex-col items-center gap-2 p-3 rounded-2xl border border-slate-100 hover:border-emerald-200 hover:bg-emerald-50/50 transition-all group"
+                  className="flex flex-col items-center gap-2 p-3 rounded-2xl border border-slate-100 dark:border-slate-300 hover:border-emerald-200 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 transition-all group"
                 >
                   <LogIn className="w-4 h-4 text-emerald-500" />
-                  <span className="text-[10px] font-black text-slate-600 uppercase tracking-tighter">Student</span>
+                  <span className="text-[10px] font-black text-slate-600 dark:text-slate-700 uppercase tracking-tighter">Student</span>
                 </button>
               </div>
             </div>

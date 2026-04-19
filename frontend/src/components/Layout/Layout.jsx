@@ -8,7 +8,7 @@ const Layout = ({ children }) => {
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);    
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-50">
       <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />  
       
       <main 
@@ -23,7 +23,7 @@ const Layout = ({ children }) => {
         </div>
 
         {/* Simple Footer */}
-        <footer className="p-8 border-t border-slate-100 text-center text-slate-400 text-sm">
+        <footer className="p-8 border-t border-slate-100 dark:border-slate-300 text-center text-slate-400 dark:text-slate-600 text-sm">
           <p>© 2026 Smart Campus Operations Hub - PAF Assignment</p>
         </footer>
       </main>

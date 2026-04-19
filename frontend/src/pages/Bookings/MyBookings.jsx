@@ -4,8 +4,10 @@ import { AlertCircle, CalendarPlus, Loader2 } from "lucide-react";
 import bookingService from "../../services/bookingService";
 import { formatBookingSlot, getBookingStatusColor } from "../../utils/bookingUtils";
 import { getApiErrorMessage } from "../../utils/apiError";
+import { useUser } from "../../context/UserContext";
 
 const MyBookings = () => {
+  const { user } = useUser();
   const [bookings, setBookings] = useState([]);
   const [statusFilter, setStatusFilter] = useState("");
   const [loading, setLoading] = useState(false);
@@ -53,9 +55,11 @@ const MyBookings = () => {
             <CalendarPlus className="w-4 h-4" />
             New Booking
           </Link>
-          <Link to="/bookings/admin" className="premium-button">
-            Admin Panel
-          </Link>
+          {user?.role === "ADMIN" && (
+            <Link to="/bookings/admin" className="premium-button">
+              Admin Panel
+            </Link>
+          )}
         </div>
       </div>
 

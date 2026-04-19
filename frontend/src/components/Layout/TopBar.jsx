@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Bell, Search, User, ChevronDown, CheckCircle2 } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
+import ThemeToggle from '../Theme/ThemeToggle';
 
 const TopBar = () => {
   const { user, logout } = useUser();
@@ -33,6 +34,8 @@ const TopBar = () => {
 
       {/* Right Actions */}
       <div className="flex items-center gap-4">
+        <ThemeToggle />
+
         <button className="p-2.5 rounded-xl text-slate-500 hover:bg-slate-50 relative group transition-all">
           <Bell className="w-5 h-5" />
           <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>

@@ -24,7 +24,7 @@ const LoginPage = () => {
   const [error, setError] = useState('');
 
   // Redirect after login
-  const from = location.state?.from?.pathname || "/dashboard";
+  const from = location.state?.from?.pathname || "/";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -179,6 +179,7 @@ const LoginPage = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <button 
+                  type="button"
                   onClick={() => quickSelect('admin@smartcampus.com', 'password123')}
                   className="flex flex-col items-center gap-2 p-3 rounded-2xl border border-slate-100 hover:border-primary-200 hover:bg-primary-50/50 transition-all group"
                 >
@@ -186,6 +187,7 @@ const LoginPage = () => {
                   <span className="text-[10px] font-black text-slate-600 uppercase tracking-tighter">Admin</span>
                 </button>
                 <button 
+                  type="button"
                   onClick={() => quickSelect('tech@smartcampus.com', 'password123')}
                   className="flex flex-col items-center gap-2 p-3 rounded-2xl border border-slate-100 hover:border-amber-200 hover:bg-amber-50/50 transition-all group"
                 >
@@ -193,6 +195,7 @@ const LoginPage = () => {
                   <span className="text-[10px] font-black text-slate-600 uppercase tracking-tighter">Tech</span>
                 </button>
                 <button 
+                  type="button"
                   onClick={() => quickSelect('student@smartcampus.com', 'password123')}
                   className="flex flex-col items-center gap-2 p-3 rounded-2xl border border-slate-100 hover:border-emerald-200 hover:bg-emerald-50/50 transition-all group"
                 >

@@ -11,15 +11,20 @@ import {
   ChevronLeft,
   Menu
 } from 'lucide-react';
+import { useUser } from '../../context/UserContext';
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
+  const { user, logout } = useUser();
+
   const menuItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
-    { icon: Building2, label: 'Resources', path: '/resources' },
-    { icon: CalendarCheck, label: 'Bookings', path: '/bookings' },
-    { icon: Ticket, label: 'Incidents', path: '/tickets' },
-    { icon: Settings, label: 'Settings', path: '/settings' },
+    { icon: LayoutDashboard, label: 'Dashboard', path: '/', roles: ['ADMIN', 'TECHNICIAN', 'USER'] },
+    { icon: Building2, label: 'Resources', path: '/resources', roles: ['ADMIN', 'TECHNICIAN', 'USER'] },
+    { icon: CalendarCheck, label: 'Bookings', path: '/bookings', roles: ['ADMIN', 'TECHNICIAN', 'USER'] },
+    { icon: Ticket, label: 'Incidents', path: '/tickets', roles: ['ADMIN', 'TECHNICIAN', 'USER'] },
+    { icon: Settings, label: 'Settings', path: '/settings', roles: ['ADMIN'] },
   ];
+
+  const allowedMenuItems = menuItems.filter((item) => item.roles.includes(user?.role));
 
   return (
     <aside 
@@ -41,7 +46,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
       {/* Nav Items */}
       <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar">
-        {menuItems.map((item) => (
+        {allowedMenuItems.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
@@ -69,7 +74,10 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
           <HelpCircle className="w-5 h-5 shrink-0" />
           {isOpen && <span>Help Support</span>}
         </NavLink>
-        <button className="sidebar-link w-full text-left text-error hover:bg-red-50 hover:text-error">
+        <button
+          onClick={logout}
+          className="sidebar-link w-full text-left text-error hover:bg-red-50 hover:text-error"
+        >
           <LogOut className="w-5 h-5 shrink-0" />
           {isOpen && <span>Logout</span>}
         </button>

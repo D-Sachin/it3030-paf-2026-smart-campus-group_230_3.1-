@@ -16,6 +16,22 @@ apiClient.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  const rawUser = localStorage.getItem("currentUser");
+  if (rawUser) {
+    try {
+      const user = JSON.parse(rawUser);
+      if (user?.role) {
+        config.headers["X-User-Role"] = user.role;
+      }
+      if (user?.email) {
+        config.headers["X-User-Email"] = user.email;
+      }
+    } catch (error) {
+      // Ignore malformed storage values and continue request.
+    }
+  }
+
   return config;
 });
 

@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { AlertCircle, Loader2 } from "lucide-react";
 import bookingService from "../../services/bookingService";
 import { formatBookingSlot, getBookingStatusColor } from "../../utils/bookingUtils";
 import { getApiErrorMessage } from "../../utils/apiError";
+import { useUser } from "../../context/UserContext";
 
 const AdminBookings = () => {
+  const { user } = useUser();
   const [bookings, setBookings] = useState([]);
   const [statusFilter, setStatusFilter] = useState("PENDING");
   const [loading, setLoading] = useState(false);
@@ -52,6 +54,10 @@ const AdminBookings = () => {
     }
   };
 
+  if (user?.role !== "ADMIN") {
+    return <Navigate to="/bookings/my" replace />;
+  }
+
   return (
     <div className="space-y-8 animate-fade-in-up">
       <div>
@@ -64,7 +70,7 @@ const AdminBookings = () => {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="bg-slate-50 border border-slate-100 rounded-2xl px-4 py-2 text-sm font-medium"
+          className="bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 text-sm font-medium"
         >
           <option value="">All</option>
           <option value="PENDING">Pending</option>

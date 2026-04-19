@@ -28,7 +28,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
   return (
     <aside 
-      className={`fixed top-0 left-0 z-50 h-screen transition-all duration-300 bg-white border-r border-slate-100 flex flex-col ${
+      className={`fixed top-0 left-0 z-50 h-screen transition-all duration-300 bg-white dark:bg-slate-100 border-r border-slate-100 dark:border-slate-300 flex flex-col ${
         isOpen ? 'w-[280px]' : 'w-[88px]'
       }`}
     >
@@ -38,7 +38,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
           <Building2 className="text-white w-6 h-6" />
         </div>
         {isOpen && (
-          <span className="font-bold text-lg text-slate-900 whitespace-nowrap">
+          <span className="font-bold text-lg text-slate-900 dark:text-slate-900 whitespace-nowrap">
             SmartCampus
           </span>
         )}
@@ -57,7 +57,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             <item.icon className={`w-5 h-5 shrink-0 transition-colors ${isOpen ? '' : 'mx-auto'}`} />
             {isOpen && <span className="font-medium">{item.label}</span>}
             {!isOpen && (
-              <div className="absolute left-full ml-4 px-2 py-1 bg-slate-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+              <div className="absolute left-full ml-4 px-2 py-1 bg-slate-900 dark:bg-slate-300 text-white dark:text-slate-950 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
                 {item.label}
               </div>
             )}
@@ -66,7 +66,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       </nav>
 
       {/* Bottom Actions */}
-      <div className="p-4 border-t border-slate-100 space-y-2">
+      <div className="p-4 border-t border-slate-100 dark:border-slate-300 space-y-2">
         <NavLink
           to="/help"
           className={({ isActive }) => `sidebar-link w-full text-left ${isActive ? 'active' : ''}`}
@@ -86,7 +86,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       {/* Toggle Button */}
       <button 
         onClick={toggleSidebar}
-        className="absolute -right-3 top-20 w-6 h-6 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-400 hover:text-primary-600 shadow-sm transition-colors"
+        className="absolute -right-3 top-20 w-6 h-6 bg-white dark:bg-slate-200 border border-slate-200 dark:border-slate-400 rounded-full flex items-center justify-center text-slate-400 dark:text-slate-700 hover:text-primary-600 shadow-sm transition-colors"
       >
         {isOpen ? <ChevronLeft className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
       </button>

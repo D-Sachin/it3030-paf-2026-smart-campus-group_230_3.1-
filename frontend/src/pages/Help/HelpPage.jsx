@@ -1,5 +1,7 @@
-import React, { useState } from "react";
-import { HelpCircle, Mail, MessageSquareText, User, CheckCircle2 } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { AlertCircle, CheckCircle2, Clock3, HelpCircle, Mail, MessageSquareText, User } from "lucide-react";
+import supportService from "../../services/supportService";
+import { useUser } from "../../context/UserContext";
 
 const faqs = [
   {
@@ -21,12 +23,39 @@ const faqs = [
 ];
 
 const HelpPage = () => {
+  const { user } = useUser();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     message: "",
   });
   const [submitted, setSubmitted] = useState(false);
+  const [adminMessages, setAdminMessages] = useState([]);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [messageError, setMessageError] = useState("");
+  const [formStatus, setFormStatus] = useState({ type: "", text: "" });
+
+  useEffect(() => {
+    if (user?.role !== "ADMIN") {
+      return;
+    }
+
+    const fetchMessages = async () => {
+      setLoadingMessages(true);
+      setMessageError("");
+
+      try {
+        const response = await supportService.getSupportMessages();
+        setAdminMessages(response.data?.data || []);
+      } catch (error) {
+        setMessageError("Failed to load support messages.");
+      } finally {
+        setLoadingMessages(false);
+      }
+    };
+
+    fetchMessages();
+  }, [user?.role]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -36,9 +65,24 @@ const HelpPage = () => {
     }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    setSubmitted(true);
+
+    setFormStatus({ type: "", text: "" });
+
+    try {
+      await supportService.submitSupportMessage(formData);
+      setSubmitted(true);
+      setFormStatus({ type: "success", text: "Support message submitted successfully." });
+      setFormData({ name: "", email: "", message: "" });
+
+      if (user?.role === "ADMIN") {
+        const response = await supportService.getSupportMessages();
+        setAdminMessages(response.data?.data || []);
+      }
+    } catch (error) {
+      setFormStatus({ type: "error", text: "Unable to submit your message right now." });
+    }
   };
 
   return (
@@ -123,6 +167,21 @@ const HelpPage = () => {
                 <HelpCircle className="w-4 h-4" />
                 Submit Message
               </button>
+
+              {formStatus.text && (
+                <div className={`rounded-2xl border p-4 flex items-start gap-3 text-sm font-medium ${
+                  formStatus.type === "success"
+                    ? "border-emerald-100 bg-emerald-50 text-emerald-700"
+                    : "border-red-100 bg-red-50 text-red-700"
+                }`}>
+                  {formStatus.type === "success" ? (
+                    <CheckCircle2 className="w-5 h-5 mt-0.5" />
+                  ) : (
+                    <AlertCircle className="w-5 h-5 mt-0.5" />
+                  )}
+                  <span>{formStatus.text}</span>
+                </div>
+              )}
             </form>
           )}
         </section>
@@ -146,6 +205,49 @@ const HelpPage = () => {
           </div>
         </section>
       </div>
+
+      {user?.role === "ADMIN" && (
+        <section className="premium-card p-6">
+          <div className="flex items-center justify-between gap-3 mb-5">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">Support Inbox</h2>
+              <p className="text-sm text-slate-500 mt-1">Recent help messages from users.</p>
+            </div>
+            <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
+              <Clock3 className="w-4 h-4" />
+              Live Queue
+            </div>
+          </div>
+
+          {messageError && (
+            <div className="p-4 bg-red-50 border border-red-100 rounded-2xl text-red-600 font-bold text-sm mb-4">
+              {messageError}
+            </div>
+          )}
+
+          {loadingMessages ? (
+            <div className="p-8 text-center text-slate-500 text-sm">Loading support messages...</div>
+          ) : adminMessages.length === 0 ? (
+            <div className="p-8 text-center text-slate-500 text-sm">No support messages yet.</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {adminMessages.map((item) => (
+                <article key={item.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <h3 className="font-bold text-slate-900">{item.name}</h3>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">New</span>
+                  </div>
+                  <p className="text-xs text-slate-500 mb-2">{item.email}</p>
+                  <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{item.message}</p>
+                  <p className="text-[11px] text-slate-400 mt-4">
+                    {item.createdAt ? new Date(item.createdAt).toLocaleString() : "Just now"}
+                  </p>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
     </div>
   );
 };

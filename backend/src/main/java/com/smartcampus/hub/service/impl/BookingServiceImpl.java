@@ -12,6 +12,7 @@ import com.smartcampus.hub.repository.BookingRepository;
 import com.smartcampus.hub.repository.ResourceRepository;
 import com.smartcampus.hub.repository.UserRepository;
 import com.smartcampus.hub.service.BookingService;
+import com.smartcampus.hub.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,6 +35,7 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final ResourceRepository resourceRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional
@@ -76,7 +79,17 @@ public class BookingServiceImpl implements BookingService {
                 .status(BookingStatus.PENDING)
                 .build();
 
-        return mapToResponseDTO(bookingRepository.save(booking));
+        Booking savedBooking = bookingRepository.save(booking);
+
+        if (!"ADMIN".equalsIgnoreCase(currentUser.getRole())) {
+            try {
+                notificationService.createAdminBookingNotification(savedBooking);
+            } catch (Exception ex) {
+                System.err.println("Failed to create booking notification: " + ex.getMessage());
+            }
+        }
+
+        return mapToResponseDTO(savedBooking);
     }
 
     @Override
@@ -106,7 +119,7 @@ public class BookingServiceImpl implements BookingService {
     @Transactional(readOnly = true)
     public BookingResponseDTO getBookingById(Long bookingId) {
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new RuntimeException("Booking not found with id: " + bookingId));
+                .orElseThrow(() -> new NoSuchElementException("Booking not found with id: " + bookingId));
 
         return mapToResponseDTO(booking);
     }
@@ -115,7 +128,7 @@ public class BookingServiceImpl implements BookingService {
     @Transactional
     public BookingResponseDTO approveBooking(Long bookingId, String reason) {
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new RuntimeException("Booking not found with id: " + bookingId));
+                .orElseThrow(() -> new NoSuchElementException("Booking not found with id: " + bookingId));
 
         if (booking.getStatus() != BookingStatus.PENDING) {
             throw new IllegalStateException("Only PENDING bookings can be approved.");
@@ -137,7 +150,25 @@ public class BookingServiceImpl implements BookingService {
         booking.setStatus(BookingStatus.APPROVED);
         booking.setDecisionReason(reason);
 
-        return mapToResponseDTO(bookingRepository.save(booking));
+        Booking savedBooking = bookingRepository.save(booking);
+
+        try {
+            String recipientEmail = resolveBookingUserEmail(savedBooking);
+            String resourceName = resolveBookingResourceName(savedBooking);
+
+            notificationService.createUserBookingApprovedNotification(
+                    savedBooking.getId(),
+                recipientEmail,
+                resourceName,
+                    savedBooking.getBookingDate(),
+                    savedBooking.getStartTime(),
+                    savedBooking.getEndTime()
+            );
+        } catch (Exception ex) {
+            System.err.println("Failed to create approved booking notification: " + ex.getMessage());
+        }
+
+        return mapToResponseDTO(savedBooking);
     }
 
     @Override
@@ -148,7 +179,7 @@ public class BookingServiceImpl implements BookingService {
         }
 
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new RuntimeException("Booking not found with id: " + bookingId));
+            .orElseThrow(() -> new NoSuchElementException("Booking not found with id: " + bookingId));
 
         if (booking.getStatus() != BookingStatus.PENDING) {
             throw new IllegalStateException("Only PENDING bookings can be rejected.");
@@ -157,14 +188,33 @@ public class BookingServiceImpl implements BookingService {
         booking.setStatus(BookingStatus.REJECTED);
         booking.setDecisionReason(reason);
 
-        return mapToResponseDTO(bookingRepository.save(booking));
+        Booking savedBooking = bookingRepository.save(booking);
+
+        try {
+            String recipientEmail = resolveBookingUserEmail(savedBooking);
+            String resourceName = resolveBookingResourceName(savedBooking);
+
+            notificationService.createUserBookingRejectedNotification(
+                    savedBooking.getId(),
+                recipientEmail,
+                resourceName,
+                    savedBooking.getBookingDate(),
+                    savedBooking.getStartTime(),
+                    savedBooking.getEndTime(),
+                    savedBooking.getDecisionReason()
+            );
+        } catch (Exception ex) {
+            System.err.println("Failed to create rejected booking notification: " + ex.getMessage());
+        }
+
+        return mapToResponseDTO(savedBooking);
     }
 
     @Override
     @Transactional
     public BookingResponseDTO cancelBooking(Long bookingId) {
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new RuntimeException("Booking not found with id: " + bookingId));
+                .orElseThrow(() -> new NoSuchElementException("Booking not found with id: " + bookingId));
 
         if (booking.getStatus() != BookingStatus.APPROVED) {
             throw new IllegalStateException("Only APPROVED bookings can be cancelled.");
@@ -214,6 +264,28 @@ public class BookingServiceImpl implements BookingService {
         if (startTime == null || endTime == null || !startTime.isBefore(endTime)) {
             throw new IllegalArgumentException("Start time must be earlier than end time.");
         }
+    }
+
+    private String resolveBookingUserEmail(Booking booking) {
+        Long userId = booking.getUser() != null ? booking.getUser().getId() : null;
+        if (userId == null) {
+            throw new IllegalStateException("Booking user is missing");
+        }
+
+        return userRepository.findById(userId)
+                .map(User::getEmail)
+                .orElseThrow(() -> new IllegalStateException("Booking user email not found for user id: " + userId));
+    }
+
+    private String resolveBookingResourceName(Booking booking) {
+        Long resourceId = booking.getResource() != null ? booking.getResource().getId() : null;
+        if (resourceId == null) {
+            throw new IllegalStateException("Booking resource is missing");
+        }
+
+        return resourceRepository.findById(resourceId)
+                .map(Resource::getName)
+                .orElseThrow(() -> new IllegalStateException("Booking resource not found for resource id: " + resourceId));
     }
 
     private BookingResponseDTO mapToResponseDTO(Booking booking) {

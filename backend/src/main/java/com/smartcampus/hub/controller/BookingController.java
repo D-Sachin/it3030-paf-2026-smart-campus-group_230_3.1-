@@ -62,7 +62,7 @@ public class BookingController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> getBookingById(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> getBookingById(@PathVariable(name = "id") Long id) {
         try {
             BookingResponseDTO response = bookingService.getBookingById(id);
             return buildSuccess("Booking retrieved successfully", response, HttpStatus.OK);
@@ -77,7 +77,7 @@ public class BookingController {
 
     @PutMapping("/{id}/approve")
     public ResponseEntity<Map<String, Object>> approveBooking(
-            @PathVariable Long id,
+            @PathVariable(name = "id") Long id,
             @RequestHeader(value = "X-User-Role", required = false) String userRole,
             @RequestBody(required = false) BookingDecisionDTO decisionDTO) {
         if (!isAdmin(userRole)) {
@@ -103,7 +103,7 @@ public class BookingController {
 
     @PutMapping("/{id}/reject")
     public ResponseEntity<Map<String, Object>> rejectBooking(
-            @PathVariable Long id,
+            @PathVariable(name = "id") Long id,
             @RequestHeader(value = "X-User-Role", required = false) String userRole,
             @Valid @RequestBody BookingDecisionDTO decisionDTO) {
         if (!isAdmin(userRole)) {
@@ -125,7 +125,7 @@ public class BookingController {
     }
 
     @PutMapping("/{id}/cancel")
-    public ResponseEntity<Map<String, Object>> cancelBooking(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> cancelBooking(@PathVariable(name = "id") Long id) {
         try {
             BookingResponseDTO response = bookingService.cancelBooking(id);
             return buildSuccess("Booking cancelled successfully", response, HttpStatus.OK);

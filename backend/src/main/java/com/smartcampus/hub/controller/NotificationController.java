@@ -36,7 +36,7 @@ public class NotificationController {
 
     @PutMapping("/{id}/read")
     public ResponseEntity<Map<String, Object>> markAsRead(
-            @PathVariable Long id,
+            @PathVariable(name = "id") Long id,
             @RequestHeader(value = "X-User-Role", required = false) String userRole,
             @RequestHeader(value = "X-User-Email", required = false) String userEmail
     ) {

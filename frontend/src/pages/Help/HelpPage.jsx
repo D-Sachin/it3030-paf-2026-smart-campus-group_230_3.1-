@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { AlertCircle, CheckCircle2, Clock3, HelpCircle, Mail, MessageSquareText, User } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock3, HelpCircle, Mail, MessageSquareText, Trash2, User } from "lucide-react";
 import supportService from "../../services/supportService";
 import { useUser } from "../../context/UserContext";
 
@@ -32,6 +32,7 @@ const HelpPage = () => {
   const [submitted, setSubmitted] = useState(false);
   const [adminMessages, setAdminMessages] = useState([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [deletingMessageId, setDeletingMessageId] = useState(null);
   const [messageError, setMessageError] = useState("");
   const [formStatus, setFormStatus] = useState({ type: "", text: "" });
 
@@ -82,6 +83,25 @@ const HelpPage = () => {
       }
     } catch (error) {
       setFormStatus({ type: "error", text: "Unable to submit your message right now." });
+    }
+  };
+
+  const handleDeleteMessage = async (messageId) => {
+    const confirmed = window.confirm("Are you sure you want to delete this support message?");
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingMessageId(messageId);
+    setMessageError("");
+
+    try {
+      await supportService.deleteSupportMessage(messageId);
+      setAdminMessages((prev) => prev.filter((message) => message.id !== messageId));
+    } catch (error) {
+      setMessageError("Failed to delete support message.");
+    } finally {
+      setDeletingMessageId(null);
     }
   };
 
@@ -235,7 +255,18 @@ const HelpPage = () => {
                 <article key={item.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
                   <div className="flex items-center justify-between gap-3 mb-3">
                     <h3 className="font-bold text-slate-900">{item.name}</h3>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">New</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">New</span>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteMessage(item.id)}
+                        disabled={deletingMessageId === item.id}
+                        className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-white px-2.5 py-1 text-[11px] font-bold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        {deletingMessageId === item.id ? "Deleting..." : "Delete"}
+                      </button>
+                    </div>
                   </div>
                   <p className="text-xs text-slate-500 mb-2">{item.email}</p>
                   <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{item.message}</p>

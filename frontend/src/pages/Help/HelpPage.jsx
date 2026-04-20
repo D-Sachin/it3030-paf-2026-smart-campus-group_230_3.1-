@@ -1,26 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { AlertCircle, CheckCircle2, Clock3, HelpCircle, Mail, MessageSquareText, Trash2, User } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock3, HelpCircle, Mail, MessageSquareText, Plus, Trash2, User, X } from "lucide-react";
 import supportService from "../../services/supportService";
 import { useUser } from "../../context/UserContext";
-
-const faqs = [
-  {
-    question: "How quickly will support respond?",
-    answer: "Most questions receive a response within one business day. Urgent campus service issues are prioritized.",
-  },
-  {
-    question: "What details should I include in my message?",
-    answer: "Include the feature/page name, what happened, and any error text you saw. Clear details help us resolve issues faster.",
-  },
-  {
-    question: "Can I request booking or ticketing guidance here?",
-    answer: "Yes. Use this page for help with resources, bookings, incidents, and general SmartCampus Hub workflows.",
-  },
-  {
-    question: "Is this form available to all users?",
-    answer: "Yes. The Help and Support page is available for all logged-in users.",
-  },
-];
 
 const HelpPage = () => {
   const { user } = useUser();
@@ -30,11 +11,34 @@ const HelpPage = () => {
     message: "",
   });
   const [submitted, setSubmitted] = useState(false);
+  const [faqs, setFAQs] = useState([]);
+  const [loadingFAQs, setLoadingFAQs] = useState(false);
   const [adminMessages, setAdminMessages] = useState([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [deletingMessageId, setDeletingMessageId] = useState(null);
   const [messageError, setMessageError] = useState("");
   const [formStatus, setFormStatus] = useState({ type: "", text: "" });
+  const [showAddFAQModal, setShowAddFAQModal] = useState(false);
+  const [faqFormData, setFAQFormData] = useState({ question: "", answer: "" });
+  const [faqFormError, setFAQFormError] = useState("");
+  const [submittingFAQ, setSubmittingFAQ] = useState(false);
+  const [deletingFAQId, setDeletingFAQId] = useState(null);
+
+  useEffect(() => {
+    const fetchFAQs = async () => {
+      setLoadingFAQs(true);
+      try {
+        const response = await supportService.getFAQs();
+        setFAQs(response.data?.data || []);
+      } catch (error) {
+        console.error("Failed to load FAQs");
+      } finally {
+        setLoadingFAQs(false);
+      }
+    };
+
+    fetchFAQs();
+  }, []);
 
   useEffect(() => {
     if (user?.role !== "ADMIN") {
@@ -102,6 +106,56 @@ const HelpPage = () => {
       setMessageError("Failed to delete support message.");
     } finally {
       setDeletingMessageId(null);
+    }
+  };
+
+  const handleAddFAQChange = (event) => {
+    const { name, value } = event.target;
+    setFAQFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleAddFAQSubmit = async (event) => {
+    event.preventDefault();
+    setFAQFormError("");
+
+    if (!faqFormData.question.trim() || !faqFormData.answer.trim()) {
+      setFAQFormError("Both question and answer are required.");
+      return;
+    }
+
+    setSubmittingFAQ(true);
+
+    try {
+      await supportService.createFAQ(faqFormData);
+      const response = await supportService.getFAQs();
+      setFAQs(response.data?.data || []);
+      setFAQFormData({ question: "", answer: "" });
+      setShowAddFAQModal(false);
+    } catch (error) {
+      setFAQFormError("Failed to create FAQ. Please try again.");
+    } finally {
+      setSubmittingFAQ(false);
+    }
+  };
+
+  const handleDeleteFAQ = async (faqId) => {
+    const confirmed = window.confirm("Are you sure you want to delete this FAQ?");
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingFAQId(faqId);
+
+    try {
+      await supportService.deleteFAQ(faqId);
+      setFAQs((prev) => prev.filter((faq) => faq.id !== faqId));
+    } catch (error) {
+      alert("Failed to delete FAQ.");
+    } finally {
+      setDeletingFAQId(null);
     }
   };
 
@@ -207,22 +261,124 @@ const HelpPage = () => {
         </section>
 
         <section className="premium-card p-6">
-          <div className="flex items-center gap-2 mb-5">
-            <HelpCircle className="w-5 h-5 text-primary-600" />
-            <h2 className="text-lg font-bold text-slate-900">Frequently Asked Questions</h2>
+          <div className="flex items-center justify-between gap-3 mb-5">
+            <div className="flex items-center gap-2">
+              <HelpCircle className="w-5 h-5 text-primary-600" />
+              <h2 className="text-lg font-bold text-slate-900">Frequently Asked Questions</h2>
+            </div>
+            {user?.role === "ADMIN" && (
+              <button
+                onClick={() => setShowAddFAQModal(true)}
+                className="inline-flex items-center gap-1 rounded-lg border border-primary-200 bg-primary-50 px-3 py-1.5 text-xs font-bold text-primary-600 transition hover:bg-primary-100"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Add FAQ
+              </button>
+            )}
           </div>
 
-          <div className="space-y-4">
-            {faqs.map((item) => (
-              <article
-                key={item.question}
-                className="rounded-2xl border border-slate-100 bg-slate-50 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-md hover:shadow-slate-200/70"
-              >
-                <h3 className="text-sm font-bold text-slate-900">{item.question}</h3>
-                <p className="text-sm text-slate-600 mt-2 leading-relaxed">{item.answer}</p>
-              </article>
-            ))}
-          </div>
+          {loadingFAQs ? (
+            <div className="text-center text-slate-500 text-sm py-8">Loading FAQs...</div>
+          ) : faqs.length === 0 ? (
+            <div className="text-center text-slate-500 text-sm py-8">No FAQs available yet.</div>
+          ) : (
+            <div className="space-y-4">
+              {faqs.map((item) => (
+                <article
+                  key={item.id}
+                  className="rounded-2xl border border-slate-100 bg-slate-50 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-md hover:shadow-slate-200/70 flex justify-between items-start gap-3"
+                >
+                  <div className="flex-1">
+                    <h3 className="text-sm font-bold text-slate-900">{item.question}</h3>
+                    <p className="text-sm text-slate-600 mt-2 leading-relaxed">{item.answer}</p>
+                  </div>
+                  {user?.role === "ADMIN" && (
+                    <button
+                      onClick={() => handleDeleteFAQ(item.id)}
+                      disabled={deletingFAQId === item.id}
+                      className="flex-shrink-0 inline-flex items-center gap-1 rounded-lg border border-red-200 bg-white px-2 py-1 text-[11px] font-bold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  )}
+                </article>
+              ))}
+            </div>
+          )}
+
+          {showAddFAQModal && user?.role === "ADMIN" && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+              <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 animate-fade-in-up">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-slate-900">Add New FAQ</h3>
+                  <button
+                    onClick={() => {
+                      setShowAddFAQModal(false);
+                      setFAQFormError("");
+                    }}
+                    className="text-slate-400 hover:text-slate-600"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleAddFAQSubmit} className="space-y-4">
+                  <label className="block">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Question</span>
+                    <input
+                      type="text"
+                      name="question"
+                      value={faqFormData.question}
+                      onChange={handleAddFAQChange}
+                      placeholder="Enter the FAQ question..."
+                      className="w-full mt-2 px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-100 text-sm font-medium outline-none focus:ring-2 focus:ring-primary-500/20"
+                      required
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Answer</span>
+                    <textarea
+                      name="answer"
+                      value={faqFormData.answer}
+                      onChange={handleAddFAQChange}
+                      placeholder="Enter the FAQ answer..."
+                      rows={5}
+                      className="w-full mt-2 px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-100 text-sm font-medium outline-none focus:ring-2 focus:ring-primary-500/20 resize-none"
+                      required
+                    />
+                  </label>
+
+                  {faqFormError && (
+                    <div className="p-3 bg-red-50 border border-red-100 rounded-lg text-red-600 text-xs font-bold flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                      <span>{faqFormError}</span>
+                    </div>
+                  )}
+
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowAddFAQModal(false);
+                        setFAQFormError("");
+                      }}
+                      className="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 bg-white text-slate-600 font-bold text-sm transition hover:bg-slate-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={submittingFAQ}
+                      className="flex-1 px-4 py-2.5 rounded-lg bg-primary-600 text-white font-bold text-sm transition hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {submittingFAQ ? "Creating..." : "Create FAQ"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
         </section>
       </div>
 

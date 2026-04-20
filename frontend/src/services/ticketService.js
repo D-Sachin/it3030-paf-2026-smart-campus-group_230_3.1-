@@ -1,126 +1,97 @@
+import apiClient from "./apiClient";
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:8080/api/tickets";
-
-const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
-// Interceptor for auth token if needed
-apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem("authToken");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+const TICKETS_PATH = "/tickets";
 
 const ticketService = {
   // GET all tickets with enhanced filtering
   getAllTickets: (params = {}) => {
-    return apiClient.get("", {
-      params: { 
-        page: params.page || 0, 
-        size: params.size || 10, 
-        sortBy: params.sortBy || "createdAt", 
+    return apiClient.get(TICKETS_PATH, {
+      params: {
+        page: params.page || 0,
+        size: params.size || 10,
+        sortBy: params.sortBy || "createdAt",
         sortDirection: params.sortDirection || "desc",
         status: params.status,
         priority: params.priority,
         category: params.category,
-        searchTerm: params.searchTerm
+        searchTerm: params.searchTerm,
       },
     });
   },
 
   // GET users by role (for technician assignment)
   getUsersByRole: (role) => {
-    return axios.get(`http://localhost:8080/api/users/role/${role}`, {
-      headers: {
-        "Authorization": `Bearer ${localStorage.getItem("authToken")}`
-      }
-    });
+    return apiClient.get(`/users/role/${role}`);
   },
-
 
   // GET tickets by User ID (for Students)
   getTicketsByUserId: (userId) => {
-    return apiClient.get(`/user/${userId}`);
+    return apiClient.get(`${TICKETS_PATH}/user/${userId}`);
   },
 
   // GET ticket by ID
   getTicketById: (id) => {
-    return apiClient.get(`/${id}`);
+    return apiClient.get(`${TICKETS_PATH}/${id}`);
   },
 
   // POST create a new ticket
   createTicket: (ticketData) => {
-    return apiClient.post("", ticketData);
+    return apiClient.post(TICKETS_PATH, ticketData);
   },
 
   // PUT update a ticket
   updateTicket: (id, ticketData) => {
-    return apiClient.put(`/${id}`, ticketData);
+    return apiClient.put(`${TICKETS_PATH}/${id}`, ticketData);
   },
 
   // PUT update ticket status
   updateTicketStatus: (id, status) => {
-    return apiClient.put(`/${id}/status`, { status });
+    return apiClient.put(`${TICKETS_PATH}/${id}/status`, { status });
   },
 
   // PUT update resolution notes
   updateResolutionNotes: (id, notes) => {
-    return apiClient.put(`/${id}/resolution`, notes, {
-      headers: { "Content-Type": "text/plain" }
+    return apiClient.put(`${TICKETS_PATH}/${id}/resolution`, notes, {
+      headers: { "Content-Type": "text/plain" },
     });
   },
 
-  // POST attach a single file to a ticket (Backend expects singular 'file')
+  // POST attach a single file to a ticket
   uploadAttachment: (ticketId, file) => {
     const formData = new FormData();
     formData.append("file", file);
-
-    return apiClient.post(`/${ticketId}/attachments`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
+    return apiClient.post(`${TICKETS_PATH}/${ticketId}/attachments`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
     });
   },
 
   // PUT assign technician
   assignTechnician: (id, technicianId) => {
-    return apiClient.put(`/${id}/assign`, { technicianId });
+    return apiClient.put(`${TICKETS_PATH}/${id}/assign`, { technicianId });
   },
 
-  // POST add a comment (Backend expects { content: "...", userId: ... })
+  // POST add a comment
   addComment: (ticketId, content, userId) => {
-    return apiClient.post(`/${ticketId}/comments`, { content, userId });
+    return apiClient.post(`${TICKETS_PATH}/${ticketId}/comments`, {
+      content,
+      userId,
+    });
   },
 
-  // Comment Management (PUT and DELETE)
+  // PUT update a comment
   updateComment: (commentId, content) => {
-    return axios.put(`http://localhost:8080/api/comments/${commentId}`, { content }, {
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${localStorage.getItem("authToken")}`
-      }
-    });
+    return apiClient.put(`/comments/${commentId}`, { content });
   },
 
+  // DELETE a comment
   deleteComment: (commentId) => {
-    return axios.delete(`http://localhost:8080/api/comments/${commentId}`, {
-      headers: {
-        "Authorization": `Bearer ${localStorage.getItem("authToken")}`
-      }
-    });
+    return apiClient.delete(`/comments/${commentId}`);
   },
 
-  // GET download attachment (matches FileController)
+  // GET download attachment
   downloadAttachment: (fileName) => {
-    return apiClient.get(`/uploads/${fileName}`, {
-      baseURL: "http://localhost:8080/api/files", // Custom base for FileController
+    return apiClient.get(`/files/uploads/${fileName}`, {
       responseType: "blob",
     });
   },

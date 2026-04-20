@@ -64,6 +64,14 @@ const TicketForm = ({ onSubmit, onCancel, isLoading }) => {
       setError('Title and Description are required.');
       return;
     }
+    if (!formData.resourceLocation.trim()) {
+      setError('Resource Location is required.');
+      return;
+    }
+    if (!formData.preferredContactDetails.trim()) {
+      setError('Preferred Contact is required.');
+      return;
+    }
     
     onSubmit(formData, attachments);
   };
@@ -108,7 +116,7 @@ const TicketForm = ({ onSubmit, onCancel, isLoading }) => {
               <div className="space-y-8">
                 <div className="space-y-3">
                   <label className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                    <Type className="w-3 h-3" /> Incident Title
+                    <Type className="w-3 h-3" /> Incident Title <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -147,7 +155,7 @@ const TicketForm = ({ onSubmit, onCancel, isLoading }) => {
 
                   <div className="space-y-3">
                     <label className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                      <Tag className="w-3 h-3" /> Resource Location
+                      <Tag className="w-3 h-3" /> Resource Location <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -162,7 +170,7 @@ const TicketForm = ({ onSubmit, onCancel, isLoading }) => {
 
                   <div className="space-y-3">
                     <label className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                      <Tag className="w-3 h-3" /> Preferred Contact
+                      <Tag className="w-3 h-3" /> Preferred Contact <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -195,7 +203,7 @@ const TicketForm = ({ onSubmit, onCancel, isLoading }) => {
 
                 <div className="space-y-3">
                   <label className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                    <FileText className="w-3 h-3" /> Detailed Description
+                    <FileText className="w-3 h-3" /> Detailed Description <span className="text-red-500">*</span>
                   </label>
                   <textarea
                     name="description"

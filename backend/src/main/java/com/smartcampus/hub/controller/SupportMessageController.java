@@ -43,6 +43,23 @@ public class SupportMessageController {
         return ResponseEntity.ok(buildResponse(true, "Support messages retrieved successfully", supportMessages));
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> deleteSupportMessage(
+            @PathVariable Long id,
+            @RequestHeader(value = "X-User-Role", required = false) String userRole
+    ) {
+        if (!isAdmin(userRole)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(buildResponse(false, "Admin access required", null));
+        }
+
+        if (!supportMessageRepository.existsById(id)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(buildResponse(false, "Support message not found", null));
+        }
+
+        supportMessageRepository.deleteById(id);
+        return ResponseEntity.ok(buildResponse(true, "Support message deleted successfully", null));
+    }
+
     private Map<String, Object> buildResponse(boolean success, String message, Object data) {
         Map<String, Object> body = new HashMap<>();
         body.put("success", success);

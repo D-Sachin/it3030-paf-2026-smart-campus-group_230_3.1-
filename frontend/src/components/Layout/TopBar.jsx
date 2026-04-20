@@ -26,10 +26,11 @@ const TopBar = () => {
 
   const initials = getInitials(user.name);
 
+  const canUseNotifications = ['ADMIN', 'USER'].includes(user?.role);
   const isAdmin = user?.role === 'ADMIN';
 
   const fetchNotifications = useCallback(async ({ silent = false } = {}) => {
-    if (!isAdmin) {
+    if (!canUseNotifications) {
       return;
     }
 
@@ -54,25 +55,25 @@ const TopBar = () => {
         setNotificationLoading(false);
       }
     }
-  }, [isAdmin]);
+  }, [canUseNotifications]);
 
   useEffect(() => {
-    if (isAdmin) {
+    if (canUseNotifications) {
       fetchNotifications();
     } else {
       setNotifications([]);
       setUnreadCount(0);
     }
-  }, [isAdmin, fetchNotifications]);
+  }, [canUseNotifications, fetchNotifications]);
 
   useEffect(() => {
-    if (isNotificationOpen && isAdmin) {
+    if (isNotificationOpen && canUseNotifications) {
       fetchNotifications();
     }
-  }, [isNotificationOpen, isAdmin]);
+  }, [isNotificationOpen, canUseNotifications, fetchNotifications]);
 
   useEffect(() => {
-    if (!isAdmin) {
+    if (!canUseNotifications) {
       return undefined;
     }
 
@@ -89,10 +90,10 @@ const TopBar = () => {
       window.clearInterval(intervalId);
       window.removeEventListener('focus', refreshNotifications);
     };
-  }, [isAdmin, isNotificationOpen, fetchNotifications]);
+  }, [canUseNotifications, isNotificationOpen, fetchNotifications]);
 
   const handleNotificationToggle = () => {
-    if (!isAdmin) {
+    if (!canUseNotifications) {
       return;
     }
 
@@ -161,7 +162,7 @@ const TopBar = () => {
             className="p-2.5 rounded-xl text-white/85 hover:bg-white/15 relative group transition-all border border-transparent hover:border-white/30"
           >
             <Bell className="w-5 h-5" />
-            {isAdmin && unreadCount > 0 && (
+            {canUseNotifications && unreadCount > 0 && (
               <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center border-2 border-primary-700">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
@@ -177,7 +178,7 @@ const TopBar = () => {
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
                       <Clock3 className="w-3.5 h-3.5" /> Notifications
                     </p>
-                    <p className="text-sm font-bold text-slate-900 mt-1">Admin Updates</p>
+                    <p className="text-sm font-bold text-slate-900 mt-1">{isAdmin ? 'Admin Updates' : 'My Booking Updates'}</p>
                   </div>
                   {notifications.some((item) => !item.isRead) && (
                     <button

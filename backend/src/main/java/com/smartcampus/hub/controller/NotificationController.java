@@ -16,40 +16,38 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class NotificationController {
 
-    private static final String ADMIN_ROLE = "ADMIN";
-
     private final NotificationService notificationService;
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> getNotifications(
-            @RequestHeader(value = "X-User-Role", required = false) String userRole
+            @RequestHeader(value = "X-User-Role", required = false) String userRole,
+            @RequestHeader(value = "X-User-Email", required = false) String userEmail
     ) {
         try {
-            String normalizedRole = requireAdminRole(userRole);
-            List<Notification> notifications = notificationService.getNotificationsForRole(normalizedRole);
-            long unreadCount = notificationService.getUnreadCountForRole(normalizedRole);
+            String normalizedRole = requireRole(userRole);
+            String normalizedEmail = normalizeEmail(userEmail);
+            List<Notification> notifications = notificationService.getNotificationsForRecipient(normalizedRole, normalizedEmail);
+            long unreadCount = notificationService.getUnreadCountForRecipient(normalizedRole, normalizedEmail);
             return ResponseEntity.ok(buildResponse(true, "Notifications retrieved successfully", notifications, unreadCount));
         } catch (IllegalArgumentException ex) {
             return buildError(ex.getMessage(), HttpStatus.BAD_REQUEST);
-        } catch (SecurityException ex) {
-            return buildError(ex.getMessage(), HttpStatus.FORBIDDEN);
         }
     }
 
     @PutMapping("/{id}/read")
     public ResponseEntity<Map<String, Object>> markAsRead(
             @PathVariable Long id,
-            @RequestHeader(value = "X-User-Role", required = false) String userRole
+            @RequestHeader(value = "X-User-Role", required = false) String userRole,
+            @RequestHeader(value = "X-User-Email", required = false) String userEmail
     ) {
         try {
-            String normalizedRole = requireAdminRole(userRole);
-            Notification notification = notificationService.markAsRead(id, normalizedRole);
-            long unreadCount = notificationService.getUnreadCountForRole(normalizedRole);
+            String normalizedRole = requireRole(userRole);
+            String normalizedEmail = normalizeEmail(userEmail);
+            Notification notification = notificationService.markAsRead(id, normalizedRole, normalizedEmail);
+            long unreadCount = notificationService.getUnreadCountForRecipient(normalizedRole, normalizedEmail);
             return ResponseEntity.ok(buildResponse(true, "Notification marked as read", notification, unreadCount));
         } catch (IllegalArgumentException ex) {
             return buildError(ex.getMessage(), HttpStatus.BAD_REQUEST);
-        } catch (SecurityException ex) {
-            return buildError(ex.getMessage(), HttpStatus.FORBIDDEN);
         } catch (RuntimeException ex) {
             return buildError(ex.getMessage(), HttpStatus.NOT_FOUND);
         }
@@ -57,29 +55,34 @@ public class NotificationController {
 
     @PutMapping("/read-all")
     public ResponseEntity<Map<String, Object>> markAllAsRead(
-            @RequestHeader(value = "X-User-Role", required = false) String userRole
+            @RequestHeader(value = "X-User-Role", required = false) String userRole,
+            @RequestHeader(value = "X-User-Email", required = false) String userEmail
     ) {
         try {
-            String normalizedRole = requireAdminRole(userRole);
-            List<Notification> notifications = notificationService.markAllAsRead(normalizedRole);
-            return ResponseEntity.ok(buildResponse(true, "All notifications marked as read", notifications, 0L));
+            String normalizedRole = requireRole(userRole);
+            String normalizedEmail = normalizeEmail(userEmail);
+            List<Notification> notifications = notificationService.markAllAsRead(normalizedRole, normalizedEmail);
+            long unreadCount = notificationService.getUnreadCountForRecipient(normalizedRole, normalizedEmail);
+            return ResponseEntity.ok(buildResponse(true, "All notifications marked as read", notifications, unreadCount));
         } catch (IllegalArgumentException ex) {
             return buildError(ex.getMessage(), HttpStatus.BAD_REQUEST);
-        } catch (SecurityException ex) {
-            return buildError(ex.getMessage(), HttpStatus.FORBIDDEN);
         }
     }
 
-    private String requireAdminRole(String userRole) {
+    private String requireRole(String userRole) {
         if (userRole == null || userRole.trim().isEmpty()) {
             throw new IllegalArgumentException("User role is required");
         }
 
-        if (!ADMIN_ROLE.equalsIgnoreCase(userRole.trim())) {
-            throw new SecurityException("Admin access required");
+        return userRole.trim().toUpperCase();
+    }
+
+    private String normalizeEmail(String userEmail) {
+        if (userEmail == null || userEmail.trim().isEmpty()) {
+            return null;
         }
 
-        return userRole.trim().toUpperCase();
+        return userEmail.trim().toLowerCase();
     }
 
     private Map<String, Object> buildResponse(boolean success, String message, Object data, Long unreadCount) {

@@ -43,6 +43,9 @@ public class Notification {
     @Column(nullable = false)
     private String recipientRole;
 
+    @Column(length = 255)
+    private String recipientEmail;
+
     private Long relatedEntityId;
 
     @Default

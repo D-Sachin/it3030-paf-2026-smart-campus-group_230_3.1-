@@ -149,7 +149,15 @@ public class BookingServiceImpl implements BookingService {
         booking.setStatus(BookingStatus.APPROVED);
         booking.setDecisionReason(reason);
 
-        return mapToResponseDTO(bookingRepository.save(booking));
+        Booking savedBooking = bookingRepository.save(booking);
+
+        try {
+            notificationService.createUserBookingApprovedNotification(savedBooking);
+        } catch (Exception ex) {
+            System.err.println("Failed to create approved booking notification: " + ex.getMessage());
+        }
+
+        return mapToResponseDTO(savedBooking);
     }
 
     @Override
@@ -169,7 +177,15 @@ public class BookingServiceImpl implements BookingService {
         booking.setStatus(BookingStatus.REJECTED);
         booking.setDecisionReason(reason);
 
-        return mapToResponseDTO(bookingRepository.save(booking));
+        Booking savedBooking = bookingRepository.save(booking);
+
+        try {
+            notificationService.createUserBookingRejectedNotification(savedBooking);
+        } catch (Exception ex) {
+            System.err.println("Failed to create rejected booking notification: " + ex.getMessage());
+        }
+
+        return mapToResponseDTO(savedBooking);
     }
 
     @Override

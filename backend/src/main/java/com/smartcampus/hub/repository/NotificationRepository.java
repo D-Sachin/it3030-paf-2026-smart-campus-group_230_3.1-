@@ -11,7 +11,13 @@ import java.util.Optional;
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
     List<Notification> findByRecipientRoleOrderByCreatedAtDesc(String recipientRole);
 
+    List<Notification> findByRecipientRoleAndRecipientEmailIgnoreCaseOrderByCreatedAtDesc(String recipientRole, String recipientEmail);
+
     long countByRecipientRoleAndIsReadFalse(String recipientRole);
 
+    long countByRecipientRoleAndRecipientEmailIgnoreCaseAndIsReadFalse(String recipientRole, String recipientEmail);
+
     Optional<Notification> findByIdAndRecipientRole(Long id, String recipientRole);
+
+    Optional<Notification> findByIdAndRecipientRoleAndRecipientEmailIgnoreCase(Long id, String recipientRole, String recipientEmail);
 }

@@ -8,11 +8,15 @@ import java.util.List;
 public interface NotificationService {
     Notification createAdminBookingNotification(Booking booking);
 
-    List<Notification> getNotificationsForRole(String role);
+    Notification createUserBookingApprovedNotification(Booking booking);
 
-    long getUnreadCountForRole(String role);
+    Notification createUserBookingRejectedNotification(Booking booking);
 
-    Notification markAsRead(Long notificationId, String role);
+    List<Notification> getNotificationsForRecipient(String role, String email);
 
-    List<Notification> markAllAsRead(String role);
+    long getUnreadCountForRecipient(String role, String email);
+
+    Notification markAsRead(Long notificationId, String role, String email);
+
+    List<Notification> markAllAsRead(String role, String email);
 }

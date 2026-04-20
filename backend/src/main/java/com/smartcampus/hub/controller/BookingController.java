@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/bookings")
@@ -38,7 +39,8 @@ public class BookingController {
     }
 
     @GetMapping("/my")
-    public ResponseEntity<Map<String, Object>> getMyBookings(@RequestParam(required = false) BookingStatus status) {
+    public ResponseEntity<Map<String, Object>> getMyBookings(
+            @RequestParam(name = "status", required = false) BookingStatus status) {
         List<BookingResponseDTO> responses = bookingService.getMyBookings(status);
         return buildSuccess("My bookings retrieved successfully", responses, HttpStatus.OK);
     }
@@ -46,7 +48,7 @@ public class BookingController {
     @GetMapping("/admin")
     public ResponseEntity<Map<String, Object>> getAdminBookings(
             @RequestHeader(value = "X-User-Role", required = false) String userRole,
-            @RequestParam(required = false) BookingStatus status) {
+            @RequestParam(name = "status", required = false) BookingStatus status) {
         if (!isAdmin(userRole)) {
             return buildError("Admin access required.", HttpStatus.FORBIDDEN);
         }
@@ -66,8 +68,10 @@ public class BookingController {
             return buildSuccess("Booking retrieved successfully", response, HttpStatus.OK);
         } catch (SecurityException ex) {
             return buildError(ex.getMessage(), HttpStatus.FORBIDDEN);
-        } catch (RuntimeException ex) {
+        } catch (NoSuchElementException ex) {
             return buildError(ex.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (Exception ex) {
+            return buildError("Failed to retrieve booking due to an unexpected server error.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -90,8 +94,10 @@ public class BookingController {
             return buildError(ex.getMessage(), HttpStatus.CONFLICT);
         } catch (IllegalArgumentException | IllegalStateException ex) {
             return buildError(ex.getMessage(), HttpStatus.BAD_REQUEST);
-        } catch (RuntimeException ex) {
+        } catch (NoSuchElementException ex) {
             return buildError(ex.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (Exception ex) {
+            return buildError("Failed to approve booking due to an unexpected server error.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -111,8 +117,10 @@ public class BookingController {
             return buildError(ex.getMessage(), HttpStatus.FORBIDDEN);
         } catch (IllegalArgumentException | IllegalStateException ex) {
             return buildError(ex.getMessage(), HttpStatus.BAD_REQUEST);
-        } catch (RuntimeException ex) {
+        } catch (NoSuchElementException ex) {
             return buildError(ex.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (Exception ex) {
+            return buildError("Failed to reject booking due to an unexpected server error.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -125,8 +133,10 @@ public class BookingController {
             return buildError(ex.getMessage(), HttpStatus.FORBIDDEN);
         } catch (IllegalArgumentException | IllegalStateException ex) {
             return buildError(ex.getMessage(), HttpStatus.BAD_REQUEST);
-        } catch (RuntimeException ex) {
+        } catch (NoSuchElementException ex) {
             return buildError(ex.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (Exception ex) {
+            return buildError("Failed to cancel booking due to an unexpected server error.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

@@ -4,6 +4,24 @@ import { useNavigate } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
 import ThemeToggle from '../Theme/ThemeToggle';
 import notificationService from '../../services/notificationService';
+import bookingService from '../../services/bookingService';
+
+const STUDENT_READ_STORAGE_KEY = 'studentBookingNotificationReads';
+
+const getStudentReadMap = () => {
+  try {
+    const raw = localStorage.getItem(STUDENT_READ_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch (error) {
+    return {};
+  }
+};
+
+const saveStudentReadMap = (map) => {
+  localStorage.setItem(STUDENT_READ_STORAGE_KEY, JSON.stringify(map));
+};
 
 const TopBar = () => {
   const { user, logout } = useUser();
@@ -28,6 +46,36 @@ const TopBar = () => {
 
   const canUseNotifications = ['ADMIN', 'USER'].includes(user?.role);
   const isAdmin = user?.role === 'ADMIN';
+  const isStudent = user?.role === 'USER';
+
+  const fetchStudentBookingNotifications = useCallback(async () => {
+    const response = await bookingService.getMyBookings();
+    const bookings = response.data?.data || [];
+    const readMap = getStudentReadMap();
+
+    const decisionNotifications = bookings
+      .filter((booking) => booking.status === 'APPROVED' || booking.status === 'REJECTED')
+      .map((booking) => {
+        const isRejected = booking.status === 'REJECTED';
+        const reason = booking.decisionReason?.trim();
+
+        return {
+          id: `booking-${booking.id}`,
+          relatedEntityId: booking.id,
+          title: isRejected ? 'Booking Rejected' : 'Booking Approved',
+          message: isRejected
+            ? `Your booking for ${booking.resourceName} on ${booking.bookingDate} was rejected.${reason ? ` Reason: ${reason}` : ''}`
+            : `Your booking for ${booking.resourceName} on ${booking.bookingDate} was approved.`,
+          isRead: Boolean(readMap[String(booking.id)]),
+          createdAt: booking.updatedAt || booking.createdAt,
+          type: isRejected ? 'BOOKING_REJECTED' : 'BOOKING_APPROVED',
+        };
+      })
+      .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+
+    setNotifications(decisionNotifications);
+    setUnreadCount(decisionNotifications.filter((item) => !item.isRead).length);
+  }, []);
 
   const fetchNotifications = useCallback(async ({ silent = false } = {}) => {
     if (!canUseNotifications) {
@@ -40,12 +88,16 @@ const TopBar = () => {
     setNotificationError("");
 
     try {
-      const response = await notificationService.getNotifications();
-      const items = response.data?.data || [];
-      const serverUnreadCount = Number(response.data?.unreadCount);
+      if (isAdmin) {
+        const response = await notificationService.getNotifications();
+        const items = response.data?.data || [];
+        const serverUnreadCount = Number(response.data?.unreadCount);
 
-      setNotifications(items);
-      setUnreadCount(Number.isFinite(serverUnreadCount) ? serverUnreadCount : items.filter((item) => !item.isRead).length);
+        setNotifications(items);
+        setUnreadCount(Number.isFinite(serverUnreadCount) ? serverUnreadCount : items.filter((item) => !item.isRead).length);
+      } else if (isStudent) {
+        await fetchStudentBookingNotifications();
+      }
     } catch (error) {
       if (!silent) {
         setNotificationError("Failed to load notifications.");
@@ -55,7 +107,7 @@ const TopBar = () => {
         setNotificationLoading(false);
       }
     }
-  }, [canUseNotifications]);
+  }, [canUseNotifications, isAdmin, isStudent, fetchStudentBookingNotifications]);
 
   useEffect(() => {
     if (canUseNotifications) {
@@ -105,12 +157,22 @@ const TopBar = () => {
     try {
       let nextUnreadCount = unreadCount;
 
-      if (!notification.isRead) {
+      if (!notification.isRead && isAdmin) {
         const response = await notificationService.markAsRead(notification.id);
         const serverUnreadCount = Number(response.data?.unreadCount);
         nextUnreadCount = Number.isFinite(serverUnreadCount) ? serverUnreadCount : Math.max(0, unreadCount - 1);
         setNotifications((prev) => prev.map((item) => (item.id === notification.id ? { ...item, isRead: true } : item)));
         setUnreadCount(nextUnreadCount);
+      } else if (!notification.isRead && isStudent) {
+        const readMap = getStudentReadMap();
+        const bookingId = String(notification.relatedEntityId);
+        readMap[bookingId] = true;
+        saveStudentReadMap(readMap);
+
+        setNotifications((prev) => prev.map((item) => (
+          item.id === notification.id ? { ...item, isRead: true } : item
+        )));
+        setUnreadCount((prev) => Math.max(0, prev - 1));
       }
 
       if (notification.relatedEntityId) {
@@ -129,10 +191,22 @@ const TopBar = () => {
 
   const handleMarkAllAsRead = async () => {
     try {
-      const response = await notificationService.markAllAsRead();
-      const serverUnreadCount = Number(response.data?.unreadCount);
-      setNotifications((prev) => prev.map((item) => ({ ...item, isRead: true })));
-      setUnreadCount(Number.isFinite(serverUnreadCount) ? serverUnreadCount : 0);
+      if (isAdmin) {
+        const response = await notificationService.markAllAsRead();
+        const serverUnreadCount = Number(response.data?.unreadCount);
+        setNotifications((prev) => prev.map((item) => ({ ...item, isRead: true })));
+        setUnreadCount(Number.isFinite(serverUnreadCount) ? serverUnreadCount : 0);
+      } else if (isStudent) {
+        const readMap = getStudentReadMap();
+        notifications.forEach((notification) => {
+          if (notification.relatedEntityId) {
+            readMap[String(notification.relatedEntityId)] = true;
+          }
+        });
+        saveStudentReadMap(readMap);
+        setNotifications((prev) => prev.map((item) => ({ ...item, isRead: true })));
+        setUnreadCount(0);
+      }
     } catch (error) {
       setNotificationError("Failed to mark notifications as read.");
     }

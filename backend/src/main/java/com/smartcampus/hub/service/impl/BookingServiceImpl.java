@@ -153,7 +153,17 @@ public class BookingServiceImpl implements BookingService {
         Booking savedBooking = bookingRepository.save(booking);
 
         try {
-            notificationService.createUserBookingApprovedNotification(savedBooking);
+            String recipientEmail = resolveBookingUserEmail(savedBooking);
+            String resourceName = resolveBookingResourceName(savedBooking);
+
+            notificationService.createUserBookingApprovedNotification(
+                    savedBooking.getId(),
+                recipientEmail,
+                resourceName,
+                    savedBooking.getBookingDate(),
+                    savedBooking.getStartTime(),
+                    savedBooking.getEndTime()
+            );
         } catch (Exception ex) {
             System.err.println("Failed to create approved booking notification: " + ex.getMessage());
         }
@@ -181,7 +191,18 @@ public class BookingServiceImpl implements BookingService {
         Booking savedBooking = bookingRepository.save(booking);
 
         try {
-            notificationService.createUserBookingRejectedNotification(savedBooking);
+            String recipientEmail = resolveBookingUserEmail(savedBooking);
+            String resourceName = resolveBookingResourceName(savedBooking);
+
+            notificationService.createUserBookingRejectedNotification(
+                    savedBooking.getId(),
+                recipientEmail,
+                resourceName,
+                    savedBooking.getBookingDate(),
+                    savedBooking.getStartTime(),
+                    savedBooking.getEndTime(),
+                    savedBooking.getDecisionReason()
+            );
         } catch (Exception ex) {
             System.err.println("Failed to create rejected booking notification: " + ex.getMessage());
         }
@@ -243,6 +264,28 @@ public class BookingServiceImpl implements BookingService {
         if (startTime == null || endTime == null || !startTime.isBefore(endTime)) {
             throw new IllegalArgumentException("Start time must be earlier than end time.");
         }
+    }
+
+    private String resolveBookingUserEmail(Booking booking) {
+        Long userId = booking.getUser() != null ? booking.getUser().getId() : null;
+        if (userId == null) {
+            throw new IllegalStateException("Booking user is missing");
+        }
+
+        return userRepository.findById(userId)
+                .map(User::getEmail)
+                .orElseThrow(() -> new IllegalStateException("Booking user email not found for user id: " + userId));
+    }
+
+    private String resolveBookingResourceName(Booking booking) {
+        Long resourceId = booking.getResource() != null ? booking.getResource().getId() : null;
+        if (resourceId == null) {
+            throw new IllegalStateException("Booking resource is missing");
+        }
+
+        return resourceRepository.findById(resourceId)
+                .map(Resource::getName)
+                .orElseThrow(() -> new IllegalStateException("Booking resource not found for resource id: " + resourceId));
     }
 
     private BookingResponseDTO mapToResponseDTO(Booking booking) {

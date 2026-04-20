@@ -39,7 +39,8 @@ public class BookingController {
     }
 
     @GetMapping("/my")
-    public ResponseEntity<Map<String, Object>> getMyBookings(@RequestParam(required = false) BookingStatus status) {
+    public ResponseEntity<Map<String, Object>> getMyBookings(
+            @RequestParam(name = "status", required = false) BookingStatus status) {
         List<BookingResponseDTO> responses = bookingService.getMyBookings(status);
         return buildSuccess("My bookings retrieved successfully", responses, HttpStatus.OK);
     }
@@ -47,7 +48,7 @@ public class BookingController {
     @GetMapping("/admin")
     public ResponseEntity<Map<String, Object>> getAdminBookings(
             @RequestHeader(value = "X-User-Role", required = false) String userRole,
-            @RequestParam(required = false) BookingStatus status) {
+            @RequestParam(name = "status", required = false) BookingStatus status) {
         if (!isAdmin(userRole)) {
             return buildError("Admin access required.", HttpStatus.FORBIDDEN);
         }

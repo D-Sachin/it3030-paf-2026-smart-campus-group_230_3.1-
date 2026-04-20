@@ -33,4 +33,9 @@ public class TicketResponseDTO {
     private String resourceLocation;
     private String preferredContactDetails;
     private String resolutionNotes;
+
+    private LocalDateTime assignedAt;
+    private LocalDateTime resolvedAt;
+    private String timeToFirstResponse;
+    private String timeToResolution;
 }

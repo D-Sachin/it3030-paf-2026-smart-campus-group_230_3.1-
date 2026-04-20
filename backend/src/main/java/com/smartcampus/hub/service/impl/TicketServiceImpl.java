@@ -23,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -79,7 +80,8 @@ public class TicketServiceImpl implements TicketService {
     @Transactional(readOnly = true)
     public List<TicketResponseDTO> getAllTickets(TicketStatus status, Priority priority, String category, String searchTerm) {
         Specification<Ticket> spec = getTicketSpecification(null, status, priority, category, searchTerm);
-        return ticketRepository.findAll(spec).stream()
+        org.springframework.data.domain.Sort sort = org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt");
+        return ticketRepository.findAll(spec, sort).stream()
                 .map(this::mapToResponseDTO)
                 .collect(Collectors.toList());
     }
@@ -96,7 +98,8 @@ public class TicketServiceImpl implements TicketService {
     @Transactional(readOnly = true)
     public List<TicketResponseDTO> getTicketsByUserId(Long userId, TicketStatus status, Priority priority) {
         Specification<Ticket> spec = getTicketSpecification(userId, status, priority, null, null);
-        return ticketRepository.findAll(spec).stream()
+        org.springframework.data.domain.Sort sort = org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt");
+        return ticketRepository.findAll(spec, sort).stream()
                 .map(this::mapToResponseDTO)
                 .collect(Collectors.toList());
     }
@@ -133,6 +136,15 @@ public class TicketServiceImpl implements TicketService {
         }
 
         ticket.setStatus(status);
+
+        // SLA logic: Set resolvedAt when transitioning to terminal states
+        if (status == TicketStatus.RESOLVED || status == TicketStatus.REJECTED) {
+            ticket.setResolvedAt(LocalDateTime.now());
+        } else if (status == TicketStatus.OPEN || status == TicketStatus.IN_PROGRESS) {
+            // If reopened, clear resolved timestamp? (Standard practice for resolution SLA)
+            ticket.setResolvedAt(null);
+        }
+
         Ticket updatedTicket = ticketRepository.save(ticket);
         return mapToResponseDTO(updatedTicket);
     }
@@ -163,6 +175,12 @@ public class TicketServiceImpl implements TicketService {
                 .orElseThrow(() -> new RuntimeException("Technician not found with id: " + technicianId));
 
         ticket.setTechnician(technician);
+        
+        // SLA logic: Set assignedAt on first assignment
+        if (ticket.getAssignedAt() == null) {
+            ticket.setAssignedAt(LocalDateTime.now());
+        }
+
         // Automatically set status to IN_PROGRESS when assigned
         if (ticket.getStatus() == TicketStatus.OPEN) {
             ticket.setStatus(TicketStatus.IN_PROGRESS);
@@ -402,10 +420,23 @@ public class TicketServiceImpl implements TicketService {
                 .comments(ticket.getComments() != null ? ticket.getComments().stream()
                         .map(this::mapToCommentResponseDTO)
                         .collect(Collectors.toList()) : Collections.emptyList())
-                .resourceLocation(ticket.getResourceLocation())
                 .preferredContactDetails(ticket.getPreferredContactDetails())
                 .resolutionNotes(ticket.getResolutionNotes())
+                .assignedAt(ticket.getAssignedAt())
+                .resolvedAt(ticket.getResolvedAt())
+                .timeToFirstResponse(calculateDuration(ticket.getCreatedAt(), ticket.getAssignedAt()))
+                .timeToResolution(calculateDuration(ticket.getCreatedAt(), ticket.getResolvedAt()))
                 .build();
+    }
+
+    private String calculateDuration(LocalDateTime start, LocalDateTime end) {
+        if (start == null || end == null) return null;
+        java.time.Duration duration = java.time.Duration.between(start, end);
+        long hours = duration.toHours();
+        long minutes = duration.toMinutesPart();
+        
+        if (hours == 0) return minutes + "m";
+        return hours + "h " + minutes + "m";
     }
 
     private CommentResponseDTO mapToCommentResponseDTO(Comment comment) {

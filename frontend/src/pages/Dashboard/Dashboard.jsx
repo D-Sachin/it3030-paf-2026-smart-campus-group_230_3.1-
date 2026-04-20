@@ -21,32 +21,33 @@ const Dashboard = () => {
     activeResources: 0,
     totalTickets: 0,
     openTickets: 0,
+    recentTickets: [],
     loading: true
   });
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [resourcesRes, ticketsRes] = await Promise.all([
-          resourceService.getAllResources(0, 1),
-          ticketService.getAllTickets(0, 50) // Fetch more for filtering simulation
-        ]);
-
-        const resourceData = resourcesRes?.data?.data || [];
-        const resourcePagination = resourcesRes?.data?.pagination || {};
-        let ticketData = ticketsRes?.data?.content || (Array.isArray(ticketsRes?.data) ? ticketsRes.data : []);
-
-        // Simulation: If Technician, only show tickets assigned to them
-        if (user.role === 'TECHNICIAN') {
-          // This is a simulation since the backend doesn't filter yet
-          // In a real app, the API would handle this
+        let response;
+        if (user.role === 'ADMIN' || user.role === 'TECHNICIAN') {
+          response = await ticketService.getAllTickets({ size: 50 });
+        } else {
+          response = await ticketService.getTicketsByUserId(user.id);
         }
+
+        const resourcesRes = await resourceService.getAllResources(0, 1);
+        const resourcePagination = resourcesRes?.data?.pagination || {};
+        const resourceData = resourcesRes?.data?.data || [];
+        
+        const ticketsRes = response;
+        let ticketData = ticketsRes?.data?.content || (Array.isArray(ticketsRes?.data) ? ticketsRes.data : []);
 
         setStats({
           totalResources: resourcePagination.totalElements || 0,
           activeResources: resourceData.filter(r => r?.status === 'ACTIVE').length,
           totalTickets: ticketsRes?.data?.totalElements || ticketData.length,
           openTickets: ticketData.filter(t => t?.status !== 'RESOLVED' && t?.status !== 'CLOSED').length,
+          recentTickets: ticketData.slice(0, 3), // Show top 3 recent tickets
           loading: false
         });
       } catch (err) {
@@ -209,13 +210,28 @@ const Dashboard = () => {
                 Active Tickets
               </h3>
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-orange-500"></div>
-                    <span className="text-sm font-bold text-slate-700 dark:text-slate-800 truncate max-w-[120px]">AC Issue</span>
+                {stats.recentTickets.length > 0 ? (
+                  stats.recentTickets.map((ticket, idx) => (
+                    <div key={ticket.id || idx} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-2 h-2 rounded-full ${
+                          ticket.status === 'OPEN' ? 'bg-orange-500' : 
+                          ticket.status === 'IN_PROGRESS' ? 'bg-blue-500' : 'bg-green-500'
+                        }`}></div>
+                        <span className="text-sm font-bold text-slate-700 dark:text-slate-800 truncate max-w-[120px]">
+                          {ticket.title}
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-bold text-slate-400">
+                        {ticket.createdAt ? new Date(ticket.createdAt).toLocaleDateString() : 'Recent'}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-6">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">No active tickets</p>
                   </div>
-                  <span className="text-[10px] font-bold text-slate-400">2h ago</span>
-                </div>
+                )}
               </div>
               <Link to="/tickets" className="block text-center text-xs font-bold text-primary-600 mt-4 hover:underline">View All</Link>
             </div>

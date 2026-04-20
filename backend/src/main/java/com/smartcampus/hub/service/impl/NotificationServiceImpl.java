@@ -7,6 +7,7 @@ import com.smartcampus.hub.repository.NotificationRepository;
 import com.smartcampus.hub.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -21,7 +22,7 @@ public class NotificationServiceImpl implements NotificationService {
     private final NotificationRepository notificationRepository;
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Notification createAdminBookingNotification(Booking booking) {
         Notification notification = Notification.builder()
                 .title("New booking request")
@@ -44,7 +45,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Notification createUserBookingApprovedNotification(Booking booking) {
         Notification notification = Notification.builder()
                 .title("Booking Approved")
@@ -66,7 +67,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Notification createUserBookingRejectedNotification(Booking booking) {
         String reason = (booking.getDecisionReason() == null || booking.getDecisionReason().trim().isEmpty())
                 ? "No reason provided"

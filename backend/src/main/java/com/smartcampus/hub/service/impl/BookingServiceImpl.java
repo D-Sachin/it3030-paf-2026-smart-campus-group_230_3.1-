@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Service
@@ -118,7 +119,7 @@ public class BookingServiceImpl implements BookingService {
     @Transactional(readOnly = true)
     public BookingResponseDTO getBookingById(Long bookingId) {
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new RuntimeException("Booking not found with id: " + bookingId));
+                .orElseThrow(() -> new NoSuchElementException("Booking not found with id: " + bookingId));
 
         return mapToResponseDTO(booking);
     }
@@ -127,7 +128,7 @@ public class BookingServiceImpl implements BookingService {
     @Transactional
     public BookingResponseDTO approveBooking(Long bookingId, String reason) {
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new RuntimeException("Booking not found with id: " + bookingId));
+                .orElseThrow(() -> new NoSuchElementException("Booking not found with id: " + bookingId));
 
         if (booking.getStatus() != BookingStatus.PENDING) {
             throw new IllegalStateException("Only PENDING bookings can be approved.");
@@ -168,7 +169,7 @@ public class BookingServiceImpl implements BookingService {
         }
 
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new RuntimeException("Booking not found with id: " + bookingId));
+            .orElseThrow(() -> new NoSuchElementException("Booking not found with id: " + bookingId));
 
         if (booking.getStatus() != BookingStatus.PENDING) {
             throw new IllegalStateException("Only PENDING bookings can be rejected.");
@@ -192,7 +193,7 @@ public class BookingServiceImpl implements BookingService {
     @Transactional
     public BookingResponseDTO cancelBooking(Long bookingId) {
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new RuntimeException("Booking not found with id: " + bookingId));
+                .orElseThrow(() -> new NoSuchElementException("Booking not found with id: " + bookingId));
 
         if (booking.getStatus() != BookingStatus.APPROVED) {
             throw new IllegalStateException("Only APPROVED bookings can be cancelled.");

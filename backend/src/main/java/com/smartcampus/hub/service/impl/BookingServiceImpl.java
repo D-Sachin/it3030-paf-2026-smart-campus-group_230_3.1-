@@ -12,6 +12,7 @@ import com.smartcampus.hub.repository.BookingRepository;
 import com.smartcampus.hub.repository.ResourceRepository;
 import com.smartcampus.hub.repository.UserRepository;
 import com.smartcampus.hub.service.BookingService;
+import com.smartcampus.hub.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -33,6 +34,7 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final ResourceRepository resourceRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional
@@ -76,7 +78,17 @@ public class BookingServiceImpl implements BookingService {
                 .status(BookingStatus.PENDING)
                 .build();
 
-        return mapToResponseDTO(bookingRepository.save(booking));
+        Booking savedBooking = bookingRepository.save(booking);
+
+        if (!"ADMIN".equalsIgnoreCase(currentUser.getRole())) {
+            try {
+                notificationService.createAdminBookingNotification(savedBooking);
+            } catch (Exception ex) {
+                System.err.println("Failed to create booking notification: " + ex.getMessage());
+            }
+        }
+
+        return mapToResponseDTO(savedBooking);
     }
 
     @Override

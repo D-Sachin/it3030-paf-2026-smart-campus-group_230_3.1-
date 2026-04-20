@@ -48,6 +48,9 @@ public class Ticket {
     private String resourceLocation;
     private String preferredContactDetails;
 
+    private LocalDateTime assignedAt;
+    private LocalDateTime resolvedAt;
+
     @Column(columnDefinition = "TEXT")
     private String resolutionNotes;
 

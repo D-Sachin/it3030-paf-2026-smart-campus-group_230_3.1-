@@ -399,6 +399,33 @@ const TicketDetails = () => {
                 </div>
               )}
             </div>
+
+            {/* SLA Performance Section */}
+            {(ticket.timeToFirstResponse || ticket.timeToResolution) && (
+              <div className="mt-6 pt-6 border-t border-slate-100">
+                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">SLA Performance</h4>
+                <div className="space-y-3">
+                  {ticket.timeToFirstResponse && (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Zap className="w-3.5 h-3.5 text-amber-500" />
+                        <span className="text-xs font-medium text-slate-600">Response Time</span>
+                      </div>
+                      <span className="text-xs font-bold text-slate-900">{ticket.timeToFirstResponse}</span>
+                    </div>
+                  )}
+                  {ticket.timeToResolution && (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                        <span className="text-xs font-medium text-slate-600">Resolution Time</span>
+                      </div>
+                      <span className="text-xs font-bold text-slate-900">{ticket.timeToResolution}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {(isAdmin || isTechnician) && ticket.status !== 'CLOSED' && ticket.status !== 'REJECTED' && (

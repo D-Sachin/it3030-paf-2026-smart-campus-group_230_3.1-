@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Bell, Search, User, ChevronDown, Clock3, Loader2, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
@@ -28,25 +28,33 @@ const TopBar = () => {
 
   const isAdmin = user?.role === 'ADMIN';
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async ({ silent = false } = {}) => {
     if (!isAdmin) {
       return;
     }
 
-    setNotificationLoading(true);
+    if (!silent) {
+      setNotificationLoading(true);
+    }
     setNotificationError("");
 
     try {
       const response = await notificationService.getNotifications();
       const items = response.data?.data || [];
+      const serverUnreadCount = Number(response.data?.unreadCount);
+
       setNotifications(items);
-      setUnreadCount(response.data?.unreadCount ?? items.filter((item) => !item.isRead).length);
+      setUnreadCount(Number.isFinite(serverUnreadCount) ? serverUnreadCount : items.filter((item) => !item.isRead).length);
     } catch (error) {
-      setNotificationError("Failed to load notifications.");
+      if (!silent) {
+        setNotificationError("Failed to load notifications.");
+      }
     } finally {
-      setNotificationLoading(false);
+      if (!silent) {
+        setNotificationLoading(false);
+      }
     }
-  };
+  }, [isAdmin]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -55,13 +63,33 @@ const TopBar = () => {
       setNotifications([]);
       setUnreadCount(0);
     }
-  }, [isAdmin]);
+  }, [isAdmin, fetchNotifications]);
 
   useEffect(() => {
     if (isNotificationOpen && isAdmin) {
       fetchNotifications();
     }
   }, [isNotificationOpen, isAdmin]);
+
+  useEffect(() => {
+    if (!isAdmin) {
+      return undefined;
+    }
+
+    const refreshNotifications = () => {
+      if (!isNotificationOpen) {
+        fetchNotifications({ silent: true });
+      }
+    };
+
+    const intervalId = window.setInterval(refreshNotifications, 30000);
+    window.addEventListener('focus', refreshNotifications);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', refreshNotifications);
+    };
+  }, [isAdmin, isNotificationOpen, fetchNotifications]);
 
   const handleNotificationToggle = () => {
     if (!isAdmin) {
@@ -74,14 +102,22 @@ const TopBar = () => {
 
   const handleNotificationClick = async (notification) => {
     try {
+      let nextUnreadCount = unreadCount;
+
       if (!notification.isRead) {
-        await notificationService.markAsRead(notification.id);
+        const response = await notificationService.markAsRead(notification.id);
+        const serverUnreadCount = Number(response.data?.unreadCount);
+        nextUnreadCount = Number.isFinite(serverUnreadCount) ? serverUnreadCount : Math.max(0, unreadCount - 1);
         setNotifications((prev) => prev.map((item) => (item.id === notification.id ? { ...item, isRead: true } : item)));
-        setUnreadCount((prev) => Math.max(0, prev - 1));
+        setUnreadCount(nextUnreadCount);
       }
 
       if (notification.relatedEntityId) {
         navigate(`/bookings/${notification.relatedEntityId}`);
+      }
+
+      if (!notification.isRead) {
+        fetchNotifications({ silent: true });
       }
 
       setIsNotificationOpen(false);
@@ -92,9 +128,10 @@ const TopBar = () => {
 
   const handleMarkAllAsRead = async () => {
     try {
-      await notificationService.markAllAsRead();
+      const response = await notificationService.markAllAsRead();
+      const serverUnreadCount = Number(response.data?.unreadCount);
       setNotifications((prev) => prev.map((item) => ({ ...item, isRead: true })));
-      setUnreadCount(0);
+      setUnreadCount(Number.isFinite(serverUnreadCount) ? serverUnreadCount : 0);
     } catch (error) {
       setNotificationError("Failed to mark notifications as read.");
     }

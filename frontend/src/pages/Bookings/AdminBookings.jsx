@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
-import { AlertCircle, Loader2, Search } from "lucide-react";
+import { AlertCircle, Loader2, Search, Clock, CheckCircle2, XCircle } from "lucide-react";
 import bookingService from "../../services/bookingService";
 import { formatBookingSlot, getBookingStatusColor } from "../../utils/bookingUtils";
 import { getApiErrorMessage } from "../../utils/apiError";
@@ -13,6 +13,7 @@ const AdminBookings = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [counts, setCounts] = useState({ pending: 0, approved: 0, rejected: 0 });
 
   const fetchBookings = async () => {
     setLoading(true);
@@ -27,8 +28,25 @@ const AdminBookings = () => {
     }
   };
 
+  const fetchCounts = async () => {
+    try {
+      const pendingRes = await bookingService.getAdminBookings("PENDING");
+      const approvedRes = await bookingService.getAdminBookings("APPROVED");
+      const rejectedRes = await bookingService.getAdminBookings("REJECTED");
+
+      setCounts({
+        pending: pendingRes.data?.data?.length || 0,
+        approved: approvedRes.data?.data?.length || 0,
+        rejected: rejectedRes.data?.data?.length || 0,
+      });
+    } catch (err) {
+      console.error("Failed to fetch counts:", err);
+    }
+  };
+
   useEffect(() => {
     fetchBookings();
+    fetchCounts();
   }, [statusFilter]);
 
   const handleApprove = async (bookingId) => {
@@ -84,6 +102,42 @@ const AdminBookings = () => {
       <div>
         <h1 className="text-3xl font-bold text-slate-900">Admin Booking Management</h1>
         <p className="text-slate-500 mt-1 font-medium text-sm">Review and process booking requests.</p>
+      </div>
+
+      {/* Booking Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Pending Card */}
+        <div className="premium-card p-6 border-l-4 border-l-amber-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Pending Bookings</p>
+              <h2 className="text-4xl font-bold text-amber-600 mt-2">{counts.pending}</h2>
+            </div>
+            <Clock className="w-12 h-12 text-amber-200" />
+          </div>
+        </div>
+
+        {/* Approved Card */}
+        <div className="premium-card p-6 border-l-4 border-l-green-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Approved Bookings</p>
+              <h2 className="text-4xl font-bold text-green-600 mt-2">{counts.approved}</h2>
+            </div>
+            <CheckCircle2 className="w-12 h-12 text-green-200" />
+          </div>
+        </div>
+
+        {/* Rejected Card */}
+        <div className="premium-card p-6 border-l-4 border-l-red-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Rejected Bookings</p>
+              <h2 className="text-4xl font-bold text-red-600 mt-2">{counts.rejected}</h2>
+            </div>
+            <XCircle className="w-12 h-12 text-red-200" />
+          </div>
+        </div>
       </div>
 
       <div className="premium-card p-4 grid grid-cols-1 lg:grid-cols-3 gap-4">

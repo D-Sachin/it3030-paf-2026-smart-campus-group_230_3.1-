@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Bell, Search, User, ChevronDown, Clock3, Loader2, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
@@ -7,6 +7,7 @@ import notificationService from '../../services/notificationService';
 import bookingService from '../../services/bookingService';
 
 const STUDENT_READ_STORAGE_KEY = 'studentBookingNotificationReads';
+const STUDENT_APPROVAL_POPUP_STORAGE_KEY = 'studentBookingApprovalPopupShown';
 
 const getStudentReadMap = () => {
   try {
@@ -23,6 +24,21 @@ const saveStudentReadMap = (map) => {
   localStorage.setItem(STUDENT_READ_STORAGE_KEY, JSON.stringify(map));
 };
 
+const getStudentApprovalPopupShownMap = () => {
+  try {
+    const raw = localStorage.getItem(STUDENT_APPROVAL_POPUP_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch (error) {
+    return {};
+  }
+};
+
+const saveStudentApprovalPopupShownMap = (map) => {
+  localStorage.setItem(STUDENT_APPROVAL_POPUP_STORAGE_KEY, JSON.stringify(map));
+};
+
 const TopBar = () => {
   const { user, logout } = useUser();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -31,6 +47,10 @@ const TopBar = () => {
   const [notificationLoading, setNotificationLoading] = useState(false);
   const [notificationError, setNotificationError] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);
+  const [approvalPopupQueue, setApprovalPopupQueue] = useState([]);
+  const [activeApprovalPopup, setActiveApprovalPopup] = useState(null);
+  const approvalQueueRef = useRef([]);
+  const activeApprovalRef = useRef(null);
   const navigate = useNavigate();
 
   if (!user) return null;
@@ -47,6 +67,14 @@ const TopBar = () => {
   const canUseNotifications = ['ADMIN', 'USER'].includes(user?.role);
   const isAdmin = user?.role === 'ADMIN';
   const isStudent = user?.role === 'USER';
+
+  useEffect(() => {
+    approvalQueueRef.current = approvalPopupQueue;
+  }, [approvalPopupQueue]);
+
+  useEffect(() => {
+    activeApprovalRef.current = activeApprovalPopup;
+  }, [activeApprovalPopup]);
 
   const fetchStudentBookingNotifications = useCallback(async () => {
     const response = await bookingService.getMyBookings();
@@ -72,6 +100,31 @@ const TopBar = () => {
         };
       })
       .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+
+    const shownPopupMap = getStudentApprovalPopupShownMap();
+    const queuedIds = new Set(
+      approvalQueueRef.current
+        .map((item) => item.relatedEntityId)
+        .filter((id) => id !== null && id !== undefined)
+        .map((id) => String(id))
+    );
+
+    if (activeApprovalRef.current?.relatedEntityId !== null && activeApprovalRef.current?.relatedEntityId !== undefined) {
+      queuedIds.add(String(activeApprovalRef.current.relatedEntityId));
+    }
+
+    const newApprovalPopups = decisionNotifications.filter((item) => {
+      if (item.type !== 'BOOKING_APPROVED') {
+        return false;
+      }
+
+      const bookingId = String(item.relatedEntityId);
+      return !shownPopupMap[bookingId] && !queuedIds.has(bookingId);
+    });
+
+    if (newApprovalPopups.length > 0) {
+      setApprovalPopupQueue((prev) => [...prev, ...newApprovalPopups]);
+    }
 
     setNotifications(decisionNotifications);
     setUnreadCount(decisionNotifications.filter((item) => !item.isRead).length);
@@ -115,8 +168,25 @@ const TopBar = () => {
     } else {
       setNotifications([]);
       setUnreadCount(0);
+      setApprovalPopupQueue([]);
+      setActiveApprovalPopup(null);
     }
   }, [canUseNotifications, fetchNotifications]);
+
+  useEffect(() => {
+    if (!isStudent) {
+      setApprovalPopupQueue([]);
+      setActiveApprovalPopup(null);
+    }
+  }, [isStudent]);
+
+  useEffect(() => {
+    if (!activeApprovalPopup && approvalPopupQueue.length > 0) {
+      const [nextPopup, ...rest] = approvalPopupQueue;
+      setActiveApprovalPopup(nextPopup);
+      setApprovalPopupQueue(rest);
+    }
+  }, [approvalPopupQueue, activeApprovalPopup]);
 
   useEffect(() => {
     if (isNotificationOpen && canUseNotifications) {
@@ -212,22 +282,33 @@ const TopBar = () => {
     }
   };
 
-  return (
-    <header className="h-[72px] bg-gradient-to-r from-primary-700 to-primary-600 dark:from-primary-800 dark:to-primary-700 border-b border-primary-500/40 dark:border-primary-600/60 shadow-sm sticky top-0 z-40 px-8 flex items-center justify-between">
-      {/* Search Bar */}
-      <div className="flex-1 max-w-md">
-        <div className="relative group">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/70 group-focus-within:text-white transition-colors" />
-          <input 
-            type="text" 
-            placeholder="Search for resources, tickets..." 
-            className="w-full bg-white/15 border border-white/25 rounded-xl py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-white/70 focus:ring-2 focus:ring-white/35 focus:border-white/50 outline-none transition-all"
-          />
-        </div>
-      </div>
+  const handleApprovalPopupClose = () => {
+    if (activeApprovalPopup?.relatedEntityId !== null && activeApprovalPopup?.relatedEntityId !== undefined) {
+      const shownPopupMap = getStudentApprovalPopupShownMap();
+      shownPopupMap[String(activeApprovalPopup.relatedEntityId)] = true;
+      saveStudentApprovalPopupShownMap(shownPopupMap);
+    }
 
-      {/* Right Actions */}
-      <div className="flex items-center gap-4">
+    setActiveApprovalPopup(null);
+  };
+
+  return (
+    <>
+      <header className="h-[72px] bg-gradient-to-r from-primary-700 to-primary-600 dark:from-primary-800 dark:to-primary-700 border-b border-primary-500/40 dark:border-primary-600/60 shadow-sm sticky top-0 z-40 px-8 flex items-center justify-between">
+        {/* Search Bar */}
+        <div className="flex-1 max-w-md">
+          <div className="relative group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/70 group-focus-within:text-white transition-colors" />
+            <input 
+              type="text" 
+              placeholder="Search for resources, tickets..." 
+              className="w-full bg-white/15 border border-white/25 rounded-xl py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-white/70 focus:ring-2 focus:ring-white/35 focus:border-white/50 outline-none transition-all"
+            />
+          </div>
+        </div>
+
+        {/* Right Actions */}
+        <div className="flex items-center gap-4">
         <ThemeToggle className="border-white/30 bg-white/15 text-white hover:bg-white/25 hover:border-white/40 dark:border-white/30 dark:bg-white/15 dark:text-white dark:hover:bg-white/25 dark:hover:border-white/40" />
 
         <div className="relative">
@@ -397,8 +478,38 @@ const TopBar = () => {
             </>
           )}
         </div>
-      </div>
-    </header>
+        </div>
+      </header>
+
+      {isStudent && activeApprovalPopup && (
+        <div className="fixed inset-0 z-[120] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white border border-emerald-100 rounded-3xl shadow-2xl p-6 animate-scale-in">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-600">Booking Update</p>
+                <h3 className="text-lg font-bold text-slate-900 mt-1">Booking Approved</h3>
+                <p className="text-sm text-slate-600 mt-2 leading-relaxed">
+                  {activeApprovalPopup.message}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                onClick={handleApprovalPopupClose}
+                className="px-5 py-2.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-700 font-bold text-sm"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

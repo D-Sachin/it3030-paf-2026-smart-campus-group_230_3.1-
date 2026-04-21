@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { AlertCircle, ArrowLeft, Loader2, Send } from "lucide-react";
+import { AlertCircle, ArrowLeft, CheckCircle2, Loader2, Send, XCircle } from "lucide-react";
 import bookingService from "../../services/bookingService";
 import resourceService from "../../services/resourceService";
 import { getApiErrorMessage } from "../../utils/apiError";
@@ -11,6 +11,13 @@ const CreateBooking = () => {
   const [loading, setLoading] = useState(false);
   const [fetchingResources, setFetchingResources] = useState(false);
   const [error, setError] = useState("");
+  const [popup, setPopup] = useState({
+    isOpen: false,
+    type: "success",
+    title: "",
+    message: "",
+  });
+  const redirectTimerRef = useRef(null);
 
   const [formData, setFormData] = useState({
     resourceId: "",
@@ -35,6 +42,14 @@ const CreateBooking = () => {
 
   useEffect(() => {
     loadResources();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (redirectTimerRef.current) {
+        window.clearTimeout(redirectTimerRef.current);
+      }
+    };
   }, []);
 
   const handleInputChange = (e) => {
@@ -79,16 +94,77 @@ const CreateBooking = () => {
       };
 
       await bookingService.createBooking(payload);
-      navigate("/bookings/my");
+      setPopup({
+        isOpen: true,
+        type: "success",
+        title: "Booking Submitted",
+        message: "Your booking request was submitted successfully. Redirecting to My Bookings...",
+      });
+      redirectTimerRef.current = window.setTimeout(() => {
+        navigate("/bookings/my");
+      }, 2000);
     } catch (err) {
-      setError(getApiErrorMessage(err, "Failed to create booking."));
+      setPopup({
+        isOpen: true,
+        type: "error",
+        title: "Booking Failed",
+        message: getApiErrorMessage(err, "Failed to create booking."),
+      });
     } finally {
       setLoading(false);
     }
   };
 
+  const closePopup = () => {
+    if (redirectTimerRef.current) {
+      window.clearTimeout(redirectTimerRef.current);
+      redirectTimerRef.current = null;
+    }
+    setPopup((prev) => ({ ...prev, isOpen: false }));
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-fade-in-up">
+      {popup.isOpen && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[120] flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 animate-scale-in">
+            <div className="flex items-start gap-4">
+              <div
+                className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
+                  popup.type === "success" ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
+                }`}
+              >
+                {popup.type === "success" ? <CheckCircle2 className="w-6 h-6" /> : <XCircle className="w-6 h-6" />}
+              </div>
+              <div className="flex-1">
+                <h2 className="text-lg font-bold text-slate-900">{popup.title}</h2>
+                <p className="text-sm text-slate-600 mt-1">{popup.message}</p>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              {popup.type === "error" ? (
+                <button
+                  type="button"
+                  onClick={closePopup}
+                  className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm"
+                >
+                  OK
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={closePopup}
+                  className="px-5 py-2.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-700 font-bold text-sm"
+                >
+                  Close
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <Link to="/bookings/my" className="flex items-center gap-2 text-slate-500 hover:text-primary-600 transition-colors font-medium">
           <ArrowLeft className="w-4 h-4" />

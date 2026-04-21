@@ -77,6 +77,46 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
+    @Transactional
+    public TicketResponseDTO updateTicket(Long id, TicketRequestDTO dto) {
+        Ticket ticket = ticketRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + id));
+
+        // Only OPEN tickets can be edited
+        if (ticket.getStatus() != TicketStatus.OPEN) {
+            throw new RuntimeException("Only OPEN tickets can be edited.");
+        }
+
+        // Determine the requesting user
+        User requestingUser;
+        if (dto.getUserId() != null) {
+            requestingUser = userRepository.findById(dto.getUserId())
+                    .orElseThrow(() -> new RuntimeException("User not found with id: " + dto.getUserId()));
+        } else {
+            Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            String email = (principal instanceof UserDetails)
+                    ? ((UserDetails) principal).getUsername()
+                    : principal.toString();
+            requestingUser = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("User not found: " + email));
+        }
+
+        // Only the ticket owner may edit
+        if (!ticket.getUser().getId().equals(requestingUser.getId())) {
+            throw new RuntimeException("Only the ticket owner can edit ticket details.");
+        }
+
+        ticket.setTitle(dto.getTitle());
+        ticket.setDescription(dto.getDescription());
+        ticket.setCategory(dto.getCategory());
+        ticket.setPriority(dto.getPriority());
+        ticket.setResourceLocation(dto.getResourceLocation());
+        ticket.setPreferredContactDetails(dto.getPreferredContactDetails());
+
+        return mapToResponseDTO(ticketRepository.save(ticket));
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<TicketResponseDTO> getAllTickets(TicketStatus status, Priority priority, String category, String searchTerm) {
         Specification<Ticket> spec = getTicketSpecification(null, status, priority, category, searchTerm);
@@ -242,6 +282,24 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     @Transactional
+    public void deleteAttachment(Long attachmentId) {
+        Attachment attachment = attachmentRepository.findById(attachmentId)
+                .orElseThrow(() -> new RuntimeException("Attachment not found with id: " + attachmentId));
+
+        // Delete physical file from disk
+        try {
+            Path filePath = Paths.get(attachment.getFilePath());
+            Files.deleteIfExists(filePath);
+        } catch (IOException e) {
+            // Log but don't fail — DB record still needs to be removed
+            System.err.println("Could not delete physical file: " + e.getMessage());
+        }
+
+        attachmentRepository.delete(attachment);
+    }
+
+    @Override
+    @Transactional
     public List<CommentResponseDTO> addComment(Long ticketId, CommentRequestDTO dto) {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + ticketId));
@@ -401,6 +459,7 @@ public class TicketServiceImpl implements TicketService {
     private TicketResponseDTO mapToResponseDTO(Ticket ticket) {
         return TicketResponseDTO.builder()
                 .id(ticket.getId())
+                .userId(ticket.getUser() != null ? ticket.getUser().getId() : null)
                 .title(ticket.getTitle())
                 .description(ticket.getDescription())
                 .category(ticket.getCategory())
@@ -421,6 +480,7 @@ public class TicketServiceImpl implements TicketService {
                         .map(this::mapToCommentResponseDTO)
                         .collect(Collectors.toList()) : Collections.emptyList())
                 .preferredContactDetails(ticket.getPreferredContactDetails())
+                .resourceLocation(ticket.getResourceLocation())
                 .resolutionNotes(ticket.getResolutionNotes())
                 .assignedAt(ticket.getAssignedAt())
                 .resolvedAt(ticket.getResolvedAt())

@@ -95,6 +95,11 @@ const ticketService = {
       responseType: "blob",
     });
   },
+
+  // DELETE an attachment from a ticket
+  deleteAttachment: (ticketId, attachmentId) => {
+    return apiClient.delete(`${TICKETS_PATH}/${ticketId}/attachments/${attachmentId}`);
+  },
 };
 
 export default ticketService;

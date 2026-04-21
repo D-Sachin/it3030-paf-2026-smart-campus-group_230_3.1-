@@ -13,6 +13,7 @@ import java.util.List;
 
 public interface TicketService {
     TicketResponseDTO createTicket(TicketRequestDTO dto);
+    TicketResponseDTO updateTicket(Long id, TicketRequestDTO dto);
     List<TicketResponseDTO> getAllTickets(TicketStatus status, Priority priority, String category, String searchTerm);
 
     TicketResponseDTO getTicketById(Long id); // Added
@@ -21,6 +22,7 @@ public interface TicketService {
     TicketResponseDTO updateTicketStatus(Long id, TicketStatus status);
     TicketResponseDTO assignTechnician(Long id, Long technicianId);
     AttachmentResponseDTO uploadAttachment(Long ticketId, MultipartFile file);
+    void deleteAttachment(Long attachmentId);
     List<CommentResponseDTO> addComment(Long ticketId, CommentRequestDTO dto);
     void updateComment(Long commentId, CommentRequestDTO dto);
     void deleteComment(Long commentId);

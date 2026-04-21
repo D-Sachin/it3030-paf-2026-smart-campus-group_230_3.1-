@@ -18,6 +18,7 @@ import java.util.List;
 @AllArgsConstructor
 public class TicketResponseDTO {
     private Long id;
+    private Long userId;
     private String title;
     private String description;
     private String category;

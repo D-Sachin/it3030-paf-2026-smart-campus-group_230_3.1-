@@ -23,7 +23,9 @@ import {
   Archive,
   UserPlus,
   UserCheck,
-  Inbox
+  Inbox,
+  Pencil,
+  X
 } from 'lucide-react';
 import ticketService from '../../services/ticketService';
 import CommentSection from '../../components/Tickets/CommentSection';
@@ -43,10 +45,16 @@ const TicketDetails = () => {
   const [selectedTechId, setSelectedTechId] = useState("");
   const [statusUpdateLoading, setStatusUpdateLoading] = useState(false);
   const [commentSubmitting, setCommentSubmitting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editForm, setEditForm] = useState({});
+  const [editExistingAttachments, setEditExistingAttachments] = useState([]);
+  const [editNewAttachments, setEditNewAttachments] = useState([]);
 
   const isAdmin = currentUser?.role === 'ADMIN';
   const isTechnician = currentUser?.role === 'TECHNICIAN';
-  const isOwner = ticket && currentUser && (ticket.userEmail === currentUser.email || ticket.userId === currentUser.id);
+  const isOwner = ticket && currentUser && (ticket.userId === currentUser.id || ticket.userEmail === currentUser.email);
+  const canEdit = isOwner && ticket?.status === 'OPEN';
 
   useEffect(() => {
     fetchTicketDetails();
@@ -169,6 +177,62 @@ const TicketDetails = () => {
     }
   };
 
+  const openEditModal = () => {
+    setEditForm({
+      title: ticket.title,
+      description: ticket.description,
+      category: ticket.category,
+      priority: ticket.priority,
+      resourceLocation: ticket.resourceLocation || '',
+      preferredContactDetails: ticket.preferredContactDetails || '',
+    });
+    setEditExistingAttachments(ticket.attachments ? [...ticket.attachments] : []);
+    setEditNewAttachments([]);
+    setIsEditing(true);
+  };
+
+  const handleDeleteExistingAttachment = async (attachmentId) => {
+    try {
+      await ticketService.deleteAttachment(id, attachmentId);
+      setEditExistingAttachments(prev => prev.filter(a => a.id !== attachmentId));
+    } catch (err) {
+      console.error('Error deleting attachment:', err);
+      alert('Failed to delete attachment.');
+    }
+  };
+
+  const handleEditSave = async () => {
+    try {
+      setEditSaving(true);
+      console.log('Starting ticket update with data:', editForm);
+      await ticketService.updateTicket(id, {
+        ...editForm,
+        userId: currentUser?.id,
+      });
+      console.log('Ticket metadata updated successfully');
+
+      // Upload any new attachments
+      if (editNewAttachments.length > 0) {
+        console.log(`Uploading ${editNewAttachments.length} new attachments...`);
+        for (const file of editNewAttachments) {
+          await ticketService.uploadAttachment(id, file);
+        }
+        console.log('Attachments uploaded successfully');
+      }
+
+      setIsEditing(false);
+      setEditNewAttachments([]);
+      await fetchTicketDetails();
+      console.log('Refreshed ticket details');
+    } catch (err) {
+      console.error('Error updating ticket:', err);
+      alert(err?.response?.data?.message || 'Failed to update ticket. Make sure you are the ticket owner and the ticket is still OPEN.');
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center p-24 gap-4">
@@ -200,6 +264,187 @@ const TicketDetails = () => {
 
   return (
     <div className="space-y-8 animate-fade-in-up">
+      {/* Edit Modal */}
+      {isEditing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl mx-4 flex flex-col" style={{maxHeight: '90vh'}}>
+            {/* Header */}
+            <div className="flex items-center justify-between px-8 py-5 border-b border-slate-100 flex-shrink-0">
+              <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                <Pencil className="w-5 h-5 text-primary-500" />
+                Edit Ticket
+              </h3>
+              <button onClick={() => setIsEditing(false)} className="p-2 text-slate-400 hover:text-slate-700 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Scrollable Body */}
+            <div className="p-8 space-y-5 overflow-y-auto flex-1">
+              {/* Title */}
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Title <span className="text-red-400">*</span></label>
+                <input
+                  type="text"
+                  value={editForm.title || ''}
+                  onChange={(e) => setEditForm(f => ({ ...f, title: e.target.value }))}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 font-medium outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 transition-all"
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Description</label>
+                <textarea
+                  rows={4}
+                  value={editForm.description || ''}
+                  onChange={(e) => setEditForm(f => ({ ...f, description: e.target.value }))}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 font-medium outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 transition-all resize-none"
+                />
+              </div>
+
+              {/* Category & Priority */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Category</label>
+                  <select
+                    value={editForm.category || ''}
+                    onChange={(e) => setEditForm(f => ({ ...f, category: e.target.value }))}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 font-medium outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 transition-all"
+                  >
+                    <option value="Maintenance">Maintenance</option>
+                    <option value="IT Support">IT Support</option>
+                    <option value="Security">Security</option>
+                    <option value="Cleaning">Cleaning</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Priority</label>
+                  <select
+                    value={editForm.priority || ''}
+                    onChange={(e) => setEditForm(f => ({ ...f, priority: e.target.value }))}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 font-medium outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 transition-all"
+                  >
+                    <option value="LOW">Low</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="HIGH">High</option>
+                    <option value="CRITICAL">Critical</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Location & Contact */}
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Resource Location <span className="text-red-400">*</span></label>
+                <input
+                  type="text"
+                  value={editForm.resourceLocation || ''}
+                  onChange={(e) => setEditForm(f => ({ ...f, resourceLocation: e.target.value }))}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 font-medium outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Preferred Contact <span className="text-red-400">*</span></label>
+                <input
+                  type="text"
+                  value={editForm.preferredContactDetails || ''}
+                  onChange={(e) => setEditForm(f => ({ ...f, preferredContactDetails: e.target.value }))}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 font-medium outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 transition-all"
+                />
+              </div>
+
+              {/* Attachments */}
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Attachments</label>
+
+                {/* Existing attachments */}
+                {editExistingAttachments.length > 0 && (
+                  <div className="space-y-2 mb-3">
+                    {editExistingAttachments.map(att => (
+                      <div key={att.id} className="flex items-center justify-between px-4 py-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                        <div className="flex items-center gap-2">
+                          <Paperclip className="w-4 h-4 text-slate-400" />
+                          <span className="text-sm font-medium text-slate-600 truncate max-w-[220px]">{att.fileName}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteExistingAttachment(att.id)}
+                          className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                          title="Remove attachment"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* New attachments queued */}
+                {editNewAttachments.length > 0 && (
+                  <div className="space-y-2 mb-3">
+                    {editNewAttachments.map((file, idx) => (
+                      <div key={idx} className="flex items-center justify-between px-4 py-2.5 bg-primary-50 rounded-xl border border-primary-100">
+                        <div className="flex items-center gap-2">
+                          <Paperclip className="w-4 h-4 text-primary-400" />
+                          <span className="text-sm font-medium text-primary-700 truncate max-w-[200px]">{file.name}</span>
+                          <span className="text-[10px] font-bold text-primary-400 uppercase">New</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setEditNewAttachments(prev => prev.filter((_, i) => i !== idx))}
+                          className="p-1.5 text-primary-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Add new file button */}
+                {(editExistingAttachments.length + editNewAttachments.length) < 3 && (
+                  <label className="flex items-center gap-2 px-4 py-3 bg-slate-50 border border-dashed border-slate-200 rounded-xl cursor-pointer hover:border-primary-400 hover:bg-primary-50/40 transition-all text-slate-500 hover:text-primary-600">
+                    <Paperclip className="w-4 h-4" />
+                    <span className="text-sm font-medium">Add attachment (max 3 total)</span>
+                    <input
+                      type="file"
+                      className="hidden"
+                      multiple
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files);
+                        const slots = 3 - editExistingAttachments.length - editNewAttachments.length;
+                        setEditNewAttachments(prev => [...prev, ...files.slice(0, slots)]);
+                        e.target.value = '';
+                      }}
+                    />
+                  </label>
+                )}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-3 px-8 py-5 border-t border-slate-100 flex-shrink-0">
+              <button
+                onClick={() => setIsEditing(false)}
+                className="premium-button premium-button-secondary"
+                disabled={editSaving}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleEditSave}
+                disabled={editSaving || !editForm.title?.trim() || !editForm.resourceLocation?.trim() || !editForm.preferredContactDetails?.trim()}
+                className="premium-button premium-button-primary"
+              >
+                {editSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Pencil className="w-4 h-4" />}
+                {editSaving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Top Navigation */}
       <div className="flex items-center justify-between">
         <Link to="/tickets" className="flex items-center gap-2 text-slate-500 hover:text-primary-600 transition-colors font-medium">
@@ -208,6 +453,15 @@ const TicketDetails = () => {
         </Link>
         
         <div className="flex items-center gap-3">
+          {canEdit && (
+            <button
+              onClick={openEditModal}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-primary-200 bg-primary-50 text-primary-700 font-bold text-sm hover:bg-primary-100 hover:border-primary-300 transition-all"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+              Edit Ticket
+            </button>
+          )}
           <span className="text-sm font-bold text-slate-400">STATUS</span>
           {(isAdmin || isTechnician) ? (
             <>

@@ -57,6 +57,13 @@ public class TicketController {
         return ResponseEntity.ok(tickets);
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<TicketResponseDTO> updateTicket(
+            @PathVariable Long id,
+            @Valid @RequestBody TicketRequestDTO ticketRequestDTO) {
+        return ResponseEntity.ok(ticketService.updateTicket(id, ticketRequestDTO));
+    }
+
     @PutMapping("/{id}/status")
     public ResponseEntity<TicketResponseDTO> updateTicketStatus(
             @PathVariable Long id,
@@ -84,6 +91,14 @@ public class TicketController {
             @RequestParam("file") MultipartFile file) {
         AttachmentResponseDTO response = ticketService.uploadAttachment(id, file);
         return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{ticketId}/attachments/{attachmentId}")
+    public ResponseEntity<Void> deleteAttachment(
+            @PathVariable Long ticketId,
+            @PathVariable Long attachmentId) {
+        ticketService.deleteAttachment(attachmentId);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/comments")

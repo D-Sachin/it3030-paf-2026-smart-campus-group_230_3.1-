@@ -3,6 +3,7 @@ import { Bell, Search, User, ChevronDown, Clock3, Loader2, CheckCircle2 } from '
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
 import ThemeToggle from '../Theme/ThemeToggle';
+import NotificationPopup from '../Shared/NotificationPopup';
 import notificationService from '../../services/notificationService';
 import bookingService from '../../services/bookingService';
 
@@ -51,6 +52,7 @@ const TopBar = () => {
   const [activeApprovalPopup, setActiveApprovalPopup] = useState(null);
   const approvalQueueRef = useRef([]);
   const activeApprovalRef = useRef(null);
+  const approvalRedirectTimerRef = useRef(null);
   const navigate = useNavigate();
 
   if (!user) return null;
@@ -189,6 +191,14 @@ const TopBar = () => {
   }, [approvalPopupQueue, activeApprovalPopup]);
 
   useEffect(() => {
+    return () => {
+      if (approvalRedirectTimerRef.current) {
+        window.clearTimeout(approvalRedirectTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     if (isNotificationOpen && canUseNotifications) {
       fetchNotifications();
     }
@@ -283,6 +293,11 @@ const TopBar = () => {
   };
 
   const handleApprovalPopupClose = () => {
+    if (approvalRedirectTimerRef.current) {
+      window.clearTimeout(approvalRedirectTimerRef.current);
+      approvalRedirectTimerRef.current = null;
+    }
+
     if (activeApprovalPopup?.relatedEntityId !== null && activeApprovalPopup?.relatedEntityId !== undefined) {
       const shownPopupMap = getStudentApprovalPopupShownMap();
       shownPopupMap[String(activeApprovalPopup.relatedEntityId)] = true;
@@ -291,6 +306,27 @@ const TopBar = () => {
 
     setActiveApprovalPopup(null);
   };
+
+  useEffect(() => {
+    if (!isStudent || !activeApprovalPopup) {
+      return undefined;
+    }
+
+    if (approvalRedirectTimerRef.current) {
+      window.clearTimeout(approvalRedirectTimerRef.current);
+    }
+
+    approvalRedirectTimerRef.current = window.setTimeout(() => {
+      handleApprovalPopupClose();
+    }, 2000);
+
+    return () => {
+      if (approvalRedirectTimerRef.current) {
+        window.clearTimeout(approvalRedirectTimerRef.current);
+        approvalRedirectTimerRef.current = null;
+      }
+    };
+  }, [activeApprovalPopup, isStudent]);
 
   return (
     <>
@@ -482,32 +518,16 @@ const TopBar = () => {
       </header>
 
       {isStudent && activeApprovalPopup && (
-        <div className="fixed inset-0 z-[120] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-white border border-emerald-100 rounded-3xl shadow-2xl p-6 animate-scale-in">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                <CheckCircle2 className="w-6 h-6" />
-              </div>
-              <div className="flex-1">
-                <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-600">Booking Update</p>
-                <h3 className="text-lg font-bold text-slate-900 mt-1">Booking Approved</h3>
-                <p className="text-sm text-slate-600 mt-2 leading-relaxed">
-                  {activeApprovalPopup.message}
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-6 flex justify-end">
-              <button
-                type="button"
-                onClick={handleApprovalPopupClose}
-                className="px-5 py-2.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-700 font-bold text-sm"
-              >
-                OK
-              </button>
-            </div>
-          </div>
-        </div>
+        <NotificationPopup
+          isOpen={Boolean(activeApprovalPopup)}
+          type="success"
+          title="Booking Approved"
+          message={activeApprovalPopup.message}
+          onClose={handleApprovalPopupClose}
+          autoDismissMs={2000}
+          showProgressBar
+          showCountdown
+        />
       )}
     </>
   );

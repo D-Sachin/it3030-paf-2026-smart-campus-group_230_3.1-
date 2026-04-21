@@ -25,11 +25,15 @@ public class FileController {
             Resource resource = new UrlResource(filePath.toUri());
 
             if (resource.exists() || resource.isReadable()) {
-                String contentType = "image/jpeg"; // Default to jpeg, or detect from extension
-                if (fileName.toLowerCase().endsWith(".png")) {
-                    contentType = "image/png";
-                } else if (fileName.toLowerCase().endsWith(".gif")) {
-                    contentType = "image/gif";
+                String contentType;
+                try {
+                    contentType = java.nio.file.Files.probeContentType(filePath);
+                } catch (java.io.IOException e) {
+                    contentType = "application/octet-stream";
+                }
+                
+                if (contentType == null) {
+                    contentType = "application/octet-stream";
                 }
 
                 return ResponseEntity.ok()

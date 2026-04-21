@@ -48,6 +48,7 @@ const TicketDetails = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editSaving, setEditSaving] = useState(false);
   const [editForm, setEditForm] = useState({});
+  const [viewingImageUrl, setViewingImageUrl] = useState(null);
   const [editExistingAttachments, setEditExistingAttachments] = useState([]);
   const [editNewAttachments, setEditNewAttachments] = useState([]);
 
@@ -145,6 +146,32 @@ const TicketDetails = () => {
       console.error('Error deleting comment:', err);
       alert('Failed to delete comment.');
     }
+  };
+
+  const isImageFile = (fileName) => {
+    if (!fileName) return false;
+    const ext = fileName.split('.').pop().toLowerCase();
+    return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
+  };
+
+  const resolveFileUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    // Backend API is at http://localhost:8080/api
+    // Prepend the origin for the browser to find it
+    return `http://localhost:8080${url}`;
+  };
+
+  // Helper component for safe image preview from File object
+  const ImagePreview = ({ file, className }) => {
+    const [previewUrl, setPreviewUrl] = useState(null);
+    useEffect(() => {
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+      return () => URL.revokeObjectURL(url);
+    }, [file]);
+    if (!previewUrl) return null;
+    return <img src={previewUrl} alt={file.name} className={className} />;
   };
 
   const handleAddComment = async (content) => {
@@ -364,7 +391,21 @@ const TicketDetails = () => {
                     {editExistingAttachments.map(att => (
                       <div key={att.id} className="flex items-center justify-between px-4 py-2.5 bg-slate-50 rounded-xl border border-slate-100">
                         <div className="flex items-center gap-2">
-                          <Paperclip className="w-4 h-4 text-slate-400" />
+                          {isImageFile(att.fileName) ? (
+                            <div className="w-8 h-8 rounded-lg overflow-hidden border border-slate-100 shadow-sm flex-shrink-0 bg-slate-200">
+                              <img 
+                                src={resolveFileUrl(att.fileUrl)} 
+                                alt={att.fileName} 
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.target.onerror = null;
+                                  e.target.src = 'https://via.placeholder.com/40?text=IMG';
+                                }}
+                              />
+                            </div>
+                          ) : (
+                            <Paperclip className="w-4 h-4 text-slate-400" />
+                          )}
                           <span className="text-sm font-medium text-slate-600 truncate max-w-[220px]">{att.fileName}</span>
                         </div>
                         <button
@@ -386,7 +427,13 @@ const TicketDetails = () => {
                     {editNewAttachments.map((file, idx) => (
                       <div key={idx} className="flex items-center justify-between px-4 py-2.5 bg-primary-50 rounded-xl border border-primary-100">
                         <div className="flex items-center gap-2">
-                          <Paperclip className="w-4 h-4 text-primary-400" />
+                          {isImageFile(file.name) ? (
+                            <div className="w-8 h-8 rounded-lg overflow-hidden border border-primary-100 shadow-sm flex-shrink-0 bg-primary-100">
+                              <ImagePreview file={file} className="w-full h-full object-cover" />
+                            </div>
+                          ) : (
+                            <Paperclip className="w-4 h-4 text-primary-400" />
+                          )}
                           <span className="text-sm font-medium text-primary-700 truncate max-w-[200px]">{file.name}</span>
                           <span className="text-[10px] font-bold text-primary-400 uppercase">New</span>
                         </div>
@@ -752,21 +799,41 @@ const TicketDetails = () => {
             </h3>
             
             {ticket.attachments && ticket.attachments.length > 0 ? (
-              <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
                 {ticket.attachments.map((file) => (
-                  <div key={file.id} className="group flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100 hover:border-primary-200 transition-all">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-slate-400 group-hover:text-primary-500 transition-colors shadow-sm">
-                        <Paperclip className="w-4 h-4" />
+                  <div key={file.id} className="group relative overflow-hidden rounded-xl border border-slate-100 bg-white hover:border-primary-200 transition-all shadow-sm">
+                    {isImageFile(file.fileName) ? (
+                      <div 
+                        className="aspect-square w-full bg-slate-50 cursor-zoom-in overflow-hidden"
+                        onClick={() => setViewingImageUrl(resolveFileUrl(file.fileUrl))}
+                      >
+                        <img 
+                          src={resolveFileUrl(file.fileUrl)} 
+                          alt={file.fileName} 
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <Download 
+                            className="w-5 h-5 text-white cursor-pointer hover:scale-110 transition-transform" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDownloadAttachment(file);
+                            }}
+                          />
+                        </div>
                       </div>
-                      <span className="text-sm font-medium text-slate-600 truncate max-w-[150px]">{file.fileName}</span>
-                    </div>
-                    <button 
-                      onClick={() => handleDownloadAttachment(file)}
-                      className="p-2 text-slate-400 hover:text-primary-600 transition-colors"
-                    >
-                      <Download className="w-4 h-4" />
-                    </button>
+                    ) : (
+                      <div className="aspect-square w-full flex flex-col items-center justify-center p-3 text-center gap-2">
+                        <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:text-primary-500 transition-colors">
+                          <Paperclip className="w-5 h-5" />
+                        </div>
+                        <span className="text-[10px] font-bold text-slate-500 truncate w-full uppercase px-1">{file.fileName}</span>
+                        <Download 
+                          className="w-4 h-4 text-slate-300 hover:text-primary-500 cursor-pointer transition-colors mt-1" 
+                          onClick={() => handleDownloadAttachment(file)}
+                        />
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -778,6 +845,32 @@ const TicketDetails = () => {
           </div>
         </div>
       </div>
+
+      {/* Full-screen Image Lightbox */}
+      {viewingImageUrl && (
+        <div className="fixed inset-0 z-[100] bg-slate-900/95 backdrop-blur-md flex items-center justify-center p-4 md:p-10 animate-in fade-in duration-300">
+          <button 
+            onClick={() => setViewingImageUrl(null)}
+            className="absolute top-6 right-6 p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all border border-white/10 hover:rotate-90 duration-300 z-[110]"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          
+          <div 
+            className="absolute inset-0 z-[105]" 
+            onClick={() => setViewingImageUrl(null)}
+          />
+
+          <div className="relative max-w-5xl w-full h-full flex items-center justify-center z-[110]">
+            <img 
+              src={viewingImageUrl} 
+              alt="Viewing attachment" 
+              className="max-w-full max-h-full object-contain rounded-xl shadow-2xl animate-in zoom-in-95 duration-500 select-none pointer-events-auto"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -211,7 +211,7 @@ const AdminBookings = () => {
         </button>
       </div>
 
-      <div className="premium-card p-4 grid grid-cols-1 lg:grid-cols-4 gap-4">
+      <div className="premium-card p-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2">
           <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Search Bookings</label>
           <div className="relative mt-2">
@@ -224,21 +224,6 @@ const AdminBookings = () => {
               className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50 border border-slate-100 text-sm font-medium outline-none focus:ring-2 focus:ring-primary-500/20"
             />
           </div>
-        </div>
-
-        <div>
-          <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Status Filter</label>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full mt-2 bg-slate-50 border border-slate-100 rounded-xl px-4 py-2.5 text-sm font-medium"
-          >
-            <option value="">All</option>
-            <option value="PENDING">Pending</option>
-            <option value="APPROVED">Approved</option>
-            <option value="REJECTED">Rejected</option>
-            <option value="CANCELLED">Cancelled</option>
-          </select>
         </div>
 
         <div>

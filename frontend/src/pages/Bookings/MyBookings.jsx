@@ -11,6 +11,7 @@ const MyBookings = () => {
   const [bookings, setBookings] = useState([]);
   const [statusFilter, setStatusFilter] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState("dateDesc");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -65,6 +66,43 @@ const MyBookings = () => {
       })
     : bookings;
 
+  const getBookingDateTime = (booking) => {
+    const date = booking.bookingDate || "1970-01-01";
+    const time = booking.startTime || "00:00:00";
+    return new Date(`${date}T${time}`).getTime();
+  };
+
+  const sortedBookings = [...filteredBookings].sort((a, b) => {
+    if (sortBy === "dateDesc") {
+      return getBookingDateTime(b) - getBookingDateTime(a);
+    }
+
+    if (sortBy === "dateAsc") {
+      return getBookingDateTime(a) - getBookingDateTime(b);
+    }
+
+    if (sortBy === "statusAsc") {
+      const statusCompare = (a.status || "").localeCompare(b.status || "");
+      return statusCompare !== 0 ? statusCompare : getBookingDateTime(b) - getBookingDateTime(a);
+    }
+
+    if (sortBy === "resourceAsc") {
+      const resourceCompare = (a.resourceName || "").localeCompare(b.resourceName || "");
+      return resourceCompare !== 0 ? resourceCompare : getBookingDateTime(b) - getBookingDateTime(a);
+    }
+
+    if (sortBy === "attendeesDesc") {
+      const attendeesA = Number(a.expectedAttendees) || 0;
+      const attendeesB = Number(b.expectedAttendees) || 0;
+      if (attendeesA !== attendeesB) {
+        return attendeesB - attendeesA;
+      }
+      return getBookingDateTime(b) - getBookingDateTime(a);
+    }
+
+    return getBookingDateTime(b) - getBookingDateTime(a);
+  });
+
   return (
     <div className="space-y-8 animate-fade-in-up">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -85,7 +123,7 @@ const MyBookings = () => {
         </div>
       </div>
 
-      <div className="premium-card p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="premium-card p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Status Filter</label>
           <select
@@ -114,6 +152,21 @@ const MyBookings = () => {
             />
           </div>
         </div>
+
+        <div>
+          <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Sort By</label>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="w-full mt-2 bg-slate-50 border border-slate-100 rounded-xl px-4 py-2.5 text-sm font-medium"
+          >
+            <option value="dateDesc">Date (newest first)</option>
+            <option value="dateAsc">Date (oldest first)</option>
+            <option value="statusAsc">Status (A-Z)</option>
+            <option value="resourceAsc">Resource name (A-Z)</option>
+            <option value="attendeesDesc">Expected attendees (high-low)</option>
+          </select>
+        </div>
       </div>
 
       {error && (
@@ -134,7 +187,7 @@ const MyBookings = () => {
         <div className="premium-card p-12 text-center text-slate-500">No bookings match your search.</div>
       ) : (
         <div className="grid grid-cols-1 gap-4">
-          {filteredBookings.map((booking) => (
+          {sortedBookings.map((booking) => (
             <div key={booking.id} className="premium-card p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div className="space-y-1">
                 <h3 className="text-lg font-bold text-slate-900">{booking.resourceName}</h3>

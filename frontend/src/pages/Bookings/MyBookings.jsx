@@ -33,7 +33,7 @@ const MyBookings = () => {
   }, [statusFilter]);
 
   const handleCancel = async (bookingId) => {
-    if (!window.confirm("Cancel this approved booking?")) {
+    if (!window.confirm("Remove this booking?")) {
       return;
     }
 
@@ -41,7 +41,7 @@ const MyBookings = () => {
       await bookingService.deleteBooking(bookingId);
       fetchBookings();
     } catch (err) {
-      setError(getApiErrorMessage(err, "Unable to cancel booking."));
+      setError(getApiErrorMessage(err, "Unable to remove booking."));
     }
   };
 
@@ -207,12 +207,12 @@ const MyBookings = () => {
                 >
                   View
                 </Link>
-                {booking.status === "APPROVED" && (
+                {(booking.status === "APPROVED" || booking.status === "REJECTED") && (
                   <button
                     onClick={() => handleCancel(booking.id)}
                     className="px-4 py-2 rounded-xl bg-red-50 text-red-600 font-bold text-sm hover:bg-red-100"
                   >
-                    Cancel
+                    Delete
                   </button>
                 )}
               </div>

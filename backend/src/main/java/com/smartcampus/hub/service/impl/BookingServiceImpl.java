@@ -228,6 +228,25 @@ public class BookingServiceImpl implements BookingService {
         return mapToResponseDTO(bookingRepository.save(booking));
     }
 
+    @Override
+    @Transactional
+    public void deleteBooking(Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new NoSuchElementException("Booking not found with id: " + bookingId));
+
+        User currentUser = resolveBookingUser();
+        Long bookingUserId = booking.getUser() != null ? booking.getUser().getId() : null;
+
+        boolean isOwner = bookingUserId != null && bookingUserId.equals(currentUser.getId());
+        boolean isAdmin = "ADMIN".equalsIgnoreCase(currentUser.getRole());
+
+        if (!isOwner && !isAdmin) {
+            throw new SecurityException("You can only delete your own bookings.");
+        }
+
+        bookingRepository.delete(booking);
+    }
+
     private User resolveBookingUser() {
         try {
             if (SecurityContextHolder.getContext().getAuthentication() != null

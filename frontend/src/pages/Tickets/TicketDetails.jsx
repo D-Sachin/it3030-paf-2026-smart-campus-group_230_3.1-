@@ -266,8 +266,8 @@ const TicketDetails = () => {
     <div className="space-y-8 animate-fade-in-up">
       {/* Edit Modal */}
       {isEditing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl mx-4 flex flex-col" style={{maxHeight: '90vh'}}>
+        <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 bg-slate-900/40 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl flex flex-col my-8 overflow-hidden animate-in fade-in slide-in-from-top-10 duration-300" style={{maxHeight: '78vh'}}>
             {/* Header */}
             <div className="flex items-center justify-between px-8 py-5 border-b border-slate-100 flex-shrink-0">
               <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">

@@ -502,6 +502,7 @@ public class TicketServiceImpl implements TicketService {
     private CommentResponseDTO mapToCommentResponseDTO(Comment comment) {
         return CommentResponseDTO.builder()
                 .id(comment.getId())
+                .userId(comment.getUser() != null ? comment.getUser().getId() : null)
                 .content(comment.getContent())
                 .userName(comment.getUser() != null ? comment.getUser().getName() : "Unknown")
                 .createdAt(comment.getCreatedAt())

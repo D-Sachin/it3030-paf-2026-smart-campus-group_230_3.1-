@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class CommentResponseDTO {
     private Long id;
+    private Long userId;
     private String content;
     private String userName;
     private LocalDateTime createdAt;

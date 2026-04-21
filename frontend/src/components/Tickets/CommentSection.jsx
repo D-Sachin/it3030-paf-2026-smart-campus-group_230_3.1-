@@ -108,7 +108,7 @@ const CommentSection = ({
                 </div>
                 
                 {/* Ownership Actions — only visible to the comment's author */}
-                {currentUser && (comment.authorId === currentUser.id || comment.author?.id === currentUser.id) && (
+                {currentUser && comment.userId === currentUser.id && (
                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button 
                       onClick={() => handleEditStart(comment)}

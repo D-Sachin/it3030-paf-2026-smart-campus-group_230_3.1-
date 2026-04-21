@@ -100,6 +100,16 @@ const ticketService = {
   deleteAttachment: (ticketId, attachmentId) => {
     return apiClient.delete(`${TICKETS_PATH}/${ticketId}/attachments/${attachmentId}`);
   },
+
+  // UPDATE a comment
+  updateComment: (commentId, content) => {
+    return apiClient.put(`${TICKETS_PATH}/comments/${commentId}`, { content });
+  },
+
+  // DELETE a comment
+  deleteComment: (commentId) => {
+    return apiClient.delete(`${TICKETS_PATH}/comments/${commentId}`);
+  },
 };
 
 export default ticketService;

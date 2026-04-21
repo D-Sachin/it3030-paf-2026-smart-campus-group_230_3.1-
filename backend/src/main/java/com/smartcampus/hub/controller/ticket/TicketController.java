@@ -108,4 +108,18 @@ public class TicketController {
         List<CommentResponseDTO> comments = ticketService.addComment(id, commentRequestDTO);
         return ResponseEntity.ok(comments);
     }
+
+    @PutMapping("/comments/{commentId}")
+    public ResponseEntity<Void> updateComment(
+            @PathVariable Long commentId,
+            @Valid @RequestBody CommentRequestDTO commentRequestDTO) {
+        ticketService.updateComment(commentId, commentRequestDTO);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/comments/{commentId}")
+    public ResponseEntity<Void> deleteComment(@PathVariable Long commentId) {
+        ticketService.deleteComment(commentId);
+        return ResponseEntity.noContent().build();
+    }
 }

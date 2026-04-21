@@ -216,16 +216,35 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new NoSuchElementException("Booking not found with id: " + bookingId));
 
-        if (booking.getStatus() != BookingStatus.APPROVED) {
-            throw new IllegalStateException("Only APPROVED bookings can be cancelled.");
+        if (booking.getStatus() != BookingStatus.APPROVED && booking.getStatus() != BookingStatus.REJECTED) {
+            throw new IllegalStateException("Only APPROVED or REJECTED bookings can be removed.");
         }
 
-        if (booking.getBookingDate().isBefore(LocalDate.now())) {
+        if (booking.getStatus() == BookingStatus.APPROVED && booking.getBookingDate().isBefore(LocalDate.now())) {
             throw new IllegalStateException("Past bookings cannot be cancelled.");
         }
 
         booking.setStatus(BookingStatus.CANCELLED);
         return mapToResponseDTO(bookingRepository.save(booking));
+    }
+
+    @Override
+    @Transactional
+    public void deleteBooking(Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new NoSuchElementException("Booking not found with id: " + bookingId));
+
+        User currentUser = resolveBookingUser();
+        Long bookingUserId = booking.getUser() != null ? booking.getUser().getId() : null;
+
+        boolean isOwner = bookingUserId != null && bookingUserId.equals(currentUser.getId());
+        boolean isAdmin = "ADMIN".equalsIgnoreCase(currentUser.getRole());
+
+        if (!isOwner && !isAdmin) {
+            throw new SecurityException("You can only delete your own bookings.");
+        }
+
+        bookingRepository.delete(booking);
     }
 
     private User resolveBookingUser() {

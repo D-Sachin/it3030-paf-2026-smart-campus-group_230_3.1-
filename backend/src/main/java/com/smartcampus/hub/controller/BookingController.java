@@ -140,6 +140,22 @@ public class BookingController {
         }
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> deleteBooking(@PathVariable(name = "id") Long id) {
+        try {
+            bookingService.deleteBooking(id);
+            return buildSuccess("Booking deleted successfully", null, HttpStatus.OK);
+        } catch (SecurityException ex) {
+            return buildError(ex.getMessage(), HttpStatus.FORBIDDEN);
+        } catch (IllegalArgumentException | IllegalStateException ex) {
+            return buildError(ex.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (NoSuchElementException ex) {
+            return buildError(ex.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (Exception ex) {
+            return buildError("Failed to delete booking due to an unexpected server error.", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     private ResponseEntity<Map<String, Object>> buildSuccess(String message, Object data, HttpStatus status) {
         Map<String, Object> body = new HashMap<>();
         body.put("success", true);

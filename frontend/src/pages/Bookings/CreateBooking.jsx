@@ -6,6 +6,7 @@ import resourceService from "../../services/resourceService";
 import { getApiErrorMessage } from "../../utils/apiError";
 
 const CreateBooking = () => {
+  const POPUP_AUTO_CLOSE_MS = 2000;
   const navigate = useNavigate();
   const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -17,7 +18,9 @@ const CreateBooking = () => {
     title: "",
     message: "",
   });
+  const [popupProgress, setPopupProgress] = useState(100);
   const redirectTimerRef = useRef(null);
+  const popupTickRef = useRef(null);
 
   const [formData, setFormData] = useState({
     resourceId: "",
@@ -48,6 +51,9 @@ const CreateBooking = () => {
     return () => {
       if (redirectTimerRef.current) {
         window.clearTimeout(redirectTimerRef.current);
+      }
+      if (popupTickRef.current) {
+        window.clearInterval(popupTickRef.current);
       }
     };
   }, []);
@@ -94,16 +100,44 @@ const CreateBooking = () => {
       };
 
       await bookingService.createBooking(payload);
+      if (redirectTimerRef.current) {
+        window.clearTimeout(redirectTimerRef.current);
+      }
+      if (popupTickRef.current) {
+        window.clearInterval(popupTickRef.current);
+      }
+      setPopupProgress(100);
       setPopup({
         isOpen: true,
         type: "success",
         title: "Booking Submitted",
         message: "Your booking request was submitted successfully. Redirecting to My Bookings...",
       });
+      const startedAt = Date.now();
+      popupTickRef.current = window.setInterval(() => {
+        const elapsed = Date.now() - startedAt;
+        const remaining = Math.max(0, POPUP_AUTO_CLOSE_MS - elapsed);
+        setPopupProgress((remaining / POPUP_AUTO_CLOSE_MS) * 100);
+
+        if (remaining <= 0 && popupTickRef.current) {
+          window.clearInterval(popupTickRef.current);
+          popupTickRef.current = null;
+        }
+      }, 50);
+
       redirectTimerRef.current = window.setTimeout(() => {
         navigate("/bookings/my");
-      }, 2000);
+      }, POPUP_AUTO_CLOSE_MS);
     } catch (err) {
+      if (redirectTimerRef.current) {
+        window.clearTimeout(redirectTimerRef.current);
+        redirectTimerRef.current = null;
+      }
+      if (popupTickRef.current) {
+        window.clearInterval(popupTickRef.current);
+        popupTickRef.current = null;
+      }
+      setPopupProgress(100);
       setPopup({
         isOpen: true,
         type: "error",
@@ -120,6 +154,11 @@ const CreateBooking = () => {
       window.clearTimeout(redirectTimerRef.current);
       redirectTimerRef.current = null;
     }
+    if (popupTickRef.current) {
+      window.clearInterval(popupTickRef.current);
+      popupTickRef.current = null;
+    }
+    setPopupProgress(100);
     setPopup((prev) => ({ ...prev, isOpen: false }));
   };
 
@@ -127,7 +166,7 @@ const CreateBooking = () => {
     <div className="max-w-4xl mx-auto space-y-8 animate-fade-in-up">
       {popup.isOpen && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[120] flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 animate-scale-in">
+          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 pb-4 animate-scale-in overflow-hidden">
             <div className="flex items-start gap-4">
               <div
                 className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
@@ -136,30 +175,47 @@ const CreateBooking = () => {
               >
                 {popup.type === "success" ? <CheckCircle2 className="w-6 h-6" /> : <XCircle className="w-6 h-6" />}
               </div>
-              <div className="flex-1">
-                <h2 className="text-lg font-bold text-slate-900">{popup.title}</h2>
-                <p className="text-sm text-slate-600 mt-1">{popup.message}</p>
+              <div className="flex-1 min-w-0">
+                <h2 className={`text-lg font-bold ${popup.type === "success" ? "text-slate-900" : "text-red-700"}`}>
+                  {popup.title}
+                </h2>
+                <p className={`text-sm mt-1 ${popup.type === "success" ? "text-slate-600" : "text-red-600"}`}>
+                  {popup.message}
+                </p>
               </div>
             </div>
 
-            <div className="mt-6 flex justify-end gap-3">
-              {popup.type === "error" ? (
-                <button
-                  type="button"
-                  onClick={closePopup}
-                  className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm"
-                >
-                  OK
-                </button>
+            <div className="mt-5 flex items-center justify-between gap-3">
+              {popup.type === "success" ? (
+                <p className="text-[11px] font-semibold text-emerald-600">
+                  Redirecting in {Math.max(0, Math.ceil((popupProgress / 100) * (POPUP_AUTO_CLOSE_MS / 1000)))}s
+                </p>
               ) : (
-                <button
-                  type="button"
-                  onClick={closePopup}
-                  className="px-5 py-2.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-700 font-bold text-sm"
-                >
-                  Close
-                </button>
+                <p className="text-[11px] font-semibold text-red-600">
+                  Please review the message and try again.
+                </p>
               )}
+
+              <button
+                type="button"
+                onClick={closePopup}
+                className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-colors ${
+                  popup.type === "success"
+                    ? "bg-emerald-100 hover:bg-emerald-200 text-emerald-700"
+                    : "bg-red-100 hover:bg-red-200 text-red-700"
+                }`}
+              >
+                {popup.type === "success" ? "Close" : "OK"}
+              </button>
+            </div>
+
+            <div className="mt-4 h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-[width] duration-100 ease-linear ${
+                  popup.type === "success" ? "bg-emerald-500" : "bg-red-500"
+                }`}
+                style={{ width: popup.type === "success" ? `${popupProgress}%` : "100%" }}
+              />
             </div>
           </div>
         </div>

@@ -11,6 +11,7 @@ const AdminBookings = () => {
   const [bookings, setBookings] = useState([]);
   const [statusFilter, setStatusFilter] = useState("PENDING");
   const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState("dateDesc");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [counts, setCounts] = useState({ pending: 0, approved: 0, rejected: 0 });
@@ -97,6 +98,39 @@ const AdminBookings = () => {
       })
     : bookings;
 
+  const getBookingDateTime = (booking) => {
+    const date = booking.bookingDate || "1970-01-01";
+    const time = booking.startTime || "00:00:00";
+    return new Date(`${date}T${time}`).getTime();
+  };
+
+  const sortedBookings = [...filteredBookings].sort((a, b) => {
+    if (sortBy === "dateDesc") {
+      return getBookingDateTime(b) - getBookingDateTime(a);
+    }
+
+    if (sortBy === "dateAsc") {
+      return getBookingDateTime(a) - getBookingDateTime(b);
+    }
+
+    if (sortBy === "statusAsc") {
+      const statusCompare = (a.status || "").localeCompare(b.status || "");
+      return statusCompare !== 0 ? statusCompare : getBookingDateTime(b) - getBookingDateTime(a);
+    }
+
+    if (sortBy === "resourceAsc") {
+      const resourceCompare = (a.resourceName || "").localeCompare(b.resourceName || "");
+      return resourceCompare !== 0 ? resourceCompare : getBookingDateTime(b) - getBookingDateTime(a);
+    }
+
+    if (sortBy === "requesterAsc") {
+      const requesterCompare = (a.userName || "").localeCompare(b.userName || "");
+      return requesterCompare !== 0 ? requesterCompare : getBookingDateTime(b) - getBookingDateTime(a);
+    }
+
+    return getBookingDateTime(b) - getBookingDateTime(a);
+  });
+
   return (
     <div className="space-y-8 animate-fade-in-up">
       <div>
@@ -140,7 +174,7 @@ const AdminBookings = () => {
         </div>
       </div>
 
-      <div className="premium-card p-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="premium-card p-4 grid grid-cols-1 lg:grid-cols-4 gap-4">
         <div className="lg:col-span-2">
           <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Search Bookings</label>
           <div className="relative mt-2">
@@ -169,6 +203,21 @@ const AdminBookings = () => {
             <option value="CANCELLED">Cancelled</option>
           </select>
         </div>
+
+        <div>
+          <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Sort By</label>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="w-full mt-2 bg-slate-50 border border-slate-100 rounded-xl px-4 py-2.5 text-sm font-medium"
+          >
+            <option value="dateDesc">Date (newest first)</option>
+            <option value="dateAsc">Date (oldest first)</option>
+            <option value="statusAsc">Status (A-Z)</option>
+            <option value="resourceAsc">Resource name (A-Z)</option>
+            <option value="requesterAsc">Requester name (A-Z)</option>
+          </select>
+        </div>
       </div>
 
       {error && (
@@ -189,7 +238,7 @@ const AdminBookings = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4">
-          {filteredBookings.map((booking) => (
+          {sortedBookings.map((booking) => (
             <div key={booking.id} className="premium-card p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div className="space-y-1">
                 <h3 className="text-lg font-bold text-slate-900">{booking.resourceName}</h3>

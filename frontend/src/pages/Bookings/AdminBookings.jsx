@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
-import { AlertCircle, Loader2, Search } from "lucide-react";
+import { AlertCircle, Loader2, Search, Clock, CheckCircle2, XCircle } from "lucide-react";
 import bookingService from "../../services/bookingService";
 import { formatBookingSlot, getBookingStatusColor } from "../../utils/bookingUtils";
 import { getApiErrorMessage } from "../../utils/apiError";
@@ -11,8 +11,10 @@ const AdminBookings = () => {
   const [bookings, setBookings] = useState([]);
   const [statusFilter, setStatusFilter] = useState("PENDING");
   const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState("dateDesc");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [counts, setCounts] = useState({ pending: 0, approved: 0, rejected: 0 });
 
   const fetchBookings = async () => {
     setLoading(true);
@@ -27,8 +29,25 @@ const AdminBookings = () => {
     }
   };
 
+  const fetchCounts = async () => {
+    try {
+      const pendingRes = await bookingService.getAdminBookings("PENDING");
+      const approvedRes = await bookingService.getAdminBookings("APPROVED");
+      const rejectedRes = await bookingService.getAdminBookings("REJECTED");
+
+      setCounts({
+        pending: pendingRes.data?.data?.length || 0,
+        approved: approvedRes.data?.data?.length || 0,
+        rejected: rejectedRes.data?.data?.length || 0,
+      });
+    } catch (err) {
+      console.error("Failed to fetch counts:", err);
+    }
+  };
+
   useEffect(() => {
     fetchBookings();
+    fetchCounts();
   }, [statusFilter]);
 
   const handleApprove = async (bookingId) => {
@@ -79,6 +98,39 @@ const AdminBookings = () => {
       })
     : bookings;
 
+  const getBookingDateTime = (booking) => {
+    const date = booking.bookingDate || "1970-01-01";
+    const time = booking.startTime || "00:00:00";
+    return new Date(`${date}T${time}`).getTime();
+  };
+
+  const sortedBookings = [...filteredBookings].sort((a, b) => {
+    if (sortBy === "dateDesc") {
+      return getBookingDateTime(b) - getBookingDateTime(a);
+    }
+
+    if (sortBy === "dateAsc") {
+      return getBookingDateTime(a) - getBookingDateTime(b);
+    }
+
+    if (sortBy === "statusAsc") {
+      const statusCompare = (a.status || "").localeCompare(b.status || "");
+      return statusCompare !== 0 ? statusCompare : getBookingDateTime(b) - getBookingDateTime(a);
+    }
+
+    if (sortBy === "resourceAsc") {
+      const resourceCompare = (a.resourceName || "").localeCompare(b.resourceName || "");
+      return resourceCompare !== 0 ? resourceCompare : getBookingDateTime(b) - getBookingDateTime(a);
+    }
+
+    if (sortBy === "requesterAsc") {
+      const requesterCompare = (a.userName || "").localeCompare(b.userName || "");
+      return requesterCompare !== 0 ? requesterCompare : getBookingDateTime(b) - getBookingDateTime(a);
+    }
+
+    return getBookingDateTime(b) - getBookingDateTime(a);
+  });
+
   return (
     <div className="space-y-8 animate-fade-in-up">
       <div>
@@ -86,7 +138,43 @@ const AdminBookings = () => {
         <p className="text-slate-500 mt-1 font-medium text-sm">Review and process booking requests.</p>
       </div>
 
-      <div className="premium-card p-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {/* Booking Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Pending Card */}
+        <div className="premium-card p-6 border-l-4 border-l-amber-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Pending Bookings</p>
+              <h2 className="text-4xl font-bold text-amber-600 mt-2">{counts.pending}</h2>
+            </div>
+            <Clock className="w-12 h-12 text-amber-200" />
+          </div>
+        </div>
+
+        {/* Approved Card */}
+        <div className="premium-card p-6 border-l-4 border-l-green-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Approved Bookings</p>
+              <h2 className="text-4xl font-bold text-green-600 mt-2">{counts.approved}</h2>
+            </div>
+            <CheckCircle2 className="w-12 h-12 text-green-200" />
+          </div>
+        </div>
+
+        {/* Rejected Card */}
+        <div className="premium-card p-6 border-l-4 border-l-red-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Rejected Bookings</p>
+              <h2 className="text-4xl font-bold text-red-600 mt-2">{counts.rejected}</h2>
+            </div>
+            <XCircle className="w-12 h-12 text-red-200" />
+          </div>
+        </div>
+      </div>
+
+      <div className="premium-card p-4 grid grid-cols-1 lg:grid-cols-4 gap-4">
         <div className="lg:col-span-2">
           <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Search Bookings</label>
           <div className="relative mt-2">
@@ -115,6 +203,21 @@ const AdminBookings = () => {
             <option value="CANCELLED">Cancelled</option>
           </select>
         </div>
+
+        <div>
+          <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Sort By</label>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="w-full mt-2 bg-slate-50 border border-slate-100 rounded-xl px-4 py-2.5 text-sm font-medium"
+          >
+            <option value="dateDesc">Date (newest first)</option>
+            <option value="dateAsc">Date (oldest first)</option>
+            <option value="statusAsc">Status (A-Z)</option>
+            <option value="resourceAsc">Resource name (A-Z)</option>
+            <option value="requesterAsc">Requester name (A-Z)</option>
+          </select>
+        </div>
       </div>
 
       {error && (
@@ -135,7 +238,7 @@ const AdminBookings = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4">
-          {filteredBookings.map((booking) => (
+          {sortedBookings.map((booking) => (
             <div key={booking.id} className="premium-card p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div className="space-y-1">
                 <h3 className="text-lg font-bold text-slate-900">{booking.resourceName}</h3>

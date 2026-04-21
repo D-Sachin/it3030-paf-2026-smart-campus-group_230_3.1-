@@ -276,31 +276,62 @@ const TopBar = () => {
                     <div className="p-8 text-center text-slate-500 text-sm">No notifications yet.</div>
                   ) : (
                     <div className="p-2 space-y-2">
-                      {notifications.map((notification) => (
-                        <button
-                          key={notification.id}
-                          onClick={() => handleNotificationClick(notification)}
-                          className={`w-full text-left rounded-xl border p-3 transition-all ${
-                            notification.isRead
-                              ? 'bg-white border-slate-200 hover:bg-slate-100'
-                              : 'bg-primary-50 border-primary-100 hover:bg-primary-100'
-                          }`}
-                        >
-                          <div className="flex items-start gap-3">
-                            <div className={`mt-1 w-2.5 h-2.5 rounded-full ${notification.isRead ? 'bg-slate-300' : 'bg-primary-500'}`} />
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between gap-3">
-                                <p className="text-sm font-bold text-slate-900 truncate">{notification.title}</p>
-                                {!notification.isRead && <CheckCircle2 className="w-4 h-4 text-primary-500 shrink-0" />}
+                      {notifications.map((notification) => {
+                        const isApproved = notification.type === 'BOOKING_APPROVED';
+                        const isRejected = notification.type === 'BOOKING_REJECTED';
+                        
+                        let statusColor = 'primary'; // default color
+                        if (isApproved) statusColor = 'green';
+                        if (isRejected) statusColor = 'red';
+
+                        const colorClasses = {
+                          bg: {
+                            read: statusColor === 'red' ? 'bg-white' : statusColor === 'green' ? 'bg-white' : 'bg-white',
+                            unread: statusColor === 'red' ? 'bg-red-50' : statusColor === 'green' ? 'bg-green-50' : 'bg-primary-50'
+                          },
+                          border: {
+                            read: 'border-slate-200',
+                            unread: statusColor === 'red' ? 'border-red-100' : statusColor === 'green' ? 'border-green-100' : 'border-primary-100'
+                          },
+                          hover: {
+                            read: 'hover:bg-slate-100',
+                            unread: statusColor === 'red' ? 'hover:bg-red-100' : statusColor === 'green' ? 'hover:bg-green-100' : 'hover:bg-primary-100'
+                          },
+                          dot: {
+                            read: 'bg-slate-300',
+                            unread: statusColor === 'red' ? 'bg-red-500' : statusColor === 'green' ? 'bg-green-500' : 'bg-primary-500'
+                          },
+                          icon: {
+                            unread: statusColor === 'red' ? 'text-red-500' : statusColor === 'green' ? 'text-green-500' : 'text-primary-500'
+                          }
+                        };
+
+                        return (
+                          <button
+                            key={notification.id}
+                            onClick={() => handleNotificationClick(notification)}
+                            className={`w-full text-left rounded-xl border p-3 transition-all ${
+                              notification.isRead
+                                ? `${colorClasses.bg.read} ${colorClasses.border.read} ${colorClasses.hover.read}`
+                                : `${colorClasses.bg.unread} ${colorClasses.border.unread} ${colorClasses.hover.unread}`
+                            }`}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className={`mt-1 w-2.5 h-2.5 rounded-full ${notification.isRead ? colorClasses.dot.read : colorClasses.dot.unread}`} />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-3">
+                                  <p className="text-sm font-bold text-slate-900 truncate">{notification.title}</p>
+                                  {!notification.isRead && <CheckCircle2 className={`w-4 h-4 ${colorClasses.icon.unread} shrink-0`} />}
+                                </div>
+                                <p className="text-xs text-slate-600 mt-1 leading-relaxed">{notification.message}</p>
+                                <p className="text-[11px] text-slate-400 mt-2">
+                                  {notification.createdAt ? new Date(notification.createdAt).toLocaleString() : 'Just now'}
+                                </p>
                               </div>
-                              <p className="text-xs text-slate-600 mt-1 leading-relaxed">{notification.message}</p>
-                              <p className="text-[11px] text-slate-400 mt-2">
-                                {notification.createdAt ? new Date(notification.createdAt).toLocaleString() : 'Just now'}
-                              </p>
                             </div>
-                          </div>
-                        </button>
-                      ))}
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

@@ -24,6 +24,7 @@ const TicketList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [category, setCategory] = useState('');
   const [statusFilter, setStatusFilter] = useState(user.role === 'TECHNICIAN' ? 'OPEN' : '');
+  const [dateFilter, setDateFilter] = useState('today');
   const [showAssignedOnly, setShowAssignedOnly] = useState(user.role === 'TECHNICIAN');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
@@ -31,10 +32,57 @@ const TicketList = () => {
   const isTechnician = user.role === 'TECHNICIAN';
   const isStudent = user.role === 'USER';
 
+  const getDateRange = (filter) => {
+    const now = new Date();
+    const start = new Date();
+    const end = new Date();
+
+    const formatLocalISO = (date) => {
+      const pad = (num) => String(num).padStart(2, '0');
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+    };
+
+    switch (filter) {
+      case 'today':
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+        break;
+      case 'yesterday':
+        start.setDate(now.getDate() - 1);
+        start.setHours(0, 0, 0, 0);
+        end.setDate(now.getDate() - 1);
+        end.setHours(23, 59, 59, 999);
+        break;
+      case 'this_week':
+        const day = now.getDay() || 7;
+        start.setDate(now.getDate() - day + 1);
+        start.setHours(0, 0, 0, 0);
+        break;
+      case 'last_month':
+        start.setMonth(now.getMonth() - 1);
+        start.setDate(1);
+        start.setHours(0, 0, 0, 0);
+        end.setMonth(now.getMonth());
+        end.setDate(0);
+        end.setHours(23, 59, 59, 999);
+        break;
+      case 'all':
+      default:
+        return { startDate: undefined, endDate: undefined };
+    }
+
+    return {
+      startDate: formatLocalISO(start),
+      endDate: formatLocalISO(end)
+    };
+  };
+
   const fetchTickets = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
+      
+      const { startDate, endDate } = getDateRange(dateFilter);
       
       let response;
       if (user.role === 'ADMIN' || user.role === 'TECHNICIAN') {
@@ -44,11 +92,17 @@ const TicketList = () => {
           status: statusFilter,
           technicianId: (isTechnician && showAssignedOnly) ? user.id : undefined,
           sortBy: "createdAt",
-          sortDirection: "desc"
+          sortDirection: "desc",
+          startDate,
+          endDate
         });
       } else {
         // For Students/Users: Fetch their own tickets
-        response = await ticketService.getTicketsByUserId(user.id);
+        response = await ticketService.getTicketsByUserId(user.id, {
+          status: statusFilter,
+          startDate,
+          endDate
+        });
       }
       
       const data = response.data;
@@ -61,7 +115,7 @@ const TicketList = () => {
     } finally {
       setLoading(false);
     }
-  }, [user.id, user.role, searchTerm, category, statusFilter, showAssignedOnly, isTechnician]);
+  }, [user.id, user.role, searchTerm, category, statusFilter, showAssignedOnly, isTechnician, dateFilter]);
 
   useEffect(() => {
     fetchTickets();

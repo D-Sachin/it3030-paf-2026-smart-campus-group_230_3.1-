@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Trash2,
   Edit2,
@@ -21,6 +22,7 @@ import {
  * Displays a single resource in card format
  */
 const ResourceCard = ({ resource, onEdit, onDelete, canEdit }) => {
+  const navigate = useNavigate();
   const getStatusConfig = (status) => {
     switch (status) {
       case "ACTIVE":
@@ -222,6 +224,7 @@ const ResourceCard = ({ resource, onEdit, onDelete, canEdit }) => {
       ) : (
         <div className="pt-4" style={{ borderTop: "1px solid #4A5C6A" }}>
           <button
+            onClick={() => navigate(`/bookings/new?resourceId=${resource.id}`)}
             disabled={resource.status !== "ACTIVE"}
             className="w-full py-2 px-4 rounded-lg font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             style={{

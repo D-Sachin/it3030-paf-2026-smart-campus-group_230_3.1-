@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AlertCircle, ArrowLeft, Loader2, Send } from "lucide-react";
 import bookingService from "../../services/bookingService";
 import resourceService from "../../services/resourceService";
@@ -8,6 +8,7 @@ import NotificationPopup from "../../components/Shared/NotificationPopup";
 
 const CreateBooking = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fetchingResources, setFetchingResources] = useState(false);
@@ -44,6 +45,17 @@ const CreateBooking = () => {
   useEffect(() => {
     loadResources();
   }, []);
+
+  // Pre-select resource from URL query parameter
+  useEffect(() => {
+    const resourceId = searchParams.get("resourceId");
+    if (resourceId) {
+      setFormData((prev) => ({
+        ...prev,
+        resourceId: resourceId,
+      }));
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     return () => {

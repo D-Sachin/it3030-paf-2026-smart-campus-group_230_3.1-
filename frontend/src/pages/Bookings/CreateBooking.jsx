@@ -29,6 +29,8 @@ const CreateBooking = () => {
     purpose: "",
     expectedAttendees: 1,
   });
+  const [resourceSearchTerm, setResourceSearchTerm] = useState("");
+  const debounceTimerRef = useRef(null);
 
   const loadResources = async () => {
     setFetchingResources(true);
@@ -69,6 +71,17 @@ const CreateBooking = () => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
+
+  const handleResourceSearch = (e) => {
+    const value = e.target.value;
+    setResourceSearchTerm(value);
+  };
+
+  const filteredResources = resources.filter((resource) =>
+    resource.name.toLowerCase().includes(resourceSearchTerm.toLowerCase()) ||
+    resource.location.toLowerCase().includes(resourceSearchTerm.toLowerCase()) ||
+    resource.id.toString().includes(resourceSearchTerm)
+  );
 
   const validate = () => {
     if (!formData.resourceId || !formData.bookingDate || !formData.startTime || !formData.endTime || !formData.purpose) {
@@ -197,16 +210,27 @@ const CreateBooking = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-2 md:col-span-2">
               <label className="text-[10px] font-black uppercase tracking-[0.2em] ml-2" style={{ color: '#4A5C6A' }}>Target Resource</label>
+              <input
+                type="text"
+                placeholder="Search resources by name, location, or ID..."
+                value={resourceSearchTerm}
+                onChange={handleResourceSearch}
+                disabled={fetchingResources}
+                className="w-full px-5 py-3.5 rounded-2xl outline-none font-bold transition-all border appearance-none mb-2"
+                style={{ backgroundColor: '#11212D', borderColor: '#4A5C6A', color: '#CCD0CF' }}
+              />
               <select
                 name="resourceId"
                 value={formData.resourceId}
                 onChange={handleInputChange}
-                disabled={fetchingResources}
+                disabled={fetchingResources || filteredResources.length === 0}
                 className="w-full px-5 py-3.5 rounded-2xl outline-none font-bold transition-all border appearance-none"
                 style={{ backgroundColor: '#11212D', borderColor: '#4A5C6A', color: '#CCD0CF' }}
               >
-                <option value="" style={{ backgroundColor: '#06141B' }}>Select Asset</option>
-                {resources.map((resource) => (
+                <option value="" style={{ backgroundColor: '#06141B' }}>
+                  {filteredResources.length === 0 ? "No resources match your search" : "Select Asset"}
+                </option>
+                {filteredResources.map((resource) => (
                   <option key={resource.id} value={resource.id} style={{ backgroundColor: '#06141B' }}>
                     {resource.name} ({resource.location}) - Capacity {resource.capacity}
                   </option>

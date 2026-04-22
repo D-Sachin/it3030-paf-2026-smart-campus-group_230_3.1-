@@ -73,7 +73,6 @@ const TicketList = () => {
       const { startDate, endDate } = getDateRange(dateFilter);
       
       let response;
-
       if (user.role === 'ADMIN' || user.role === 'TECHNICIAN') {
         response = await ticketService.getAllTickets({
           searchTerm,
@@ -158,7 +157,7 @@ const TicketList = () => {
     TECHNICIAN: { title: 'My Work Queue',          subtitle: 'Manage and resolve assigned maintenance incidents.' },
     USER:       { title: 'My Incident Reports',    subtitle: 'Track and manage your submitted campus issues.' },
   };
-  const { title, subtitle, accent } = headerConfig[user.role] || headerConfig.USER;
+  const { title, subtitle } = headerConfig[user.role] || headerConfig.USER;
 
   return (
     <div className="space-y-8 animate-fade-in-up">

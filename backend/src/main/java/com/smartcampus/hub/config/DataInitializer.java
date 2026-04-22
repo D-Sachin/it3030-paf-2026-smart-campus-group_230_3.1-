@@ -40,6 +40,8 @@ public class DataInitializer {
                 user.setName(name);
                 user.setRole(role);
                 user.setPassword(password);
+                user.setTwoFactorSecret(null);
+                user.setTwoFactorEnabled(false);
                 userRepository.save(user);
                 LOGGER.info("Updated demo user: {}", email);
             },

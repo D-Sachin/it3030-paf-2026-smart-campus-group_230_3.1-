@@ -232,7 +232,7 @@ const CreateBooking = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] ml-2" style={{ color: '#4A5C6A' }}>Start Time</label>
+              <label className="text-[10px) font-black uppercase tracking-[0.2em] ml-2" style={{ color: '#4A5C6A' }}>Start Time</label>
               <input
                 type="time"
                 name="startTime"

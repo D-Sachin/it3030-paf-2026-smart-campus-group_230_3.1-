@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { AlertCircle, CheckCircle2, Clock3, HelpCircle, Mail, MessageSquareText, Plus, Trash2, User, X } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock3, HelpCircle, Mail, MessageSquareText, Plus, Trash2, User, X, Loader2 } from "lucide-react";
 import supportService from "../../services/supportService";
 import { useUser } from "../../context/UserContext";
 
@@ -346,7 +346,7 @@ const HelpPage = () => {
           <div className="space-y-4">
             {loadingFAQs ? (
               <div className="py-12 flex flex-col items-center gap-3">
-                <div className="w-8 h-8 border-2 border-t-transparent animate-spin rounded-full" style={{ borderColor: '#1c4f78' }}></div>
+                <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#1c4f78' }} />
                 <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#4A5C6A' }}>Loading FAQs...</p>
               </div>
             ) : faqs.length === 0 ? (
@@ -417,7 +417,7 @@ const HelpPage = () => {
 
           {loadingMessages ? (
             <div className="py-24 flex flex-col items-center gap-4">
-              <div className="w-12 h-12 border-4 border-t-transparent animate-spin rounded-full" style={{ borderColor: '#1c4f78' }}></div>
+              <Loader2 className="w-12 h-12 animate-spin" style={{ color: '#1c4f78' }} />
               <p className="font-bold uppercase tracking-widest text-sm" style={{ color: '#4A5C6A' }}>Syncing Inbox...</p>
             </div>
           ) : adminMessages.length === 0 ? (
@@ -468,7 +468,7 @@ const HelpPage = () => {
         </section>
       )}
 
-      {/* FAQ Modal Stays Mostly the Same with Styling Tweaks */}
+      {/* FAQ Modal Section */}
       {showAddFAQModal && user?.role === "ADMIN" && (
         <div
           className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-sm px-4 py-12"

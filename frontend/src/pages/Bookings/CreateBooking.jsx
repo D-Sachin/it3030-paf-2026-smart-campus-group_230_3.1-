@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AlertCircle, ArrowLeft, Loader2, Send } from "lucide-react";
 import bookingService from "../../services/bookingService";
 import resourceService from "../../services/resourceService";
 import { getApiErrorMessage } from "../../utils/apiError";
+import NotificationPopup from "../../components/Shared/NotificationPopup";
 
 const CreateBooking = () => {
   const navigate = useNavigate();
@@ -11,6 +12,13 @@ const CreateBooking = () => {
   const [loading, setLoading] = useState(false);
   const [fetchingResources, setFetchingResources] = useState(false);
   const [error, setError] = useState("");
+  const [popup, setPopup] = useState({
+    isOpen: false,
+    type: "success",
+    title: "",
+    message: "",
+  });
+  const redirectTimerRef = useRef(null);
 
   const [formData, setFormData] = useState({
     resourceId: "",
@@ -35,6 +43,14 @@ const CreateBooking = () => {
 
   useEffect(() => {
     loadResources();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (redirectTimerRef.current) {
+        window.clearTimeout(redirectTimerRef.current);
+      }
+    };
   }, []);
 
   const handleInputChange = (e) => {
@@ -79,16 +95,55 @@ const CreateBooking = () => {
       };
 
       await bookingService.createBooking(payload);
-      navigate("/bookings/my");
+      if (redirectTimerRef.current) {
+        window.clearTimeout(redirectTimerRef.current);
+      }
+      setPopup({
+        isOpen: true,
+        type: "success",
+        title: "Booking Submitted",
+        message: "Your booking request was submitted successfully. Redirecting to My Bookings...",
+      });
+      redirectTimerRef.current = window.setTimeout(() => {
+        navigate("/bookings/my");
+      }, 2000);
     } catch (err) {
-      setError(getApiErrorMessage(err, "Failed to create booking."));
+      if (redirectTimerRef.current) {
+        window.clearTimeout(redirectTimerRef.current);
+        redirectTimerRef.current = null;
+      }
+      setPopup({
+        isOpen: true,
+        type: "error",
+        title: "Booking Failed",
+        message: getApiErrorMessage(err, "Failed to create booking."),
+      });
     } finally {
       setLoading(false);
     }
   };
 
+  const closePopup = () => {
+    if (redirectTimerRef.current) {
+      window.clearTimeout(redirectTimerRef.current);
+      redirectTimerRef.current = null;
+    }
+    setPopup((prev) => ({ ...prev, isOpen: false }));
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-fade-in-up">
+      <NotificationPopup
+        isOpen={popup.isOpen}
+        type={popup.type}
+        title={popup.title}
+        message={popup.message}
+        onClose={closePopup}
+        autoDismissMs={2000}
+        showProgressBar
+        showCountdown={popup.type === "success"}
+      />
+
       <div className="flex items-center justify-between">
         <Link 
           to="/bookings/my" 

@@ -6,6 +6,16 @@ import { X, Save, Box, MapPin, Users, Clock, LayoutGrid, Loader2 } from "lucide-
  * Form for creating and editing resources
  */
 const ResourceForm = ({ resource, onSubmit, onCancel, isLoading }) => {
+  const normalizeTimeForInput = (value) => {
+    if (!value) return "";
+    return String(value).slice(0, 5);
+  };
+
+  const normalizeTimeForApi = (value) => {
+    if (!value) return null;
+    return value.length === 5 ? `${value}:00` : value;
+  };
+
   const [formData, setFormData] = useState({
     name: "",
     type: "LECTURE_HALL",
@@ -28,8 +38,8 @@ const ResourceForm = ({ resource, onSubmit, onCancel, isLoading }) => {
         location: resource.location || "",
         description: resource.description || "",
         status: resource.status || "ACTIVE",
-        availableFrom: resource.availableFrom || "",
-        availableTo: resource.availableTo || "",
+        availableFrom: normalizeTimeForInput(resource.availableFrom),
+        availableTo: normalizeTimeForInput(resource.availableTo),
       });
     }
   }, [resource]);
@@ -51,6 +61,7 @@ const ResourceForm = ({ resource, onSubmit, onCancel, isLoading }) => {
     if (!formData.name.trim()) newErrors.name = "Resource name is required";
     if (!formData.location.trim()) newErrors.location = "Location is required";
     if (formData.capacity < 1) newErrors.capacity = "Min capacity is 1";
+    if (formData.capacity > 500) newErrors.capacity = "Max capacity is 500";
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -60,14 +71,20 @@ const ResourceForm = ({ resource, onSubmit, onCancel, isLoading }) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "capacity" ? parseInt(value) || 0 : value,
+      [name]: name === "capacity"
+        ? Math.max(0, Math.min(500, parseInt(value, 10) || 0))
+        : value,
     }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validateForm()) {
-      onSubmit(formData);
+      onSubmit({
+        ...formData,
+        availableFrom: normalizeTimeForApi(formData.availableFrom),
+        availableTo: normalizeTimeForApi(formData.availableTo),
+      });
     }
   };
 
@@ -153,6 +170,8 @@ const ResourceForm = ({ resource, onSubmit, onCancel, isLoading }) => {
                 <input
                   type="number"
                   name="capacity"
+                  min="1"
+                  max="500"
                   value={formData.capacity}
                   onChange={handleChange}
                   disabled={isLoading}
@@ -163,6 +182,9 @@ const ResourceForm = ({ resource, onSubmit, onCancel, isLoading }) => {
                     color: '#CCD0CF' 
                   }}
                 />
+                {!errors.capacity && (
+                  <p className="text-[10px] text-slate-400 font-bold uppercase">Range: 1-500</p>
+                )}
               </div>
             </div>
 

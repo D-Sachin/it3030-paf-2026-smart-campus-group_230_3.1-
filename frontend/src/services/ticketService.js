@@ -28,7 +28,7 @@ const ticketService = {
     return apiClient.get(`/users/role/${role}`);
   },
 
-  // GET tickets by User ID (for Students)
+  // GET tickets by User ID (for Students) with filtering
   getTicketsByUserId: (userId, params = {}) => {
     return apiClient.get(`${TICKETS_PATH}/user/${userId}`, {
       params: {

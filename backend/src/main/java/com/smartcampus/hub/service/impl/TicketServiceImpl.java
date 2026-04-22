@@ -449,7 +449,7 @@ public class TicketServiceImpl implements TicketService {
                 predicates.add(cb.equal(root.get("user").get("id"), userId));
             }
             if (technicianId != null) {
-                predicates.add(cb.equal(root.join("technician").get("id"), technicianId));
+                predicates.add(cb.equal(root.get("technician").get("id"), technicianId));
             }
             if (status != null) {
                 predicates.add(cb.equal(root.get("status"), status));
@@ -460,18 +460,18 @@ public class TicketServiceImpl implements TicketService {
             if (category != null && !category.isEmpty()) {
                 predicates.add(cb.equal(root.get("category"), category));
             }
+            if (startDate != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), startDate));
+            }
+            if (endDate != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), endDate));
+            }
             if (searchTerm != null && !searchTerm.trim().isEmpty()) {
                 String searchPattern = "%" + searchTerm.toLowerCase() + "%";
                 Predicate titleSearch = cb.like(cb.lower(root.get("title")), searchPattern);
                 Predicate descSearch = cb.like(cb.lower(root.get("description")), searchPattern);
                 Predicate locSearch = cb.like(cb.lower(root.get("resourceLocation")), searchPattern);
                 predicates.add(cb.or(titleSearch, descSearch, locSearch));
-            }
-            if (startDate != null) {
-                predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), startDate));
-            }
-            if (endDate != null) {
-                predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), endDate));
             }
             return cb.and(predicates.toArray(new Predicate[0]));
         };

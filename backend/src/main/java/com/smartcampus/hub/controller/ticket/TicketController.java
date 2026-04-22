@@ -43,7 +43,6 @@ public class TicketController {
             @RequestParam(required = false) Long technicianId,
             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime startDate,
             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime endDate) {
-        System.out.println("DEBUG: getAllTickets - status: " + status + ", category: " + category + ", searchTerm: " + searchTerm + ", startDate: " + startDate + ", endDate: " + endDate);
         List<TicketResponseDTO> tickets = ticketService.getAllTickets(status, priority, category, searchTerm, technicianId, startDate, endDate);
         return ResponseEntity.ok(tickets);
     }
@@ -61,7 +60,6 @@ public class TicketController {
             @RequestParam(required = false) String searchTerm,
             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime startDate,
             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime endDate) {
-        System.out.println("DEBUG: getTicketsByUserId - userId: " + userId + ", status: " + status + ", category: " + category + ", searchTerm: " + searchTerm + ", startDate: " + startDate + ", endDate: " + endDate);
         List<TicketResponseDTO> tickets = ticketService.getTicketsByUserId(userId, status, priority, category, searchTerm, startDate, endDate);
         return ResponseEntity.ok(tickets);
     }

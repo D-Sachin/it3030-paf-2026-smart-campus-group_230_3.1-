@@ -136,8 +136,8 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     @Transactional(readOnly = true)
     public Page<ResourceResponseDTO> advancedSearch(
-            ResourceType type,
-            ResourceStatus status,
+            String type,
+            String status,
             String location,
             Integer minCapacity,
             Integer maxCapacity,
@@ -149,6 +149,12 @@ public class ResourceServiceImpl implements ResourceService {
             logger.warn("Invalid capacity range: minCapacity={}, maxCapacity={}", minCapacity, maxCapacity);
             throw new IllegalArgumentException("minCapacity cannot be greater than maxCapacity");
         }
+        
+        // Convert empty strings to null for optional filters
+        type = (type != null && type.isEmpty()) ? null : type;
+        status = (status != null && status.isEmpty()) ? null : status;
+        location = (location != null && location.isEmpty()) ? null : location;
+        term = (term != null && term.isEmpty()) ? null : term;
         
         logger.info("Advanced search: type={}, status={}, location={}, minCapacity={}, maxCapacity={}, term={}",
                 type, status, location, minCapacity, maxCapacity, term);

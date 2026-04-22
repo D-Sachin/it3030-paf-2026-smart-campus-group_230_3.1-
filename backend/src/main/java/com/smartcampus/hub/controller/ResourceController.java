@@ -138,13 +138,8 @@ public class ResourceController {
             @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
         
         try {
-            // Convert empty strings to null for optional enums
-            ResourceType resourceType = (type == null || type.isEmpty()) ? null : ResourceType.valueOf(type);
-            ResourceStatus resourceStatus = (status == null || status.isEmpty()) ? null : ResourceStatus.valueOf(status);
-            location = (location != null && location.isEmpty()) ? null : location;
-            
             Page<ResourceResponseDTO> page = resourceService.advancedSearch(
-                    resourceType, resourceStatus, location, minCapacity, maxCapacity, term, pageable);
+                    type, status, location, minCapacity, maxCapacity, term, pageable);
             Map<String, Object> paginationMap = new HashMap<>();
             paginationMap.put("currentPage", page.getNumber());
             paginationMap.put("totalPages", page.getTotalPages());

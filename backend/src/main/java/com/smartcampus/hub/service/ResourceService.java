@@ -89,8 +89,8 @@ public interface ResourceService {
     Page<ResourceResponseDTO> filterByStatus(ResourceStatus status, Pageable pageable);
 
     Page<ResourceResponseDTO> advancedSearch(
-            ResourceType type,
-            ResourceStatus status,
+            String type,
+            String status,
             String location,
             Integer minCapacity,
             Integer maxCapacity,

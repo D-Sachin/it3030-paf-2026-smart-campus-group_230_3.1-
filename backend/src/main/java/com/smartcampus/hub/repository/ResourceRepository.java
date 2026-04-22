@@ -71,7 +71,8 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
      * @param pageable Pagination details
      * @return Page of resources matching search term
      */
-    @Query("SELECT r FROM Resource r WHERE LOWER(CAST(r.name AS string)) LIKE LOWER(CONCAT('%', CAST(:term AS string), '%'))")
+    @Query(value = "SELECT r.* FROM resources r WHERE LOWER(r.name) LIKE LOWER(CONCAT('%', :term, '%')) ORDER BY r.id DESC", 
+           nativeQuery = true)
     Page<Resource> searchByName(@Param("term") String term, Pageable pageable);
 
     /**
@@ -86,16 +87,18 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
      * @param pageable Pagination details
      * @return Page of resources matching all applied filters
      */
-    @Query("SELECT r FROM Resource r WHERE " +
-            "(:type IS NULL OR r.type = :type) AND " +
-            "(:status IS NULL OR r.status = :status) AND " +
-            "(:location IS NULL OR LOWER(CAST(r.location AS string)) LIKE LOWER(CONCAT('%', CAST(:location AS string), '%'))) AND " +
+    @Query(value = "SELECT r.* FROM resources r WHERE " +
+            "(:type IS NULL OR r.type = CAST(:type AS VARCHAR)) AND " +
+            "(:status IS NULL OR r.status = CAST(:status AS VARCHAR)) AND " +
+            "(:location IS NULL OR LOWER(r.location) LIKE LOWER(CONCAT('%', :location, '%'))) AND " +
             "(:minCapacity IS NULL OR r.capacity >= :minCapacity) AND " +
             "(:maxCapacity IS NULL OR r.capacity <= :maxCapacity) AND " +
-            "(:term IS NULL OR LOWER(CAST(r.name AS string)) LIKE LOWER(CONCAT('%', CAST(:term AS string), '%')))")
+            "(:term IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', :term, '%'))) " +
+            "ORDER BY r.id DESC",
+            nativeQuery = true)
     Page<Resource> advancedSearch(
-            @Param("type") ResourceType type,
-            @Param("status") ResourceStatus status,
+            @Param("type") String type,
+            @Param("status") String status,
             @Param("location") String location,
             @Param("minCapacity") Integer minCapacity,
             @Param("maxCapacity") Integer maxCapacity,
@@ -108,6 +111,7 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
      * @param prefix Location prefix to search
      * @return List of distinct locations matching prefix
      */
-    @Query("SELECT DISTINCT r.location FROM Resource r WHERE LOWER(CAST(r.location AS string)) LIKE LOWER(CONCAT(CAST(:prefix AS string), '%'))")
+    @Query(value = "SELECT DISTINCT r.location FROM resources r WHERE LOWER(r.location) LIKE LOWER(CONCAT(:prefix, '%')) ORDER BY r.location",
+           nativeQuery = true)
     List<String> findLocationsByPrefix(@Param("prefix") String prefix);
 }

@@ -118,8 +118,8 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<TicketResponseDTO> getAllTickets(TicketStatus status, Priority priority, String category, String searchTerm, Long technicianId) {
-        Specification<Ticket> spec = getTicketSpecification(null, technicianId, status, priority, category, searchTerm);
+    public List<TicketResponseDTO> getAllTickets(TicketStatus status, Priority priority, String category, String searchTerm, Long technicianId, LocalDateTime startDate, LocalDateTime endDate) {
+        Specification<Ticket> spec = getTicketSpecification(null, technicianId, status, priority, category, searchTerm, startDate, endDate);
         org.springframework.data.domain.Sort sort = org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt");
         return ticketRepository.findAll(spec, sort).stream()
                 .map(this::mapToResponseDTO)
@@ -136,8 +136,8 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<TicketResponseDTO> getTicketsByUserId(Long userId, TicketStatus status, Priority priority) {
-        Specification<Ticket> spec = getTicketSpecification(userId, null, status, priority, null, null);
+    public List<TicketResponseDTO> getTicketsByUserId(Long userId, TicketStatus status, Priority priority, String category, String searchTerm, LocalDateTime startDate, LocalDateTime endDate) {
+        Specification<Ticket> spec = getTicketSpecification(userId, null, status, priority, category, searchTerm, startDate, endDate);
         org.springframework.data.domain.Sort sort = org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt");
         return ticketRepository.findAll(spec, sort).stream()
                 .map(this::mapToResponseDTO)
@@ -442,14 +442,14 @@ public class TicketServiceImpl implements TicketService {
         return mapToResponseDTO(updatedTicket);
     }
 
-    private Specification<Ticket> getTicketSpecification(Long userId, Long technicianId, TicketStatus status, Priority priority, String category, String searchTerm) {
+    private Specification<Ticket> getTicketSpecification(Long userId, Long technicianId, TicketStatus status, Priority priority, String category, String searchTerm, LocalDateTime startDate, LocalDateTime endDate) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (userId != null) {
                 predicates.add(cb.equal(root.get("user").get("id"), userId));
             }
             if (technicianId != null) {
-                predicates.add(cb.equal(root.join("technician").get("id"), technicianId));
+                predicates.add(cb.equal(root.get("technician").get("id"), technicianId));
             }
             if (status != null) {
                 predicates.add(cb.equal(root.get("status"), status));
@@ -459,6 +459,12 @@ public class TicketServiceImpl implements TicketService {
             }
             if (category != null && !category.isEmpty()) {
                 predicates.add(cb.equal(root.get("category"), category));
+            }
+            if (startDate != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), startDate));
+            }
+            if (endDate != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), endDate));
             }
             if (searchTerm != null && !searchTerm.trim().isEmpty()) {
                 String searchPattern = "%" + searchTerm.toLowerCase() + "%";

@@ -1,8 +1,3 @@
-<<<<<<< HEAD
-import React, { useState } from 'react';
-import { Bell, Search, User, ChevronDown } from 'lucide-react';
-import { useUser } from '../../context/UserContext';
-=======
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Bell, Search, User, ChevronDown, Clock3, Loader2, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -44,22 +39,23 @@ const getStudentApprovalPopupShownMap = () => {
 const saveStudentApprovalPopupShownMap = (map) => {
   localStorage.setItem(STUDENT_APPROVAL_POPUP_STORAGE_KEY, JSON.stringify(map));
 };
->>>>>>> origin/oshada
 
 const TopBar = () => {
   const { user, logout } = useUser();
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [notificationLoading, setNotificationLoading] = useState(false);
   const [notificationError, setNotificationError] = useState("");
-  const [unreadCount, setUnreadCount] = useState(0);
+  
   const [approvalPopupQueue, setApprovalPopupQueue] = useState([]);
   const [activeApprovalPopup, setActiveApprovalPopup] = useState(null);
+  
   const approvalQueueRef = useRef([]);
   const activeApprovalRef = useRef(null);
   const approvalRedirectTimerRef = useRef(null);
-  const navigate = useNavigate();
 
   if (!user) return null;
 
@@ -72,25 +68,7 @@ const TopBar = () => {
 
   const initials = getInitials(user.name);
 
-<<<<<<< HEAD
   const avatarBg = user.role === 'ADMIN' ? '#1c4f78' : user.role === 'TECHNICIAN' ? '#b45309' : '#15803d';
-
-  return (
-    <header
-      className="h-[72px] sticky top-0 z-40 px-8 flex items-center justify-between backdrop-blur-md"
-      style={{ backgroundColor: 'rgba(6, 20, 27, 0.92)', borderBottom: '1px solid #253745' }}
-    >
-      {/* Search Bar */}
-      <div className="flex-1 max-w-md">
-        <div className="relative group">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#9BA8AB' }} />
-          <input
-            type="text"
-            placeholder="Search for resources, tickets..."
-            className="w-full rounded-xl py-2.5 pl-10 pr-4 text-sm outline-none transition-all"
-            style={{ backgroundColor: '#11212D', border: '1px solid #253745', color: '#CCD0CF' }}
-          />
-=======
   const canUseNotifications = ['ADMIN', 'USER'].includes(user?.role);
   const isAdmin = user?.role === 'ADMIN';
   const isStudent = user?.role === 'USER';
@@ -343,7 +321,7 @@ const TopBar = () => {
 
     approvalRedirectTimerRef.current = window.setTimeout(() => {
       handleApprovalPopupClose();
-    }, 2000);
+    }, 5000);
 
     return () => {
       if (approvalRedirectTimerRef.current) {
@@ -355,265 +333,182 @@ const TopBar = () => {
 
   return (
     <>
-      <header className="h-[72px] bg-gradient-to-r from-primary-700 to-primary-600 dark:from-primary-800 dark:to-primary-700 border-b border-primary-500/40 dark:border-primary-600/60 shadow-sm sticky top-0 z-40 px-8 flex items-center justify-between">
+      <header
+        className="h-[72px] sticky top-0 z-40 px-8 flex items-center justify-between backdrop-blur-md"
+        style={{ backgroundColor: 'rgba(6, 20, 27, 0.92)', borderBottom: '1px solid #253745' }}
+      >
         {/* Search Bar */}
         <div className="flex-1 max-w-md">
           <div className="relative group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/70 group-focus-within:text-white transition-colors" />
-            <input 
-              type="text" 
-              placeholder="Search for resources, tickets..." 
-              className="w-full bg-white/15 border border-white/25 rounded-xl py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-white/70 focus:ring-2 focus:ring-white/35 focus:border-white/50 outline-none transition-all"
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#9BA8AB' }} />
+            <input
+              type="text"
+              placeholder="Search for resources, tickets..."
+              className="w-full rounded-xl py-2.5 pl-10 pr-4 text-sm outline-none transition-all"
+              style={{ backgroundColor: '#11212D', border: '1px solid #253745', color: '#CCD0CF' }}
             />
           </div>
->>>>>>> origin/oshada
         </div>
 
-<<<<<<< HEAD
-      {/* Right Actions */}
-      <div className="flex items-center gap-4">
-
-        <button
-          className="p-2.5 rounded-xl relative group transition-all"
-          style={{ color: '#9BA8AB' }}
-        >
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full" style={{ border: '2px solid #06141B' }}></span>
-        </button>
-
-        <div className="h-8 w-[1px]" style={{ backgroundColor: '#253745' }}></div>
-
-        {/* User Profile */}
-        <div className="relative">
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="flex items-center gap-3 p-1.5 pr-3 rounded-xl transition-all"
-            style={isMenuOpen
-              ? { backgroundColor: '#253745', border: '1px solid #4A5C6A' }
-              : { border: '1px solid transparent' }}
-=======
         {/* Right Actions */}
         <div className="flex items-center gap-4">
-        <ThemeToggle className="border-white/30 bg-white/15 text-white hover:bg-white/25 hover:border-white/40 dark:border-white/30 dark:bg-white/15 dark:text-white dark:hover:bg-white/25 dark:hover:border-white/40" />
-
-        <div className="relative">
           <button
             onClick={handleNotificationToggle}
-            className="p-2.5 rounded-xl text-white/85 hover:bg-white/15 relative group transition-all border border-transparent hover:border-white/30"
+            className="p-2.5 rounded-xl relative group transition-all"
+            style={{ 
+              color: isNotificationOpen ? '#CCD0CF' : '#9BA8AB',
+              backgroundColor: isNotificationOpen ? '#253745' : 'transparent',
+              border: isNotificationOpen ? '1px solid #4A5C6A' : '1px solid transparent'
+            }}
           >
             <Bell className="w-5 h-5" />
-            {canUseNotifications && unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center border-2 border-primary-700">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
+            {unreadCount > 0 && (
+              <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full" style={{ border: '2px solid #06141B' }}></span>
+            )}
+            
+            {/* Notification Dropdown */}
+            {isNotificationOpen && (
+              <div 
+                className="absolute right-0 mt-3 w-[400px] rounded-2xl shadow-xl z-50 overflow-hidden text-left" 
+                onClick={e => e.stopPropagation()}
+                style={{ backgroundColor: '#11212D', border: '1px solid #253745' }}
+              >
+                <div className="p-4 flex items-center justify-between" style={{ backgroundColor: '#06141B', borderBottom: '1px solid #253745' }}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: '#CCD0CF' }}>Notifications</span>
+                    {unreadCount > 0 && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500 text-white">
+                        {unreadCount} NEW
+                      </span>
+                    )}
+                  </div>
+                  <button 
+                    onClick={handleMarkAllAsRead}
+                    className="text-[10px] font-black uppercase tracking-widest hover:opacity-80 transition-opacity"
+                    style={{ color: '#1c4f78' }}
+                  >
+                    Mark all read
+                  </button>
+                </div>
+                
+                <div className="max-h-[480px] overflow-y-auto custom-scrollbar">
+                  {notificationLoading && notifications.length === 0 ? (
+                    <div className="p-12 flex flex-col items-center justify-center gap-4">
+                      <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#1c4f78' }} />
+                      <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#4A5C6A' }}>Syncing alerts...</p>
+                    </div>
+                  ) : notifications.length === 0 ? (
+                    <div className="p-12 text-center">
+                      <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: '#06141B' }}>
+                        <Bell className="w-6 h-6" style={{ color: '#253745' }} />
+                      </div>
+                      <p className="text-xs font-bold" style={{ color: '#4A5C6A' }}>No alerts found in the ledger.</p>
+                    </div>
+                  ) : (
+                    <div className="divide-y" style={{ divideColor: '#253745' }}>
+                      {notifications.map((n) => (
+                        <div 
+                          key={n.id} 
+                          onClick={() => handleNotificationClick(n)}
+                          className="p-4 transition-all hover:bg-[#253745] cursor-pointer group"
+                        >
+                          <div className="flex gap-4">
+                            <div className="mt-1">
+                              {!n.isRead ? (
+                                <div className="w-2 h-2 rounded-full bg-[#1c4f78]" />
+                              ) : (
+                                <div className="w-2 h-2 rounded-full border border-[#4A5C6A]" />
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <p className={`text-sm ${!n.isRead ? 'font-black' : 'font-medium'}`} style={{ color: '#CCD0CF' }}>{n.title}</p>
+                              <p className="text-xs mt-1 leading-relaxed" style={{ color: '#9BA8AB' }}>{n.message}</p>
+                              <div className="flex items-center gap-2 mt-2">
+                                <Clock3 className="w-3 h-3" style={{ color: '#4A5C6A' }} />
+                                <span className="text-[10px] font-bold" style={{ color: '#4A5C6A' }}>
+                                  {new Date(n.createdAt).toLocaleDateString()}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
           </button>
 
-          {isNotificationOpen && (
-            <>
-              <div className="fixed inset-0 z-10" onClick={() => setIsNotificationOpen(false)}></div>
-              <div className="absolute right-0 mt-3 w-96 bg-slate-50/95 border border-slate-200 rounded-2xl shadow-xl shadow-slate-900/20 z-20 overflow-hidden animate-scale-in">
-                <div className="p-4 bg-white/80 border-b border-slate-200 flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                      <Clock3 className="w-3.5 h-3.5" /> Notifications
-                    </p>
-                    <p className="text-sm font-bold text-slate-900 mt-1">{isAdmin ? 'Admin Updates' : 'My Booking Updates'}</p>
-                  </div>
-                  {notifications.some((item) => !item.isRead) && (
-                    <button
-                      onClick={handleMarkAllAsRead}
-                      className="text-xs font-bold text-primary-600 hover:text-primary-700"
-                    >
-                      Mark all as read
-                    </button>
-                  )}
-                </div>
+          <div className="h-8 w-[1px]" style={{ backgroundColor: '#253745' }}></div>
 
-                <div className="max-h-96 overflow-y-auto">
-                  {notificationLoading ? (
-                    <div className="p-8 flex flex-col items-center justify-center text-slate-500">
-                      <Loader2 className="w-6 h-6 animate-spin text-primary-600" />
-                      <p className="text-sm mt-2">Loading notifications...</p>
-                    </div>
-                  ) : notificationError ? (
-                    <div className="p-4 text-sm text-red-600 bg-red-50">{notificationError}</div>
-                  ) : notifications.length === 0 ? (
-                    <div className="p-8 text-center text-slate-500 text-sm">No notifications yet.</div>
-                  ) : (
-                    <div className="p-2 space-y-2">
-                      {notifications.map((notification) => {
-                        const isApproved = notification.type === 'BOOKING_APPROVED';
-                        const isRejected = notification.type === 'BOOKING_REJECTED';
-                        
-                        let statusColor = 'primary'; // default color
-                        if (isApproved) statusColor = 'green';
-                        if (isRejected) statusColor = 'red';
-
-                        const colorClasses = {
-                          bg: {
-                            read: statusColor === 'red' ? 'bg-white' : statusColor === 'green' ? 'bg-white' : 'bg-white',
-                            unread: statusColor === 'red' ? 'bg-red-50' : statusColor === 'green' ? 'bg-green-50' : 'bg-primary-50'
-                          },
-                          border: {
-                            read: 'border-slate-200',
-                            unread: statusColor === 'red' ? 'border-red-100' : statusColor === 'green' ? 'border-green-100' : 'border-primary-100'
-                          },
-                          hover: {
-                            read: 'hover:bg-slate-100',
-                            unread: statusColor === 'red' ? 'hover:bg-red-100' : statusColor === 'green' ? 'hover:bg-green-100' : 'hover:bg-primary-100'
-                          },
-                          dot: {
-                            read: 'bg-slate-300',
-                            unread: statusColor === 'red' ? 'bg-red-500' : statusColor === 'green' ? 'bg-green-500' : 'bg-primary-500'
-                          },
-                          icon: {
-                            unread: statusColor === 'red' ? 'text-red-500' : statusColor === 'green' ? 'text-green-500' : 'text-primary-500'
-                          }
-                        };
-
-                        return (
-                          <button
-                            key={notification.id}
-                            onClick={() => handleNotificationClick(notification)}
-                            className={`w-full text-left rounded-xl border p-3 transition-all ${
-                              notification.isRead
-                                ? `${colorClasses.bg.read} ${colorClasses.border.read} ${colorClasses.hover.read}`
-                                : `${colorClasses.bg.unread} ${colorClasses.border.unread} ${colorClasses.hover.unread}`
-                            }`}
-                          >
-                            <div className="flex items-start gap-3">
-                              <div className={`mt-1 w-2.5 h-2.5 rounded-full ${notification.isRead ? colorClasses.dot.read : colorClasses.dot.unread}`} />
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between gap-3">
-                                  <p className="text-sm font-bold text-slate-900 truncate">{notification.title}</p>
-                                  {!notification.isRead && <CheckCircle2 className={`w-4 h-4 ${colorClasses.icon.unread} shrink-0`} />}
-                                </div>
-                                <p className="text-xs text-slate-600 mt-1 leading-relaxed">{notification.message}</p>
-                                <p className="text-[11px] text-slate-400 mt-2">
-                                  {notification.createdAt ? new Date(notification.createdAt).toLocaleString() : 'Just now'}
-                                </p>
-                              </div>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-
-        <div className="h-8 w-[1px] bg-white/30 mx-2"></div>
-
-        {/* User Profile */}
-        <div className="relative">
-          <button 
-            onClick={() => {
-              setIsMenuOpen(!isMenuOpen);
-              setIsNotificationOpen(false);
-            }}
-            className={`flex items-center gap-3 p-1.5 pr-3 rounded-xl transition-all border ${
-              isMenuOpen ? 'bg-white/20 border-white/35 shadow-sm' : 'border-transparent hover:bg-white/15 hover:border-white/30'
-            }`}
->>>>>>> origin/oshada
-          >
-            <div
-              className="w-9 h-9 rounded-lg flex items-center justify-center font-bold text-sm shadow-sm"
-              style={{ backgroundColor: avatarBg, color: '#CCD0CF' }}
+          {/* User Profile */}
+          <div className="relative">
+            <button
+              onClick={() => { setIsMenuOpen(!isMenuOpen); setIsNotificationOpen(false); }}
+              className="flex items-center gap-3 p-1.5 pr-3 rounded-xl transition-all"
+              style={isMenuOpen
+                ? { backgroundColor: '#253745', border: '1px solid #4A5C6A' }
+                : { border: '1px solid transparent' }}
             >
-              {initials}
-            </div>
-            <div className="text-left hidden sm:block">
-<<<<<<< HEAD
-              <p className="text-sm font-semibold leading-none" style={{ color: '#CCD0CF' }}>{user.name}</p>
-              <p className="text-[10px] font-bold mt-1 uppercase tracking-wider" style={{ color: '#9BA8AB' }}>{user.role}</p>
-            </div>
-            <ChevronDown className={`w-4 h-4 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`} style={{ color: '#9BA8AB' }} />
-=======
-              <p className="text-sm font-semibold text-white leading-none">{user.name}</p>
-              <p className="text-[10px] font-bold text-white/70 mt-1 uppercase tracking-wider">{user.role}</p>
-            </div>
-            <ChevronDown className={`w-4 h-4 text-white/70 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`} />
->>>>>>> origin/oshada
-          </button>
-
-          {/* Dropdown Menu */}
-          {isMenuOpen && (
-            <>
-<<<<<<< HEAD
-              <div className="fixed inset-0 z-10" onClick={() => setIsMenuOpen(false)}></div>
               <div
-                className="absolute right-0 mt-3 w-56 rounded-2xl shadow-xl z-20 overflow-hidden"
-                style={{ backgroundColor: '#11212D', border: '1px solid #253745' }}
+                className="w-9 h-9 rounded-lg flex items-center justify-center font-bold text-sm shadow-sm"
+                style={{ backgroundColor: avatarBg, color: '#CCD0CF' }}
               >
-                <div className="p-4" style={{ backgroundColor: '#06141B', borderBottom: '1px solid #253745' }}>
-                  <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#4A5C6A' }}>Signed in as</p>
-                  <p className="text-xs font-bold truncate mt-1" style={{ color: '#CCD0CF' }}>{user.email}</p>
-                </div>
-                <div className="p-2">
-                  <button
-                    className="w-full flex items-center gap-3 p-3 rounded-xl text-sm font-medium transition-all"
-                    style={{ color: '#9BA8AB' }}
-                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#253745'}
-                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                  >
-                    <User className="w-4 h-4" />
-                    My Profile
-                  </button>
-                  <button
-                    onClick={() => { logout(); setIsMenuOpen(false); }}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl text-sm font-bold transition-all mt-1"
-                    style={{ color: '#ef4444' }}
-                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.1)'}
-                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-=======
-              <div 
-                className="fixed inset-0 z-10" 
-                onClick={() => setIsMenuOpen(false)}
-              ></div>
-              <div className="absolute right-0 mt-3 w-56 bg-slate-50/95 dark:bg-slate-200 border border-slate-200 dark:border-slate-300 rounded-2xl shadow-xl shadow-slate-900/20 z-20 overflow-hidden animate-scale-in">
-                <div className="p-4 bg-white/70 dark:bg-slate-100 border-b border-slate-100 dark:border-slate-300">
-                  <p className="text-[10px] font-bold text-slate-500 dark:text-slate-700 uppercase tracking-widest">Signed in as</p>
-                  <p className="text-xs font-bold text-slate-900 truncate mt-1">{user.email}</p>
-                </div>
-                <div className="p-2">
-                  <button className="w-full flex items-center gap-3 p-3 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-800 hover:bg-slate-100 dark:hover:bg-slate-100 transition-all">
-                    <User className="w-4 h-4 text-slate-500 dark:text-slate-700" />
-                    My Profile
-                  </button>
-                  <button 
-                    onClick={() => {
-                      logout();
-                      setIsMenuOpen(false);
-                    }}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-100 transition-all mt-1"
->>>>>>> origin/oshada
-                  >
-                    Logout
-                  </button>
-                </div>
+                {initials}
               </div>
-            </>
-          )}
-        </div>
+              <div className="text-left hidden sm:block">
+                <p className="text-sm font-semibold leading-none" style={{ color: '#CCD0CF' }}>{user.name}</p>
+                <p className="text-[10px] font-bold mt-1 uppercase tracking-wider" style={{ color: '#9BA8AB' }}>{user.role}</p>
+              </div>
+              <ChevronDown className={`w-4 h-4 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`} style={{ color: '#9BA8AB' }} />
+            </button>
+
+            {/* Dropdown Menu */}
+            {isMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setIsMenuOpen(false)}></div>
+                <div
+                  className="absolute right-0 mt-3 w-56 rounded-2xl shadow-xl z-20 overflow-hidden"
+                  style={{ backgroundColor: '#11212D', border: '1px solid #253745' }}
+                >
+                  <div className="p-4" style={{ backgroundColor: '#06141B', borderBottom: '1px solid #253745' }}>
+                    <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#4A5C6A' }}>Signed in as</p>
+                    <p className="text-xs font-bold truncate mt-1" style={{ color: '#CCD0CF' }}>{user.email}</p>
+                  </div>
+                  <div className="p-2">
+                    <button
+                      className="w-full flex items-center gap-3 p-3 rounded-xl text-sm font-medium transition-all"
+                      style={{ color: '#9BA8AB' }}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = '#253745'}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                      onClick={() => { navigate('/profile'); setIsMenuOpen(false); }}
+                    >
+                      <User className="w-4 h-4" />
+                      My Profile
+                    </button>
+                    <button
+                      onClick={() => { logout(); setIsMenuOpen(false); }}
+                      className="w-full flex items-center gap-3 p-3 rounded-xl text-sm font-bold transition-all mt-1"
+                      style={{ color: '#ef4444' }}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.1)'}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </header>
-
-      {isStudent && activeApprovalPopup && (
-        <NotificationPopup
-          isOpen={Boolean(activeApprovalPopup)}
-          type="success"
-          title="Booking Approved"
-          message={activeApprovalPopup.message}
-          onClose={handleApprovalPopupClose}
-          autoDismissMs={2000}
-          showProgressBar
-          showCountdown
-        />
-      )}
+      
+      {/* Student Approval Popup */}
+      <NotificationPopup 
+        notification={activeApprovalPopup}
+        onClose={handleApprovalPopupClose}
+      />
     </>
   );
 };

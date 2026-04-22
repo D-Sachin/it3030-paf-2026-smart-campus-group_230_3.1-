@@ -17,6 +17,8 @@ const ticketService = {
         category: params.category,
         searchTerm: params.searchTerm,
         technicianId: params.technicianId,
+        startDate: params.startDate,
+        endDate: params.endDate,
       },
     });
   },
@@ -26,9 +28,18 @@ const ticketService = {
     return apiClient.get(`/users/role/${role}`);
   },
 
-  // GET tickets by User ID (for Students)
-  getTicketsByUserId: (userId) => {
-    return apiClient.get(`${TICKETS_PATH}/user/${userId}`);
+  // GET tickets by User ID (for Students) with filtering
+  getTicketsByUserId: (userId, params = {}) => {
+    return apiClient.get(`${TICKETS_PATH}/user/${userId}`, {
+      params: {
+        status: params.status,
+        priority: params.priority,
+        category: params.category,
+        searchTerm: params.searchTerm,
+        startDate: params.startDate,
+        endDate: params.endDate,
+      }
+    });
   },
 
   // GET ticket by ID

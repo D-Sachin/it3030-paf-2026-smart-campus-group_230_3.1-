@@ -437,7 +437,7 @@ public class TicketServiceImpl implements TicketService {
                 predicates.add(cb.equal(root.get("user").get("id"), userId));
             }
             if (technicianId != null) {
-                predicates.add(cb.equal(root.get("technician").get("id"), technicianId));
+                predicates.add(cb.equal(root.join("technician").get("id"), technicianId));
             }
             if (status != null) {
                 predicates.add(cb.equal(root.get("status"), status));

@@ -23,7 +23,7 @@ const TicketList = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [category, setCategory] = useState('');
-  const [statusFilter, setStatusFilter] = useState(user.role === 'TECHNICIAN' ? 'OPEN' : '');
+  const [statusFilter, setStatusFilter] = useState('');
   const [dateFilter, setDateFilter] = useState('today');
   const [showAssignedOnly, setShowAssignedOnly] = useState(user.role === 'TECHNICIAN');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -100,6 +100,8 @@ const TicketList = () => {
         // For Students/Users: Fetch their own tickets
         response = await ticketService.getTicketsByUserId(user.id, {
           status: statusFilter,
+          category,
+          searchTerm,
           startDate,
           endDate
         });
@@ -229,6 +231,19 @@ const TicketList = () => {
           {categories.map(cat => (
             <option key={cat} value={cat}>{cat}</option>
           ))}
+        </select>
+
+        <select
+          value={dateFilter}
+          onChange={(e) => setDateFilter(e.target.value)}
+          className="px-4 py-2.5 rounded-xl text-sm font-bold outline-none cursor-pointer w-40"
+          style={{ backgroundColor: '#11212D', border: '1px solid #253745', color: '#9BA8AB' }}
+        >
+          <option value="today">Today</option>
+          <option value="yesterday">Yesterday</option>
+          <option value="this_week">This Week</option>
+          <option value="last_month">Last Month</option>
+          <option value="all">All Time</option>
         </select>
 
         {(isAdmin || isTechnician) && (

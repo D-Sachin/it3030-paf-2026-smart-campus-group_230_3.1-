@@ -34,6 +34,8 @@ const ticketService = {
       params: {
         status: params.status,
         priority: params.priority,
+        category: params.category,
+        searchTerm: params.searchTerm,
         startDate: params.startDate,
         endDate: params.endDate,
       }

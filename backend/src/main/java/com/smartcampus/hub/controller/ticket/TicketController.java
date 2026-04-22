@@ -69,6 +69,14 @@ public class TicketController {
     public ResponseEntity<TicketResponseDTO> updateTicketStatus(
             @PathVariable Long id,
             @Valid @RequestBody StatusUpdateDTO statusUpdateDTO) {
+        try {
+            java.nio.file.Files.writeString(
+                java.nio.file.Paths.get("debug_controller.log"), 
+                "Received status update request for ticket " + id + " to " + statusUpdateDTO.getStatus() + "\n", 
+                java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND
+            );
+        } catch (Exception e) {}
+        
         TicketResponseDTO updatedTicket = ticketService.updateTicketStatus(id, statusUpdateDTO.getStatus());
         return ResponseEntity.ok(updatedTicket);
     }

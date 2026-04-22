@@ -109,33 +109,37 @@ const TicketList = () => {
 
   // Role-based header config
   const headerConfig = {
-    ADMIN:       { title: 'Incident Management',    subtitle: 'Review, assign, and resolve all campus incident reports.', accent: 'bg-violet-600' },
-    TECHNICIAN:  { title: 'My Work Queue',           subtitle: 'Manage and resolve assigned maintenance incidents.',          accent: 'bg-amber-500' },
-    USER:        { title: 'My Incident Reports',     subtitle: 'Track and manage your submitted campus issues.',             accent: 'bg-primary-600' },
+    ADMIN:      { title: 'Incident Management',   subtitle: 'Review, assign, and resolve all campus incident reports.' },
+    TECHNICIAN: { title: 'My Work Queue',          subtitle: 'Manage and resolve assigned maintenance incidents.' },
+    USER:       { title: 'My Incident Reports',    subtitle: 'Track and manage your submitted campus issues.' },
   };
   const { title, subtitle, accent } = headerConfig[user.role] || headerConfig.USER;
 
   return (
     <div className="space-y-8 animate-fade-in-up">
       {/* Header Section */}
-      <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-2xl text-white ${accent}`}>
+      <div
+        className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-2xl"
+        style={{ background: 'linear-gradient(135deg, #11212D 0%, #253745 100%)', border: '1px solid #4A5C6A' }}
+      >
         <div>
-          <h1 className="text-3xl font-bold">{title}</h1>
-          <p className="mt-1 opacity-80 text-sm">{subtitle}</p>
+          <h1 className="text-3xl font-bold" style={{ color: '#CCD0CF' }}>{title}</h1>
+          <p className="mt-1 text-sm" style={{ color: '#9BA8AB' }}>{subtitle}</p>
         </div>
         <div className="flex gap-3">
-          <button 
+          <button
             onClick={fetchTickets}
-            className="p-3 rounded-xl bg-white/20 hover:bg-white/30 transition-all"
+            className="p-3 rounded-xl transition-all"
+            style={{ backgroundColor: '#4A5C6A', color: '#CCD0CF' }}
             title="Refresh"
           >
             <RefreshCcw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
           </button>
-          {/* Only students and admins can create new tickets */}
           {(isStudent || isAdmin) && (
-            <button 
+            <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="premium-button bg-white text-slate-800 hover:bg-slate-50"
+              className="premium-button"
+              style={{ backgroundColor: '#1c4f78', color: '#CCD0CF' }}
             >
               <Plus className="w-5 h-5" />
               New Ticket
@@ -145,22 +149,27 @@ const TicketList = () => {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+      <div
+        className="flex flex-wrap items-center gap-3 p-4 rounded-2xl"
+        style={{ backgroundColor: '#06141B', border: '1px solid #253745' }}
+      >
         <div className="relative flex-1 min-w-[180px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input 
-            type="text" 
-            placeholder="Search by title, location or description..." 
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#9BA8AB' }} />
+          <input
+            type="text"
+            placeholder="Search by title, location or description..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary-500/20 outline-none transition-all font-medium"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm outline-none transition-all font-medium"
+            style={{ backgroundColor: '#11212D', border: '1px solid #253745', color: '#CCD0CF' }}
           />
         </div>
 
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="px-4 py-2.5 bg-slate-50 border-none rounded-xl text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-primary-500/20 appearance-none cursor-pointer w-44"
+          className="px-4 py-2.5 rounded-xl text-sm font-bold outline-none cursor-pointer w-44"
+          style={{ backgroundColor: '#11212D', border: '1px solid #253745', color: '#9BA8AB' }}
         >
           <option value="">All Categories</option>
           {categories.map(cat => (
@@ -168,12 +177,12 @@ const TicketList = () => {
           ))}
         </select>
 
-        {/* Status filter — only for Admin and Technician */}
         {(isAdmin || isTechnician) && (
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2.5 bg-slate-50 border-none rounded-xl text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-primary-500/20 appearance-none cursor-pointer w-40"
+            className="px-4 py-2.5 rounded-xl text-sm font-bold outline-none cursor-pointer w-40"
+            style={{ backgroundColor: '#11212D', border: '1px solid #253745', color: '#9BA8AB' }}
           >
             <option value="">All Statuses</option>
             <option value="OPEN">Open</option>
@@ -184,26 +193,23 @@ const TicketList = () => {
           </select>
         )}
 
-        {/* Technician-specific Assigned Toggle */}
         {isTechnician && (
-          <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-100">
+          <div className="flex p-1 rounded-xl" style={{ backgroundColor: '#11212D', border: '1px solid #253745' }}>
             <button
               onClick={() => setShowAssignedOnly(true)}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                showAssignedOnly 
-                ? 'bg-white text-primary-600 shadow-sm' 
-                : 'text-slate-500 hover:text-slate-700'
-              }`}
+              className="px-4 py-1.5 rounded-lg text-xs font-bold transition-all"
+              style={showAssignedOnly
+                ? { backgroundColor: '#1c4f78', color: '#CCD0CF' }
+                : { color: '#9BA8AB' }}
             >
               Assigned to Me
             </button>
             <button
               onClick={() => setShowAssignedOnly(false)}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                !showAssignedOnly 
-                ? 'bg-white text-primary-600 shadow-sm' 
-                : 'text-slate-500 hover:text-slate-700'
-              }`}
+              className="px-4 py-1.5 rounded-lg text-xs font-bold transition-all"
+              style={!showAssignedOnly
+                ? { backgroundColor: '#1c4f78', color: '#CCD0CF' }
+                : { color: '#9BA8AB' }}
             >
               All Public Tickets
             </button>

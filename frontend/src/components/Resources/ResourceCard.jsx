@@ -24,19 +24,25 @@ const ResourceCard = ({ resource, onEdit, onDelete, canEdit }) => {
     switch (status) {
       case "ACTIVE":
         return { 
-          color: "text-success bg-green-50 border-green-100", 
+          color: "#10b981", 
+          bgColor: "rgba(16, 185, 129, 0.1)",
+          borderColor: "rgba(16, 185, 129, 0.2)",
           icon: CheckCircle2, 
           label: "Active" 
         };
       case "OUT_OF_SERVICE":
         return { 
-          color: "text-error bg-red-50 border-red-100", 
+          color: "#ef4444", 
+          bgColor: "rgba(239, 68, 68, 0.1)",
+          borderColor: "rgba(239, 68, 68, 0.2)",
           icon: AlertTriangle, 
           label: "Maintenance" 
         };
       default:
         return { 
-          color: "text-slate-500 bg-slate-50 border-slate-100", 
+          color: "#9BA8AB", 
+          bgColor: "#11212D",
+          borderColor: "#253745",
           icon: Clock, 
           label: status 
         };
@@ -58,19 +64,22 @@ const ResourceCard = ({ resource, onEdit, onDelete, canEdit }) => {
   const TypeIcon = getTypeIcon(resource.type);
 
   return (
-    <div className="premium-card group hover:scale-[1.02] transition-all p-6">
+    <div className="group hover:scale-[1.02] transition-all p-6 rounded-[32px] shadow-xl" style={{ backgroundColor: '#253745', border: '1px solid #4A5C6A' }}>
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-primary-50 text-primary-600 flex items-center justify-center shadow-inner group-hover:bg-primary-600 group-hover:text-white transition-colors duration-300">
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner transition-colors duration-300" style={{ backgroundColor: 'rgba(45, 112, 163, 0.15)', color: '#1c4f78' }}>
             <TypeIcon className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="font-bold text-slate-900 group-hover:text-primary-600 transition-colors">{resource.name}</h3>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">REF: {resource.id}</span>
+            <h3 className="font-bold transition-colors" style={{ color: '#CCD0CF' }}>{resource.name}</h3>
+            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#4A5C6A' }}>REF: {resource.id}</span>
           </div>
         </div>
-        <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-extrabold uppercase ${statusConfig.color}`}>
+        <div 
+          className="flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-extrabold uppercase"
+          style={{ backgroundColor: statusConfig.bgColor, color: statusConfig.color, borderColor: statusConfig.borderColor }}
+        >
           <statusConfig.icon className="w-3 h-3" />
           {statusConfig.label}
         </div>
@@ -78,54 +87,60 @@ const ResourceCard = ({ resource, onEdit, onDelete, canEdit }) => {
 
       {/* Description */}
       {resource.description && (
-        <p className="text-sm text-slate-500 line-clamp-2 mb-6 font-medium leading-relaxed">
+        <p className="text-sm line-clamp-2 mb-6 font-medium leading-relaxed" style={{ color: '#9BA8AB' }}>
           {resource.description}
         </p>
       )}
 
       {/* Info Grid */}
-      <div className="grid grid-cols-2 gap-y-4 mb-6 pt-6 border-t border-slate-50">
+      <div className="grid grid-cols-2 gap-y-4 mb-6 pt-6" style={{ borderTop: '1px solid #4A5C6A' }}>
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#11212D', color: '#4A5C6A' }}>
             <MapPin className="w-4 h-4" />
           </div>
-          <span className="text-xs font-bold text-slate-600 truncate">{resource.location}</span>
+          <span className="text-xs font-bold truncate" style={{ color: '#9BA8AB' }}>{resource.location}</span>
         </div>
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#11212D', color: '#4A5C6A' }}>
             <Users className="w-4 h-4" />
           </div>
-          <span className="text-xs font-bold text-slate-600">{resource.capacity} Seats</span>
+          <span className="text-xs font-bold" style={{ color: '#9BA8AB' }}>{resource.capacity} Seats</span>
         </div>
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#11212D', color: '#4A5C6A' }}>
             <Tag className="w-4 h-4" />
           </div>
-          <span className="text-xs font-bold text-slate-600">{resource.resourceTypeDisplay || resource.type}</span>
+          <span className="text-xs font-bold" style={{ color: '#9BA8AB' }}>{resource.resourceTypeDisplay || resource.type}</span>
         </div>
         {resource.availableFrom && (
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#11212D', color: '#4A5C6A' }}>
               <Clock className="w-4 h-4" />
             </div>
-            <span className="text-xs font-bold text-slate-600">{resource.availabilityWindow || 'Daily'}</span>
+            <span className="text-xs font-bold" style={{ color: '#9BA8AB' }}>{resource.availabilityWindow || 'Daily'}</span>
           </div>
         )}
       </div>
 
       {/* Footer Actions */}
       {canEdit && (
-        <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-50 opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 transition-transform">
+        <div className="flex items-center justify-end gap-2 pt-4 opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 transition-transform" style={{ borderTop: '1px solid #4A5C6A' }}>
           <button
             onClick={() => onEdit(resource)}
-            className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all"
+            className="p-2 rounded-lg transition-all"
+            style={{ color: '#4A5C6A' }}
+            onMouseEnter={e => { e.currentTarget.style.color = '#1c4f78'; e.currentTarget.style.backgroundColor = 'rgba(45, 112, 163, 0.1)'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = '#4A5C6A'; e.currentTarget.style.backgroundColor = 'transparent'; }}
             title="Edit Resource"
           >
             <Edit2 className="w-4 h-4" />
           </button>
           <button
             onClick={() => onDelete(resource.id)}
-            className="p-2 text-slate-400 hover:text-error hover:bg-red-50 rounded-lg transition-all"
+            className="p-2 rounded-lg transition-all"
+            style={{ color: '#4A5C6A' }}
+            onMouseEnter={e => { e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = '#4A5C6A'; e.currentTarget.style.backgroundColor = 'transparent'; }}
             title="Delete Resource"
           >
             <Trash2 className="w-4 h-4" />

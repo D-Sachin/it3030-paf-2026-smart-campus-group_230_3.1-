@@ -23,9 +23,9 @@ import {
   Archive,
   UserPlus,
   UserCheck,
-  Inbox,
   Pencil,
-  X
+  X,
+  ChevronDown
 } from 'lucide-react';
 import ticketService from '../../services/ticketService';
 import CommentSection from '../../components/Tickets/CommentSection';
@@ -36,7 +36,7 @@ const TicketDetails = () => {
   const { user: currentUser } = useUser();
   const { id } = useParams();
   const navigate = useNavigate();
-  // ... state ...
+  
   const [ticket, setTicket] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -157,12 +157,9 @@ const TicketDetails = () => {
   const resolveFileUrl = (url) => {
     if (!url) return '';
     if (url.startsWith('http')) return url;
-    // Backend API is at http://localhost:8080/api
-    // Prepend the origin for the browser to find it
     return `http://localhost:8080${url}`;
   };
 
-  // Helper component for safe image preview from File object
   const ImagePreview = ({ file, className }) => {
     const [previewUrl, setPreviewUrl] = useState(null);
     useEffect(() => {
@@ -231,40 +228,33 @@ const TicketDetails = () => {
   const handleEditSave = async () => {
     try {
       setEditSaving(true);
-      console.log('Starting ticket update with data:', editForm);
       await ticketService.updateTicket(id, {
         ...editForm,
         userId: currentUser?.id,
       });
-      console.log('Ticket metadata updated successfully');
 
-      // Upload any new attachments
       if (editNewAttachments.length > 0) {
-        console.log(`Uploading ${editNewAttachments.length} new attachments...`);
         for (const file of editNewAttachments) {
           await ticketService.uploadAttachment(id, file);
         }
-        console.log('Attachments uploaded successfully');
       }
 
       setIsEditing(false);
       setEditNewAttachments([]);
       await fetchTicketDetails();
-      console.log('Refreshed ticket details');
     } catch (err) {
       console.error('Error updating ticket:', err);
-      alert(err?.response?.data?.message || 'Failed to update ticket. Make sure you are the ticket owner and the ticket is still OPEN.');
+      alert(err?.response?.data?.message || 'Failed to update ticket.');
     } finally {
       setEditSaving(false);
     }
   };
 
-
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center p-24 gap-4">
-        <Loader2 className="w-10 h-10 text-primary-600 animate-spin" />
-        <p className="text-slate-500 font-medium">Loading ticket details...</p>
+        <Loader2 className="w-10 h-10 animate-spin" style={{ color: '#1c4f78' }} />
+        <p className="font-medium" style={{ color: '#9BA8AB' }}>Loading ticket details...</p>
       </div>
     );
   }
@@ -272,10 +262,10 @@ const TicketDetails = () => {
   if (error || !ticket) {
     return (
       <div className="max-w-4xl mx-auto py-8">
-        <div className="bg-red-50 border border-red-100 rounded-2xl p-6 flex flex-col items-center gap-4">
+        <div className="rounded-2xl p-6 flex flex-col items-center gap-4" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
           <AlertCircle className="w-10 h-10 text-red-500" />
-          <p className="text-red-700 font-medium text-center">{error || 'Ticket not found'}</p>
-          <button onClick={() => navigate('/tickets')} className="premium-button premium-button-secondary">
+          <p className="font-medium text-center" style={{ color: '#ef4444' }}>{error || 'Ticket not found'}</p>
+          <button onClick={() => navigate('/tickets')} className="premium-button" style={{ backgroundColor: '#253745', color: '#CCD0CF' }}>
             <ArrowLeft className="w-4 h-4" />
             Back to Tickets
           </button>
@@ -293,126 +283,132 @@ const TicketDetails = () => {
     <div className="space-y-8 animate-fade-in-up">
       {/* Edit Modal */}
       {isEditing && (
-        <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 bg-slate-900/40 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl flex flex-col my-8 overflow-hidden animate-in fade-in slide-in-from-top-10 duration-300" style={{maxHeight: '78vh'}}>
+        <div 
+          className="fixed inset-0 z-[100] flex items-start justify-center p-4 backdrop-blur-sm overflow-y-auto"
+          style={{ backgroundColor: 'rgba(6, 20, 27, 0.85)' }}
+        >
+          <div 
+            className="rounded-3xl shadow-2xl w-full max-w-2xl flex flex-col my-8 overflow-hidden animate-in fade-in slide-in-from-top-10 duration-300" 
+            style={{ maxHeight: '78vh', backgroundColor: '#11212D', border: '1px solid #253745' }}
+          >
             {/* Header */}
-            <div className="flex items-center justify-between px-8 py-5 border-b border-slate-100 flex-shrink-0">
-              <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                <Pencil className="w-5 h-5 text-primary-500" />
+            <div className="flex items-center justify-between px-8 py-5 flex-shrink-0" style={{ borderBottom: '1px solid #253745' }}>
+              <h3 className="text-xl font-bold flex items-center gap-2" style={{ color: '#CCD0CF' }}>
+                <Pencil className="w-5 h-5" style={{ color: '#1c4f78' }} />
                 Edit Ticket
               </h3>
-              <button onClick={() => setIsEditing(false)} className="p-2 text-slate-400 hover:text-slate-700 transition-colors">
+              <button 
+                onClick={() => setIsEditing(false)} 
+                className="p-2 transition-colors"
+                style={{ color: '#9BA8AB' }}
+                onMouseEnter={e => e.currentTarget.style.color = '#CCD0CF'}
+                onMouseLeave={e => e.currentTarget.style.color = '#9BA8AB'}
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Scrollable Body */}
             <div className="p-8 space-y-5 overflow-y-auto flex-1">
-              {/* Title */}
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Title <span className="text-red-400">*</span></label>
+                <label className="block text-xs font-bold uppercase tracking-widest mb-1.5" style={{ color: '#4A5C6A' }}>Title <span className="text-red-400">*</span></label>
                 <input
                   type="text"
                   value={editForm.title || ''}
                   onChange={(e) => setEditForm(f => ({ ...f, title: e.target.value }))}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 font-medium outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 transition-all"
+                  className="w-full px-4 py-3 rounded-xl outline-none transition-all font-medium"
+                  style={{ backgroundColor: '#06141B', border: '1px solid #253745', color: '#CCD0CF' }}
                 />
               </div>
 
-              {/* Description */}
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Description</label>
+                <label className="block text-xs font-bold uppercase tracking-widest mb-1.5" style={{ color: '#4A5C6A' }}>Description</label>
                 <textarea
                   rows={4}
                   value={editForm.description || ''}
                   onChange={(e) => setEditForm(f => ({ ...f, description: e.target.value }))}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 font-medium outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 transition-all resize-none"
+                  className="w-full px-4 py-3 rounded-xl outline-none transition-all font-medium resize-none leading-relaxed"
+                  style={{ backgroundColor: '#06141B', border: '1px solid #253745', color: '#CCD0CF' }}
                 />
               </div>
 
-              {/* Category & Priority */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Category</label>
+                  <label className="block text-xs font-bold uppercase tracking-widest mb-1.5" style={{ color: '#4A5C6A' }}>Category</label>
                   <select
                     value={editForm.category || ''}
                     onChange={(e) => setEditForm(f => ({ ...f, category: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 font-medium outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 transition-all"
+                    className="w-full px-4 py-3 rounded-xl outline-none transition-all font-medium appearance-none"
+                    style={{ backgroundColor: '#06141B', border: '1px solid #253745', color: '#CCD0CF' }}
                   >
-                    <option value="Maintenance">Maintenance</option>
-                    <option value="IT Support">IT Support</option>
-                    <option value="Security">Security</option>
-                    <option value="Cleaning">Cleaning</option>
-                    <option value="Other">Other</option>
+                    <option value="Maintenance" style={{ backgroundColor: '#11212D' }}>Maintenance</option>
+                    <option value="IT Support" style={{ backgroundColor: '#11212D' }}>IT Support</option>
+                    <option value="Security" style={{ backgroundColor: '#11212D' }}>Security</option>
+                    <option value="Cleaning" style={{ backgroundColor: '#11212D' }}>Cleaning</option>
+                    <option value="Other" style={{ backgroundColor: '#11212D' }}>Other</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Priority</label>
+                  <label className="block text-xs font-bold uppercase tracking-widest mb-1.5" style={{ color: '#4A5C6A' }}>Priority</label>
                   <select
                     value={editForm.priority || ''}
                     onChange={(e) => setEditForm(f => ({ ...f, priority: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 font-medium outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 transition-all"
+                    className="w-full px-4 py-3 rounded-xl outline-none transition-all font-medium appearance-none"
+                    style={{ backgroundColor: '#06141B', border: '1px solid #253745', color: '#CCD0CF' }}
                   >
-                    <option value="LOW">Low</option>
-                    <option value="MEDIUM">Medium</option>
-                    <option value="HIGH">High</option>
-                    <option value="CRITICAL">Critical</option>
+                    <option value="LOW" style={{ backgroundColor: '#11212D' }}>Low</option>
+                    <option value="MEDIUM" style={{ backgroundColor: '#11212D' }}>Medium</option>
+                    <option value="HIGH" style={{ backgroundColor: '#11212D' }}>High</option>
+                    <option value="CRITICAL" style={{ backgroundColor: '#11212D' }}>Critical</option>
                   </select>
                 </div>
               </div>
 
-              {/* Location & Contact */}
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Resource Location <span className="text-red-400">*</span></label>
+                <label className="block text-xs font-bold uppercase tracking-widest mb-1.5" style={{ color: '#4A5C6A' }}>Resource Location <span className="text-red-400">*</span></label>
                 <input
                   type="text"
                   value={editForm.resourceLocation || ''}
                   onChange={(e) => setEditForm(f => ({ ...f, resourceLocation: e.target.value }))}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 font-medium outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 transition-all"
+                  className="w-full px-4 py-3 rounded-xl outline-none transition-all font-medium"
+                  style={{ backgroundColor: '#06141B', border: '1px solid #253745', color: '#CCD0CF' }}
                 />
               </div>
+
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Preferred Contact <span className="text-red-400">*</span></label>
+                <label className="block text-xs font-bold uppercase tracking-widest mb-1.5" style={{ color: '#4A5C6A' }}>Preferred Contact <span className="text-red-400">*</span></label>
                 <input
                   type="text"
                   value={editForm.preferredContactDetails || ''}
                   onChange={(e) => setEditForm(f => ({ ...f, preferredContactDetails: e.target.value }))}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-800 font-medium outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 transition-all"
+                  className="w-full px-4 py-3 rounded-xl outline-none transition-all font-medium"
+                  style={{ backgroundColor: '#06141B', border: '1px solid #253745', color: '#CCD0CF' }}
                 />
               </div>
 
-              {/* Attachments */}
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Attachments</label>
+                <label className="block text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#4A5C6A' }}>Attachments</label>
 
                 {/* Existing attachments */}
                 {editExistingAttachments.length > 0 && (
                   <div className="space-y-2 mb-3">
                     {editExistingAttachments.map(att => (
-                      <div key={att.id} className="flex items-center justify-between px-4 py-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                      <div key={att.id} className="flex items-center justify-between px-4 py-2.5 rounded-xl transition-all" style={{ backgroundColor: '#06141B', border: '1px solid #253745' }}>
                         <div className="flex items-center gap-2">
                           {isImageFile(att.fileName) ? (
-                            <div className="w-8 h-8 rounded-lg overflow-hidden border border-slate-100 shadow-sm flex-shrink-0 bg-slate-200">
-                              <img 
-                                src={resolveFileUrl(att.fileUrl)} 
-                                alt={att.fileName} 
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  e.target.onerror = null;
-                                  e.target.src = 'https://via.placeholder.com/40?text=IMG';
-                                }}
-                              />
+                            <div className="w-8 h-8 rounded-lg overflow-hidden border shadow-sm flex-shrink-0" style={{ borderColor: '#253745', backgroundColor: '#11212D' }}>
+                              <img src={resolveFileUrl(att.fileUrl)} alt={att.fileName} className="w-full h-full object-cover" />
                             </div>
                           ) : (
-                            <Paperclip className="w-4 h-4 text-slate-400" />
+                            <Paperclip className="w-4 h-4" style={{ color: '#4A5C6A' }} />
                           )}
-                          <span className="text-sm font-medium text-slate-600 truncate max-w-[220px]">{att.fileName}</span>
+                          <span className="text-sm font-medium truncate max-w-[220px]" style={{ color: '#CCD0CF' }}>{att.fileName}</span>
                         </div>
                         <button
                           type="button"
                           onClick={() => handleDeleteExistingAttachment(att.id)}
-                          className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                          title="Remove attachment"
+                          className="p-1.5 hover:text-red-500 rounded-lg transition-all"
+                          style={{ color: '#4A5C6A' }}
                         >
                           <X className="w-4 h-4" />
                         </button>
@@ -421,37 +417,14 @@ const TicketDetails = () => {
                   </div>
                 )}
 
-                {/* New attachments queued */}
-                {editNewAttachments.length > 0 && (
-                  <div className="space-y-2 mb-3">
-                    {editNewAttachments.map((file, idx) => (
-                      <div key={idx} className="flex items-center justify-between px-4 py-2.5 bg-primary-50 rounded-xl border border-primary-100">
-                        <div className="flex items-center gap-2">
-                          {isImageFile(file.name) ? (
-                            <div className="w-8 h-8 rounded-lg overflow-hidden border border-primary-100 shadow-sm flex-shrink-0 bg-primary-100">
-                              <ImagePreview file={file} className="w-full h-full object-cover" />
-                            </div>
-                          ) : (
-                            <Paperclip className="w-4 h-4 text-primary-400" />
-                          )}
-                          <span className="text-sm font-medium text-primary-700 truncate max-w-[200px]">{file.name}</span>
-                          <span className="text-[10px] font-bold text-primary-400 uppercase">New</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setEditNewAttachments(prev => prev.filter((_, i) => i !== idx))}
-                          className="p-1.5 text-primary-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Add new file button */}
+                {/* Add Attachment */}
                 {(editExistingAttachments.length + editNewAttachments.length) < 3 && (
-                  <label className="flex items-center gap-2 px-4 py-3 bg-slate-50 border border-dashed border-slate-200 rounded-xl cursor-pointer hover:border-primary-400 hover:bg-primary-50/40 transition-all text-slate-500 hover:text-primary-600">
+                  <label 
+                    className="flex items-center gap-2 px-4 py-3 border border-dashed rounded-xl cursor-pointer transition-all"
+                    style={{ backgroundColor: '#06141B', borderColor: '#253745', color: '#9BA8AB' }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = '#2d70a3'; e.currentTarget.style.color = '#CCD0CF'; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = '#253745'; e.currentTarget.style.color = '#9BA8AB'; }}
+                  >
                     <Paperclip className="w-4 h-4" />
                     <span className="text-sm font-medium">Add attachment (max 3 total)</span>
                     <input
@@ -471,18 +444,13 @@ const TicketDetails = () => {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-3 px-8 py-5 border-t border-slate-100 flex-shrink-0">
-              <button
-                onClick={() => setIsEditing(false)}
-                className="premium-button premium-button-secondary"
-                disabled={editSaving}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleEditSave}
-                disabled={editSaving || !editForm.title?.trim() || !editForm.resourceLocation?.trim() || !editForm.preferredContactDetails?.trim()}
-                className="premium-button premium-button-primary"
+            <div className="flex items-center justify-end gap-3 px-8 py-5 flex-shrink-0" style={{ borderTop: '1px solid #253745' }}>
+              <button onClick={() => setIsEditing(false)} className="premium-button" style={{ backgroundColor: '#253745', color: '#CCD0CF' }} disabled={editSaving}>Cancel</button>
+              <button 
+                onClick={handleEditSave} 
+                disabled={editSaving || !editForm.title?.trim() || !editForm.resourceLocation?.trim()} 
+                className="premium-button"
+                style={{ backgroundColor: '#1c4f78', color: '#CCD0CF' }}
               >
                 {editSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Pencil className="w-4 h-4" />}
                 {editSaving ? 'Saving...' : 'Save Changes'}
@@ -492,9 +460,9 @@ const TicketDetails = () => {
         </div>
       )}
 
-      {/* Top Navigation */}
+      {/* Top Nav */}
       <div className="flex items-center justify-between">
-        <Link to="/tickets" className="flex items-center gap-2 text-slate-500 hover:text-primary-600 transition-colors font-medium">
+        <Link to="/tickets" className="flex items-center gap-2 transition-colors font-medium" style={{ color: '#9BA8AB' }} onMouseEnter={e => e.currentTarget.style.color = '#CCD0CF'} onMouseLeave={e => e.currentTarget.style.color = '#9BA8AB'}>
           <ArrowLeft className="w-4 h-4" />
           Back to Tickets
         </Link>
@@ -503,20 +471,21 @@ const TicketDetails = () => {
           {canEdit && (
             <button
               onClick={openEditModal}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-primary-200 bg-primary-50 text-primary-700 font-bold text-sm hover:bg-primary-100 hover:border-primary-300 transition-all"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl border font-bold text-sm transition-all"
+              style={{ backgroundColor: 'rgba(45, 112, 163, 0.15)', color: '#1c4f78', borderColor: 'rgba(45, 112, 163, 0.3)' }}
             >
               <Pencil className="w-3.5 h-3.5" />
               Edit Ticket
             </button>
           )}
-          <span className="text-sm font-bold text-slate-400">STATUS</span>
-          {(isAdmin || isTechnician) ? (
-            <>
+          <span className="text-sm font-bold" style={{ color: '#4A5C6A' }}>STATUS</span>
+          {(isAdmin || (isTechnician && ticket.status !== 'CLOSED' && ticket.status !== 'REJECTED')) ? (
+            <div className="flex items-center gap-2 relative">
               <select
                 value={ticket.status}
                 onChange={(e) => handleStatusChange(e.target.value)}
                 disabled={statusUpdateLoading}
-                className={`px-4 py-2 rounded-xl text-sm font-bold border outline-none cursor-pointer transition-all ${getStatusColor(ticket.status)} ${statusUpdateLoading ? 'opacity-50' : 'hover:shadow-md'}`}
+                className={`px-4 py-2 rounded-xl text-sm font-bold border outline-none cursor-pointer transition-all appearance-none pr-10 ${getStatusColor(ticket.status)}`}
               >
                 <option value="OPEN">OPEN</option>
                 <option value="IN_PROGRESS">IN PROGRESS</option>
@@ -524,8 +493,9 @@ const TicketDetails = () => {
                 <option value="CLOSED">CLOSED</option>
                 <option value="REJECTED">REJECTED</option>
               </select>
-              {statusUpdateLoading && <Loader2 className="w-4 h-4 text-primary-600 animate-spin" />}
-            </>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: 'currentColor' }} />
+              {statusUpdateLoading && <Loader2 className="w-4 h-4 animate-spin" style={{ color: '#1c4f78' }} />}
+            </div>
           ) : (
             <span className={`px-4 py-2 rounded-xl text-sm font-bold border ${getStatusColor(ticket.status)}`}>
               {ticket.status.replace('_', ' ')}
@@ -536,67 +506,63 @@ const TicketDetails = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
-          <div className="premium-card overflow-hidden">
+          <div className="rounded-2xl overflow-hidden shadow-xl" style={{ backgroundColor: '#253745', border: '1px solid #4A5C6A' }}>
             <div className="p-8">
               <div className="flex items-center gap-3 mb-6">
                 <span className={`px-3 py-1 rounded-lg text-xs font-bold border ${getPriorityColor(ticket.priority)}`}>
                   {ticket.priority} PRIORITY
                 </span>
-                <span className="text-slate-300">•</span>
-                <span className="text-slate-400 text-sm font-medium">#{ticket.id}</span>
+                <span style={{ color: '#4A5C6A' }}>•</span>
+                <span className="text-sm font-medium" style={{ color: '#9BA8AB' }}>#{ticket.id}</span>
               </div>
               
-              <h2 className="text-3xl font-bold text-slate-900 mb-4">{ticket.title}</h2>
+              <h2 className="text-3xl font-bold mb-4" style={{ color: '#CCD0CF' }}>{ticket.title}</h2>
 
               <div className="flex flex-wrap gap-4 mb-6">
-                <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
-                  <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                  <span className="text-xs font-bold text-slate-600">Location: <span className="text-slate-900">{ticket.resourceLocation || "Not specified"}</span></span>
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border" style={{ backgroundColor: '#11212D', borderColor: '#4A5C6A' }}>
+                  <MapPin className="w-3.5 h-3.5" style={{ color: '#4A5C6A' }} />
+                  <span className="text-xs font-bold" style={{ color: '#9BA8AB' }}>Location: <span style={{ color: '#CCD0CF' }}>{ticket.resourceLocation || "Not specified"}</span></span>
                 </div>
-                <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
-                  <Phone className="w-3.5 h-3.5 text-slate-400" />
-                  <span className="text-xs font-bold text-slate-600">Contact: <span className="text-slate-900">{ticket.preferredContactDetails || "Not specified"}</span></span>
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border" style={{ backgroundColor: '#11212D', borderColor: '#4A5C6A' }}>
+                  <Phone className="w-3.5 h-3.5" style={{ color: '#4A5C6A' }} />
+                  <span className="text-xs font-bold" style={{ color: '#9BA8AB' }}>Contact: <span style={{ color: '#CCD0CF' }}>{ticket.preferredContactDetails || "Not specified"}</span></span>
                 </div>
-                <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
-                  <Tag className="w-3.5 h-3.5 text-slate-400" />
-                  <span className="text-xs font-bold text-slate-600">Category: <span className="text-slate-900">{ticket.category}</span></span>
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border" style={{ backgroundColor: '#11212D', borderColor: '#4A5C6A' }}>
+                  <Tag className="w-3.5 h-3.5" style={{ color: '#4A5C6A' }} />
+                  <span className="text-xs font-bold" style={{ color: '#9BA8AB' }}>Category: <span style={{ color: '#CCD0CF' }}>{ticket.category}</span></span>
                 </div>
               </div>
               
-              <div className="prose prose-slate max-w-none text-slate-600 leading-relaxed bg-slate-50/50 p-6 rounded-2xl border border-slate-100">
+              <div className="p-6 rounded-2xl border leading-relaxed" style={{ backgroundColor: 'rgba(6, 20, 27, 0.4)', borderColor: '#4A5C6A', color: '#CCD0CF' }}>
                 <p className="whitespace-pre-wrap">{ticket.description}</p>
               </div>
 
               {ticket.resolutionNotes && (
-                <div className={`mt-8 rounded-2xl border p-6 shadow-sm ${ticket.status === 'REJECTED' ? 'bg-red-50 border-red-100 shadow-red-100/50' : 'bg-emerald-50 border-emerald-100 shadow-emerald-100/50'}`}>
+                <div className={`mt-8 rounded-2xl border p-6 shadow-sm`} style={{ backgroundColor: ticket.status === 'REJECTED' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)', borderColor: ticket.status === 'REJECTED' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)' }}>
                   <div className="flex items-center gap-2 mb-3">
-                    {ticket.status === 'REJECTED' ? <AlertCircle className="w-5 h-5 text-red-600" /> : <CheckCircle2 className="w-5 h-5 text-emerald-600" />}
-                    <h4 className={`text-sm font-bold uppercase tracking-wider ${ticket.status === 'REJECTED' ? 'text-red-900' : 'text-emerald-900'}`}>
+                    {ticket.status === 'REJECTED' ? <AlertCircle className="w-5 h-5 text-red-500" /> : <CheckCircle2 className="w-5 h-5 text-emerald-500" />}
+                    <h4 className="text-sm font-bold uppercase tracking-wider" style={{ color: ticket.status === 'REJECTED' ? '#ef4444' : '#10b981' }}>
                       {ticket.status === 'REJECTED' ? 'Rejection Reason' : 'Resolution Finalized'}
                     </h4>
                   </div>
-                  <p className={`leading-relaxed font-medium ${ticket.status === 'REJECTED' ? 'text-red-700' : 'text-emerald-700'}`}>{ticket.resolutionNotes}</p>
+                  <p className="leading-relaxed font-medium" style={{ color: '#CCD0CF' }}>{ticket.resolutionNotes}</p>
                 </div>
               )}
             </div>
             
-            <div className="bg-slate-50/50 px-8 py-5 border-t border-slate-100 flex flex-wrap gap-6 items-center">
-              <div className="flex items-center gap-2 text-slate-500 text-sm">
+            <div className="px-8 py-5 border-t flex flex-wrap gap-6 items-center" style={{ backgroundColor: '#11212D', borderColor: '#4A5C6A' }}>
+              <div className="flex items-center gap-2 text-sm" style={{ color: '#9BA8AB' }}>
                 <Calendar className="w-4 h-4" />
                 <span>Reported: {formattedDate}</span>
               </div>
-              <div className="flex items-center gap-2 text-slate-500 text-sm">
+              <div className="flex items-center gap-2 text-sm" style={{ color: '#9BA8AB' }}>
                 <User className="w-4 h-4" />
-                <span>Reported By: {ticket.userName}</span>
+                <span>By: {ticket.userName}</span>
               </div>
             </div>
           </div>
 
-          <div className="premium-card p-8">
-            <h3 className="text-xl font-bold text-slate-900 mb-8 flex items-center gap-3">
-              <MessageSquare className="w-5 h-5 text-primary-500" />
-              Resolution Progress
-            </h3>
+          <div className="rounded-2xl p-8 shadow-xl" style={{ backgroundColor: '#253745', border: '1px solid #4A5C6A' }}>
             <CommentSection 
               comments={ticket.comments} 
               onAddComment={handleAddComment}
@@ -609,266 +575,148 @@ const TicketDetails = () => {
         </div>
 
         <div className="space-y-8">
-          <div className="premium-card p-6">
-            <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-primary-500" />
+          <div className="rounded-2xl p-6 shadow-xl" style={{ backgroundColor: '#253745', border: '1px solid #4A5C6A' }}>
+            <h3 className="text-lg font-bold mb-6 flex items-center gap-2" style={{ color: '#CCD0CF' }}>
+              <ShieldCheck className="w-5 h-5" style={{ color: '#1c4f78' }} />
               Service Status
             </h3>
             
             <div className="space-y-6">
-              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+              <div className="flex items-center justify-between p-4 rounded-2xl border" style={{ backgroundColor: '#11212D', borderColor: '#4A5C6A' }}>
                 <div className="flex items-center gap-3">
-                  <div className={`w-3 h-3 rounded-full animate-pulse ${getStatusColor(ticket.status).includes('blue') ? 'bg-blue-500' : getStatusColor(ticket.status).includes('emerald') ? 'bg-emerald-500' : 'bg-slate-400'}`} />
-                  <span className="text-sm font-bold text-slate-700">{ticket.status}</span>
+                  <div className={`w-3 h-3 rounded-full animate-pulse ${getStatusColor(ticket.status).includes('blue') ? 'bg-blue-500' : 'bg-emerald-500'}`} />
+                  <span className="text-sm font-bold" style={{ color: '#CCD0CF' }}>{ticket.status}</span>
                 </div>
-                <Clock className="w-4 h-4 text-slate-300" />
+                <Clock className="w-4 h-4" style={{ color: '#4A5C6A' }} />
               </div>
 
-              {isAdmin && !ticket.technicianName?.includes("Unassigned") ? (
-                <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center text-primary-600">
-                        <UserCheck className="w-5 h-5" />
+              {isAdmin ? (
+                <div className="rounded-2xl p-6 border" style={{ backgroundColor: '#11212D', borderColor: '#4A5C6A' }}>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(45, 112, 163, 0.15)', color: '#1c4f78' }}>
+                          <UserCheck className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#4A5C6A' }}>Technician</p>
+                          <p className="font-bold" style={{ color: '#CCD0CF' }}>{ticket.technicianName?.includes("Unassigned") ? "Unassigned" : ticket.technicianName}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Assigned Technician</p>
-                        <p className="text-slate-900 font-bold">{ticket.technicianName}</p>
-                      </div>
+                      <button onClick={() => setIsAssigning(!isAssigning)} className="text-xs font-bold transition-colors" style={{ color: '#1c4f78' }}>{isAssigning ? 'Cancel' : 'Change'}</button>
                     </div>
-                    <button 
-                      onClick={() => setIsAssigning(true)}
-                      className="text-xs font-bold text-primary-600 hover:text-primary-700 underline"
-                    >
-                      Reassign
-                    </button>
-                  </div>
-                </div>
-              ) : isAdmin ? (
-                <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
-                  {isAssigning ? (
-                    <div className="space-y-4">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Select Technician</label>
-                      <select 
-                        value={selectedTechId}
-                        onChange={(e) => setSelectedTechId(e.target.value)}
-                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 outline-none focus:border-primary-500"
-                      >
-                        <option value="">Choose a technician...</option>
-                        {technicians.map(tech => (
-                          <option key={tech.id} value={tech.id}>{tech.name} ({tech.email})</option>
-                        ))}
-                      </select>
-                      <div className="flex gap-2">
+
+                    {isAssigning && (
+                      <div className="space-y-4 mt-4 pt-4" style={{ borderTop: '1px solid #253745' }}>
+                        <select 
+                          value={selectedTechId}
+                          onChange={(e) => setSelectedTechId(e.target.value)}
+                          className="w-full px-4 py-3 rounded-xl font-bold outline-none border transition-all"
+                          style={{ backgroundColor: '#06141B', borderColor: '#253745', color: '#CCD0CF' }}
+                        >
+                          <option value="" style={{ backgroundColor: '#11212D' }}>Choose a technician...</option>
+                          {technicians.map(tech => (
+                            <option key={tech.id} value={tech.id} style={{ backgroundColor: '#11212D' }}>{tech.name}</option>
+                          ))}
+                        </select>
                         <button 
                           onClick={() => handleAssignTechnician(selectedTechId)}
                           disabled={!selectedTechId || statusUpdateLoading}
-                          className="premium-button premium-button-primary py-2 flex-1"
+                          className="premium-button w-full"
+                          style={{ backgroundColor: '#1c4f78', color: '#CCD0CF' }}
                         >
                           Assign Now
                         </button>
-                        <button 
-                          onClick={() => setIsAssigning(false)}
-                          className="premium-button premium-button-secondary py-2"
-                        >
-                          Cancel
-                        </button>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="text-center">
-                      <p className="text-slate-500 text-sm mb-4 font-medium">No technician assigned yet.</p>
-                      <button 
-                        onClick={() => setIsAssigning(true)}
-                        className="premium-button premium-button-primary w-full"
-                      >
-                        <UserPlus className="w-4 h-4" />
-                        Assign Technician
-                      </button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               ) : (
-                <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-slate-200 flex items-center justify-center text-slate-500">
+                <div className="rounded-2xl p-6 flex items-center gap-3 border" style={{ backgroundColor: '#11212D', borderColor: '#4A5C6A' }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#06141B', color: '#4A5C6A' }}>
                     <UserCheck className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Technician</p>
-                    <p className="text-slate-900 font-bold">{ticket.technicianName || "Unassigned"}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#4A5C6A' }}>Technician</p>
+                    <p className="font-bold" style={{ color: '#CCD0CF' }}>{ticket.technicianName || "Unassigned"}</p>
                   </div>
                 </div>
               )}
             </div>
-
-            {/* SLA Performance Section */}
-            {(ticket.timeToFirstResponse || ticket.timeToResolution) && (
-              <div className="mt-6 pt-6 border-t border-slate-100">
-                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">SLA Performance</h4>
-                <div className="space-y-3">
-                  {ticket.timeToFirstResponse && (
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Zap className="w-3.5 h-3.5 text-amber-500" />
-                        <span className="text-xs font-medium text-slate-600">Response Time</span>
-                      </div>
-                      <span className="text-xs font-bold text-slate-900">{ticket.timeToFirstResponse}</span>
-                    </div>
-                  )}
-                  {ticket.timeToResolution && (
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                        <span className="text-xs font-medium text-slate-600">Resolution Time</span>
-                      </div>
-                      <span className="text-xs font-bold text-slate-900">{ticket.timeToResolution}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
 
           {(isAdmin || isTechnician) && ticket.status !== 'CLOSED' && ticket.status !== 'REJECTED' && (
-            <div className="premium-card p-6 overflow-hidden">
-              <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+            <div className="rounded-2xl p-6 shadow-xl" style={{ backgroundColor: '#253745', border: '1px solid #4A5C6A' }}>
+              <h3 className="text-lg font-bold mb-6 flex items-center gap-2" style={{ color: '#CCD0CF' }}>
                 <Zap className="w-5 h-5 text-amber-500" />
-                Management Actions
+                Actions
               </h3>
-              
               <div className="grid grid-cols-2 gap-3">
                 {ticket.status === 'OPEN' && (
-                  <button 
-                    onClick={() => handleStatusChange('IN_PROGRESS')}
-                    disabled={statusUpdateLoading}
-                    className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border border-slate-100 hover:border-blue-200 hover:bg-blue-50/50 transition-all group"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
-                      <Play className="w-5 h-5" />
-                    </div>
-                    <span className="text-xs font-bold text-slate-700">Start Work</span>
+                  <button onClick={() => handleStatusChange('IN_PROGRESS')} className="flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all hover:bg-white/5" style={{ borderColor: '#4A5C6A' }}>
+                    <Play className="w-6 h-6 text-blue-500" />
+                    <span className="text-[10px] font-bold uppercase" style={{ color: '#9BA8AB' }}>Start Work</span>
                   </button>
                 )}
-                
                 {(ticket.status === 'IN_PROGRESS' || ticket.status === 'OPEN') && (
                   <>
-                    <button 
-                      onClick={() => handleStatusChange('RESOLVED')}
-                      disabled={statusUpdateLoading}
-                      className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border border-slate-100 hover:border-emerald-200 hover:bg-emerald-50/50 transition-all group"
-                    >
-                      <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform">
-                        <CheckCircle className="w-5 h-5" />
-                      </div>
-                      <span className="text-xs font-bold text-slate-700">Resolve</span>
+                    <button onClick={() => handleStatusChange('RESOLVED')} className="flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all hover:bg-white/5" style={{ borderColor: '#4A5C6A' }}>
+                      <CheckCircle className="w-6 h-6 text-emerald-500" />
+                      <span className="text-[10px] font-bold uppercase" style={{ color: '#9BA8AB' }}>Resolve</span>
                     </button>
-                    
-                    <button 
-                      onClick={() => handleStatusChange('REJECTED')}
-                      disabled={statusUpdateLoading}
-                      className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border border-slate-100 hover:border-rose-200 hover:bg-rose-50/50 transition-all group"
-                    >
-                      <div className="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 group-hover:scale-110 transition-transform">
-                        <XCircle className="w-5 h-5" />
-                      </div>
-                      <span className="text-xs font-bold text-slate-700">Reject</span>
+                    <button onClick={() => handleStatusChange('REJECTED')} className="flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all hover:bg-white/5" style={{ borderColor: '#4A5C6A' }}>
+                      <XCircle className="w-6 h-6 text-red-500" />
+                      <span className="text-[10px] font-bold uppercase" style={{ color: '#9BA8AB' }}>Reject</span>
                     </button>
                   </>
                 )}
-                
                 {ticket.status === 'RESOLVED' && (
-                  <button 
-                    onClick={() => handleStatusChange('CLOSED')}
-                    disabled={statusUpdateLoading}
-                    className="col-span-2 flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border border-slate-100 hover:border-slate-300 hover:bg-slate-50 transition-all group"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 group-hover:scale-110 transition-transform">
-                      <Archive className="w-5 h-5" />
-                    </div>
-                    <span className="text-xs font-bold text-slate-700">Close Ticket Permanently</span>
+                  <button onClick={() => handleStatusChange('CLOSED')} className="col-span-2 flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all hover:bg-primary-500/10" style={{ borderColor: '#4A5C6A' }}>
+                    <Archive className="w-6 h-6" style={{ color: '#9BA8AB' }} />
+                    <span className="text-[10px] font-bold uppercase" style={{ color: '#9BA8AB' }}>Close Ticket Permanently</span>
                   </button>
                 )}
               </div>
             </div>
           )}
 
-          <div className="premium-card p-6">
-            <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
-              <Paperclip className="w-5 h-5 text-indigo-500" />
+          <div className="rounded-2xl p-6 shadow-xl" style={{ backgroundColor: '#253745', border: '1px solid #4A5C6A' }}>
+            <h3 className="text-lg font-bold mb-6 flex items-center gap-2" style={{ color: '#CCD0CF' }}>
+              <Paperclip className="w-5 h-5" style={{ color: '#1c4f78' }} />
               Attachments
             </h3>
-            
             {ticket.attachments && ticket.attachments.length > 0 ? (
               <div className="grid grid-cols-2 gap-3">
                 {ticket.attachments.map((file) => (
-                  <div key={file.id} className="group relative overflow-hidden rounded-xl border border-slate-100 bg-white hover:border-primary-200 transition-all shadow-sm">
+                  <div key={file.id} className="group relative overflow-hidden rounded-xl border transition-all" style={{ backgroundColor: '#11212D', borderColor: '#4A5C6A' }}>
                     {isImageFile(file.fileName) ? (
-                      <div 
-                        className="aspect-square w-full bg-slate-50 cursor-zoom-in overflow-hidden"
-                        onClick={() => setViewingImageUrl(resolveFileUrl(file.fileUrl))}
-                      >
-                        <img 
-                          src={resolveFileUrl(file.fileUrl)} 
-                          alt={file.fileName} 
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                        />
+                      <div className="aspect-square w-full cursor-zoom-in overflow-hidden" onClick={() => setViewingImageUrl(resolveFileUrl(file.fileUrl))}>
+                        <img src={resolveFileUrl(file.fileUrl)} alt={file.fileName} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <Download 
-                            className="w-5 h-5 text-white cursor-pointer hover:scale-110 transition-transform" 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDownloadAttachment(file);
-                            }}
-                          />
+                          <Download className="w-6 h-6 text-white" onClick={(e) => { e.stopPropagation(); handleDownloadAttachment(file); }} />
                         </div>
                       </div>
                     ) : (
                       <div className="aspect-square w-full flex flex-col items-center justify-center p-3 text-center gap-2">
-                        <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:text-primary-500 transition-colors">
-                          <Paperclip className="w-5 h-5" />
-                        </div>
-                        <span className="text-[10px] font-bold text-slate-500 truncate w-full uppercase px-1">{file.fileName}</span>
-                        <Download 
-                          className="w-4 h-4 text-slate-300 hover:text-primary-500 cursor-pointer transition-colors mt-1" 
-                          onClick={() => handleDownloadAttachment(file)}
-                        />
+                        <Paperclip className="w-6 h-6" style={{ color: '#4A5C6A' }} />
+                        <span className="text-[10px] font-bold uppercase truncate w-full px-1" style={{ color: '#9BA8AB' }}>{file.fileName}</span>
+                        <Download className="w-4 h-4 cursor-pointer transition-colors" style={{ color: '#4A5C6A' }} onClick={() => handleDownloadAttachment(file)} onMouseEnter={e => e.currentTarget.style.color = '#CCD0CF'} onMouseLeave={e => e.currentTarget.style.color = '#4A5C6A'} />
                       </div>
                     )}
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-4">
-                <p className="text-slate-400 text-sm italic">No files attached</p>
-              </div>
+              <p className="text-center italic text-sm" style={{ color: '#4A5C6A' }}>No files attached</p>
             )}
           </div>
         </div>
       </div>
 
-      {/* Full-screen Image Lightbox */}
       {viewingImageUrl && (
-        <div className="fixed inset-0 z-[100] bg-slate-900/95 backdrop-blur-md flex items-center justify-center p-4 md:p-10 animate-in fade-in duration-300">
-          <button 
-            onClick={() => setViewingImageUrl(null)}
-            className="absolute top-6 right-6 p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all border border-white/10 hover:rotate-90 duration-300 z-[110]"
-          >
-            <X className="w-6 h-6" />
-          </button>
-          
-          <div 
-            className="absolute inset-0 z-[105]" 
-            onClick={() => setViewingImageUrl(null)}
-          />
-
-          <div className="relative max-w-5xl w-full h-full flex items-center justify-center z-[110]">
-            <img 
-              src={viewingImageUrl} 
-              alt="Viewing attachment" 
-              className="max-w-full max-h-full object-contain rounded-xl shadow-2xl animate-in zoom-in-95 duration-500 select-none pointer-events-auto"
-              onClick={(e) => e.stopPropagation()}
-            />
-          </div>
+        <div className="fixed inset-0 z-[100] backdrop-blur-md flex items-center justify-center p-10 animate-in fade-in duration-300" style={{ backgroundColor: 'rgba(6, 20, 27, 0.95)' }}>
+          <button onClick={() => setViewingImageUrl(null)} className="absolute top-6 right-6 p-3 rounded-full hover:rotate-90 duration-300 z-[110]" style={{ color: '#CCD0CF', backgroundColor: 'rgba(255,255,255,0.1)' }}><X className="w-6 h-6" /></button>
+          <img src={viewingImageUrl} alt="Preview" className="max-w-full max-h-full object-contain rounded-xl shadow-2xl animate-in zoom-in-95 duration-500" onClick={(e) => e.stopPropagation()} />
         </div>
       )}
     </div>

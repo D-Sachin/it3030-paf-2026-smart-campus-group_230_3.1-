@@ -63,81 +63,116 @@ const BookingDetails = () => {
     withAction(() => bookingService.deleteBooking(id));
   };
 
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center py-20 gap-4">
+        <Loader2 className="w-10 h-10 animate-spin" style={{ color: '#1c4f78' }} />
+        <p className="font-bold uppercase tracking-widest text-[10px]" style={{ color: '#4A5C6A' }}>Retrieving Reservation Details...</p>
+      </div>
+    );
+  }
+
+  if (error || !booking) {
+    return (
+      <div className="max-w-4xl mx-auto py-8">
+        <div className="rounded-2xl p-6 flex flex-col items-center gap-4 text-center" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+          <AlertCircle className="w-10 h-10 text-red-500" />
+          <p className="font-bold" style={{ color: '#ef4444' }}>{error || "Booking not found."}</p>
+          <button onClick={() => navigate('/bookings/my')} className="premium-button" style={{ backgroundColor: '#11212D', color: '#CCD0CF' }}>
+            <ArrowLeft className="w-4 h-4" />
+            Return to Ledger
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-fade-in-up">
       <div className="flex items-center justify-between">
-        <Link to="/bookings/my" className="flex items-center gap-2 text-slate-500 hover:text-primary-600 transition-colors font-medium">
+        <Link to="/bookings/my" className="flex items-center gap-2 font-medium transition-colors" style={{ color: '#9BA8AB' }} onMouseEnter={e => e.currentTarget.style.color = '#CCD0CF'} onMouseLeave={e => e.currentTarget.style.color = '#9BA8AB'}>
           <ArrowLeft className="w-4 h-4" />
           Back to My Bookings
         </Link>
       </div>
 
-      {error && (
-        <div className="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 text-red-600 font-bold text-sm">
-          <AlertCircle className="w-5 h-5" />
-          {error}
-        </div>
-      )}
-
-      {loading ? (
-        <div className="flex flex-col items-center py-16">
-          <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
-          <p className="text-slate-400 text-sm mt-2">Loading booking details...</p>
-        </div>
-      ) : !booking ? (
-        <div className="premium-card p-12 text-center text-slate-500">Booking not found.</div>
-      ) : (
-        <div className="premium-card p-8 space-y-6">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-slate-900">Booking #{booking.id}</h1>
-            <span className={`px-3 py-1.5 rounded-full text-xs font-bold border ${getBookingStatusColor(booking.status)}`}>
-              {booking.status}
-            </span>
+      <div className="rounded-[32px] overflow-hidden shadow-2xl border" style={{ backgroundColor: '#253745', borderColor: '#4A5C6A' }}>
+        {/* Header */}
+        <div className="p-8 border-b flex items-center justify-between" style={{ borderColor: '#4A5C6A' }}>
+          <div>
+            <h1 className="text-2xl font-black" style={{ color: '#CCD0CF' }}>Reservation #{booking.id}</h1>
+            <p className="text-[10px] font-bold uppercase tracking-widest mt-1" style={{ color: '#4A5C6A' }}>Global Facility Management</p>
           </div>
+          <span className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider border shadow-inner ${getBookingStatusColor(booking.status)}`}>
+            {booking.status}
+          </span>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div>
-              <p className="text-slate-400 uppercase text-xs font-bold tracking-wider">Resource</p>
-              <p className="text-slate-900 font-semibold mt-1">{booking.resourceName}</p>
+        <div className="p-8 space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-1">
+              <p className="uppercase text-[10px] font-black tracking-[0.2em]" style={{ color: '#4A5C6A' }}>Target Asset</p>
+              <div className="p-4 rounded-2xl border flex items-center" style={{ backgroundColor: '#11212D', borderColor: '#253745' }}>
+                <p className="font-black text-lg" style={{ color: '#CCD0CF' }}>{booking.resourceName}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-slate-400 uppercase text-xs font-bold tracking-wider">Requester</p>
-              <p className="text-slate-900 font-semibold mt-1">{booking.userName}</p>
+            <div className="space-y-1">
+              <p className="uppercase text-[10px] font-black tracking-[0.2em]" style={{ color: '#4A5C6A' }}>Primary User</p>
+              <div className="p-4 rounded-2xl border flex items-center" style={{ backgroundColor: '#11212D', borderColor: '#253745' }}>
+                <p className="font-bold" style={{ color: '#CCD0CF' }}>{booking.userName}</p>
+              </div>
             </div>
-            <div className="md:col-span-2">
-              <p className="text-slate-400 uppercase text-xs font-bold tracking-wider">Schedule</p>
-              <p className="text-slate-900 font-semibold mt-1">{formatBookingSlot(booking.bookingDate, booking.startTime, booking.endTime)}</p>
-            </div>
-            <div className="md:col-span-2">
-              <p className="text-slate-400 uppercase text-xs font-bold tracking-wider">Purpose</p>
-              <p className="text-slate-700 mt-1">{booking.purpose}</p>
-            </div>
-            <div>
-              <p className="text-slate-400 uppercase text-xs font-bold tracking-wider">Expected Attendees</p>
-              <p className="text-slate-900 font-semibold mt-1">{booking.expectedAttendees}</p>
-            </div>
-            <div>
-              <p className="text-slate-400 uppercase text-xs font-bold tracking-wider">Decision Note</p>
-              <p className="text-slate-700 mt-1">{booking.decisionReason || "-"}</p>
+            <div className="md:col-span-2 space-y-1">
+              <p className="uppercase text-[10px] font-black tracking-[0.2em]" style={{ color: '#4A5C6A' }}>Scheduled Window</p>
+              <div className="p-4 rounded-2xl border flex items-center" style={{ backgroundColor: '#11212D', borderColor: '#253745' }}>
+                <p className="font-bold text-lg" style={{ color: '#CCD0CF' }}>{formatBookingSlot(booking.bookingDate, booking.startTime, booking.endTime)}</p>
+              </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 pt-2">
+          <div className="space-y-2">
+            <p className="uppercase text-[10px] font-black tracking-[0.2em]" style={{ color: '#4A5C6A' }}>Operational Purpose</p>
+            <div className="p-6 rounded-2xl border leading-relaxed" style={{ backgroundColor: 'rgba(6, 20, 27, 0.4)', borderColor: '#4A5C6A', color: '#CCD0CF' }}>
+              <p>{booking.purpose}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-1">
+              <p className="uppercase text-[10px] font-black tracking-[0.2em]" style={{ color: '#4A5C6A' }}>Attendee Threshold</p>
+              <p className="font-black text-xl ml-2" style={{ color: '#CCD0CF' }}>{booking.expectedAttendees}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="uppercase text-[10px] font-black tracking-[0.2em]" style={{ color: '#4A5C6A' }}>System Decision Note</p>
+              <p className="font-medium italic ml-2" style={{ color: '#9BA8AB' }}>{booking.decisionReason || "Awaiting verification..."}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Tray */}
+        <div className="px-8 py-6 border-t flex flex-wrap items-center justify-between gap-4" style={{ backgroundColor: '#11212D', borderColor: '#4A5C6A' }}>
+          <div className="flex gap-3">
             {booking.status === "PENDING" && (
               <>
                 <button
                   onClick={handleApprove}
-                  className="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-sm hover:bg-emerald-100 disabled:opacity-60"
+                  className="px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all"
+                  style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.2)' }}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#10b981'; e.currentTarget.style.color = '#11212D'; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(16, 185, 129, 0.1)'; e.currentTarget.style.color = '#10b981'; }}
                   disabled={actionLoading}
                 >
-                  Approve
+                  Authorize
                 </button>
                 <button
                   onClick={handleReject}
-                  className="px-4 py-2 rounded-xl bg-red-50 text-red-600 font-bold text-sm hover:bg-red-100 disabled:opacity-60"
+                  className="px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all"
+                  style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)' }}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#ef4444'; e.currentTarget.style.color = '#CCD0CF'; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'; e.currentTarget.style.color = '#ef4444'; }}
                   disabled={actionLoading}
                 >
-                  Reject
+                  Decline
                 </button>
               </>
             )}
@@ -145,23 +180,27 @@ const BookingDetails = () => {
             {booking.status === "APPROVED" && (
               <button
                 onClick={handleDelete}
-                className="px-4 py-2 rounded-xl bg-red-50 text-red-600 font-bold text-sm hover:bg-red-100 disabled:opacity-60"
+                className="px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all"
+                style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)' }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#ef4444'; e.currentTarget.style.color = '#CCD0CF'; }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'; e.currentTarget.style.color = '#ef4444'; }}
                 disabled={actionLoading}
               >
-                Delete (Cancel)
+                Nullify Reservation
               </button>
             )}
-
-            <button
-              onClick={() => navigate("/bookings/my")}
-              className="px-4 py-2 rounded-xl bg-slate-50 text-slate-700 font-bold text-sm hover:bg-slate-100"
-              disabled={actionLoading}
-            >
-              Back
-            </button>
           </div>
+
+          <button
+            onClick={() => navigate("/bookings/my")}
+            className="px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all"
+            style={{ backgroundColor: '#253745', color: '#CCD0CF', border: '1px solid #4A5C6A' }}
+            disabled={actionLoading}
+          >
+            Ledger View
+          </button>
         </div>
-      )}
+      </div>
     </div>
   );
 };

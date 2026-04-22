@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { AlertCircle, CheckCircle2, Clock3, HelpCircle, Mail, MessageSquareText, User } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock3, HelpCircle, Mail, MessageSquareText, User, Loader2 } from "lucide-react";
 import supportService from "../../services/supportService";
 import { useUser } from "../../context/UserContext";
 
@@ -88,118 +88,131 @@ const HelpPage = () => {
   return (
     <div className="space-y-8 animate-fade-in-up">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900">Help and Support</h1>
-        <p className="text-slate-500 mt-1 font-medium text-sm">
+        <h1 className="text-3xl font-bold" style={{ color: '#CCD0CF' }}>Help and Support</h1>
+        <p className="mt-1 font-medium text-sm" style={{ color: '#9BA8AB' }}>
           Need assistance with resources, bookings, or incident management? Send us a message.
         </p>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <section className="premium-card p-6 xl:col-span-2">
-          <div className="flex items-center gap-2 mb-5">
-            <Mail className="w-5 h-5 text-primary-600" />
-            <h2 className="text-lg font-bold text-slate-900">Contact Support</h2>
+        <section className="p-8 xl:col-span-2 rounded-[32px] shadow-xl border" style={{ backgroundColor: '#253745', borderColor: '#4A5C6A' }}>
+          <div className="flex items-center gap-2 mb-8 pb-4 border-b" style={{ borderColor: '#4A5C6A' }}>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(45, 112, 163, 0.15)', color: '#1c4f78' }}>
+              <Mail className="w-5 h-5" />
+            </div>
+            <h2 className="text-xl font-bold" style={{ color: '#CCD0CF' }}>Contact Support</h2>
           </div>
 
           {submitted ? (
-            <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 mt-0.5" />
-              <div>
-                <p className="font-bold text-emerald-700">Support request drafted</p>
-                <p className="text-sm text-emerald-700/90 mt-1">
-                  Your message is ready. API submission can be connected in the next step without changing this page layout.
-                </p>
+            <div className="rounded-2xl border p-6 flex flex-col items-center gap-4 text-center animate-fade-in" style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mb-2" style={{ backgroundColor: '#11212D', color: '#10b981' }}>
+                <CheckCircle2 className="w-10 h-10" />
               </div>
+              <h3 className="text-xl font-bold" style={{ color: '#10b981' }}>Inquiry Transmitted</h3>
+              <p className="max-w-md font-medium" style={{ color: '#CCD0CF' }}>
+                Your support message has been successfully logged. Our campus operations team will review it and respond shortly.
+              </p>
+              <button 
+                onClick={() => setSubmitted(false)}
+                className="mt-4 px-8 py-2.5 rounded-xl font-bold transition-all"
+                style={{ backgroundColor: '#11212D', color: '#CCD0CF', border: '1px solid #253745' }}
+              >
+                Send Another Message
+              </button>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <label className="block">
-                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Name</span>
-                  <div className="relative mt-2">
-                    <User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <span className="text-[10px] font-bold uppercase tracking-widest ml-2" style={{ color: '#4A5C6A' }}>Name</span>
+                  <div className="relative">
+                    <User className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2" style={{ color: '#4A5C6A' }} />
                     <input
                       type="text"
                       name="name"
                       value={formData.name}
                       onChange={handleChange}
                       placeholder="Your name"
-                      className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50 border border-slate-100 text-sm font-medium outline-none focus:ring-2 focus:ring-primary-500/20"
+                      className="w-full pl-10 pr-4 py-3 rounded-2xl outline-none transition-all font-medium border"
+                      style={{ backgroundColor: '#11212D', borderColor: '#4A5C6A', color: '#CCD0CF' }}
                       required
                     />
                   </div>
-                </label>
+                </div>
 
-                <label className="block">
-                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Email</span>
-                  <div className="relative mt-2">
-                    <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <div className="space-y-2">
+                  <span className="text-[10px] font-bold uppercase tracking-widest ml-2" style={{ color: '#4A5C6A' }}>Email Address</span>
+                  <div className="relative">
+                    <Mail className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2" style={{ color: '#4A5C6A' }} />
                     <input
                       type="email"
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
                       placeholder="you@example.com"
-                      className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50 border border-slate-100 text-sm font-medium outline-none focus:ring-2 focus:ring-primary-500/20"
+                      className="w-full pl-10 pr-4 py-3 rounded-2xl outline-none transition-all font-medium border"
+                      style={{ backgroundColor: '#11212D', borderColor: '#4A5C6A', color: '#CCD0CF' }}
                       required
                     />
                   </div>
-                </label>
+                </div>
               </div>
 
-              <label className="block">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Message</span>
-                <div className="relative mt-2">
-                  <MessageSquareText className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+              <div className="space-y-2">
+                <span className="text-[10px] font-bold uppercase tracking-widest ml-2" style={{ color: '#4A5C6A' }}>Your Message</span>
+                <div className="relative">
+                  <MessageSquareText className="w-4 h-4 absolute left-4 top-4" style={{ color: '#4A5C6A' }} />
                   <textarea
                     name="message"
                     value={formData.message}
                     onChange={handleChange}
                     placeholder="Describe the issue or question..."
                     rows={6}
-                    className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50 border border-slate-100 text-sm font-medium outline-none focus:ring-2 focus:ring-primary-500/20 resize-none"
+                    className="w-full pl-10 pr-4 py-3 rounded-2xl outline-none transition-all font-medium border resize-none leading-relaxed"
+                    style={{ backgroundColor: '#11212D', borderColor: '#4A5C6A', color: '#CCD0CF' }}
                     required
                   />
                 </div>
-              </label>
+              </div>
 
-              <button type="submit" className="premium-button premium-button-primary">
-                <HelpCircle className="w-4 h-4" />
-                Submit Message
-              </button>
-
-              {formStatus.text && (
-                <div className={`rounded-2xl border p-4 flex items-start gap-3 text-sm font-medium ${
-                  formStatus.type === "success"
-                    ? "border-emerald-100 bg-emerald-50 text-emerald-700"
-                    : "border-red-100 bg-red-50 text-red-700"
-                }`}>
-                  {formStatus.type === "success" ? (
-                    <CheckCircle2 className="w-5 h-5 mt-0.5" />
-                  ) : (
-                    <AlertCircle className="w-5 h-5 mt-0.5" />
-                  )}
-                  <span>{formStatus.text}</span>
-                </div>
-              )}
+              <div className="flex justify-between items-center pt-2">
+                {formStatus.text && formStatus.type === "error" ? (
+                  <div className="flex items-center gap-2 text-sm font-bold" style={{ color: '#ef4444' }}>
+                    <AlertCircle className="w-4 h-4" />
+                    <span>{formStatus.text}</span>
+                  </div>
+                ) : <div />}
+                
+                <button 
+                  type="submit" 
+                  className="premium-button px-10 py-3.5 flex items-center gap-2"
+                  style={{ backgroundColor: '#1c4f78', color: '#CCD0CF' }}
+                >
+                  <HelpCircle className="w-4 h-4" />
+                  Submit Inquiry
+                </button>
+              </div>
             </form>
           )}
         </section>
 
-        <section className="premium-card p-6">
-          <div className="flex items-center gap-2 mb-5">
-            <HelpCircle className="w-5 h-5 text-primary-600" />
-            <h2 className="text-lg font-bold text-slate-900">Frequently Asked Questions</h2>
+        <section className="p-8 rounded-[32px] shadow-xl border h-fit" style={{ backgroundColor: '#253745', borderColor: '#4A5C6A' }}>
+          <div className="flex items-center gap-2 mb-8 pb-4 border-b" style={{ borderColor: '#4A5C6A' }}>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(251, 191, 36, 0.15)', color: '#fbbf24' }}>
+              <HelpCircle className="w-5 h-5" />
+            </div>
+            <h2 className="text-xl font-bold" style={{ color: '#CCD0CF' }}>General FAQ</h2>
           </div>
 
           <div className="space-y-4">
             {faqs.map((item) => (
               <article
                 key={item.question}
-                className="rounded-2xl border border-slate-100 bg-slate-50 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-md hover:shadow-slate-200/70"
+                className="rounded-2xl border p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg group"
+                style={{ backgroundColor: '#11212D', borderColor: '#253745' }}
               >
-                <h3 className="text-sm font-bold text-slate-900">{item.question}</h3>
-                <p className="text-sm text-slate-600 mt-2 leading-relaxed">{item.answer}</p>
+                <h3 className="text-sm font-bold transition-colors group-hover:text-amber-400" style={{ color: '#CCD0CF' }}>{item.question}</h3>
+                <p className="text-sm mt-3 leading-relaxed" style={{ color: '#9BA8AB' }}>{item.answer}</p>
               </article>
             ))}
           </div>
@@ -207,41 +220,55 @@ const HelpPage = () => {
       </div>
 
       {user?.role === "ADMIN" && (
-        <section className="premium-card p-6">
-          <div className="flex items-center justify-between gap-3 mb-5">
+        <section className="p-8 rounded-[32px] shadow-xl border overflow-hidden" style={{ backgroundColor: '#253745', borderColor: '#4A5C6A' }}>
+          <div className="flex items-center justify-between gap-3 mb-8 pb-4 border-b" style={{ borderColor: '#4A5C6A' }}>
             <div>
-              <h2 className="text-lg font-bold text-slate-900">Support Inbox</h2>
-              <p className="text-sm text-slate-500 mt-1">Recent help messages from users.</p>
+              <h2 className="text-xl font-bold" style={{ color: '#CCD0CF' }}>Support Inbox</h2>
+              <p className="text-sm mt-1" style={{ color: '#9BA8AB' }}>Recent help messages from users.</p>
             </div>
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
-              <Clock3 className="w-4 h-4" />
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: '#4A5C6A' }}>
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               Live Queue
             </div>
           </div>
 
           {messageError && (
-            <div className="p-4 bg-red-50 border border-red-100 rounded-2xl text-red-600 font-bold text-sm mb-4">
+            <div className="p-4 rounded-2xl font-bold text-sm mb-4 border" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.2)', color: '#ef4444' }}>
               {messageError}
             </div>
           )}
 
           {loadingMessages ? (
-            <div className="p-8 text-center text-slate-500 text-sm">Loading support messages...</div>
+            <div className="py-20 flex flex-col items-center justify-center gap-4">
+              <Loader2 className="w-10 h-10 animate-spin" style={{ color: '#1c4f78' }} />
+              <p className="text-sm font-bold uppercase tracking-widest" style={{ color: '#4A5C6A' }}>Synchronizing Inbox...</p>
+            </div>
           ) : adminMessages.length === 0 ? (
-            <div className="p-8 text-center text-slate-500 text-sm">No support messages yet.</div>
+            <div className="py-20 text-center rounded-3xl" style={{ backgroundColor: '#11212D' }}>
+              <p className="italic font-medium" style={{ color: '#4A5C6A' }}>No support messages detected in queue.</p>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {adminMessages.map((item) => (
-                <article key={item.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-                  <div className="flex items-center justify-between gap-3 mb-3">
-                    <h3 className="font-bold text-slate-900">{item.name}</h3>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">New</span>
+                <article 
+                  key={item.id} 
+                  className="rounded-2xl border p-6 transition-all hover:shadow-xl" 
+                  style={{ backgroundColor: '#11212D', borderColor: '#253745' }}
+                >
+                  <div className="flex items-center justify-between gap-3 mb-4">
+                    <h3 className="font-bold" style={{ color: '#CCD0CF' }}>{item.name}</h3>
+                    <span className="px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest" style={{ backgroundColor: 'rgba(45, 112, 163, 0.2)', color: '#1c4f78', border: '1px solid rgba(45, 112, 163, 0.3)' }}>NEW</span>
                   </div>
-                  <p className="text-xs text-slate-500 mb-2">{item.email}</p>
-                  <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{item.message}</p>
-                  <p className="text-[11px] text-slate-400 mt-4">
-                    {item.createdAt ? new Date(item.createdAt).toLocaleString() : "Just now"}
-                  </p>
+                  <div className="space-y-4">
+                    <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: '#4A5C6A' }}>{item.email}</p>
+                    <div className="p-4 rounded-xl text-sm leading-relaxed" style={{ backgroundColor: '#06141B', color: '#CCD0CF' }}>
+                      <p className="whitespace-pre-line">{item.message}</p>
+                    </div>
+                    <div className="flex items-center gap-2 text-[9px] font-bold uppercase" style={{ color: '#4A5C6A' }}>
+                      <Clock3 className="w-3 h-3" />
+                      {item.createdAt ? new Date(item.createdAt).toLocaleString() : "Just now"}
+                    </div>
+                  </div>
                 </article>
               ))}
             </div>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Clock, AlertCircle } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 import { getPriorityColor, getStatusColor } from '../../utils/ticketUtils';
 
 const TicketCard = ({ ticket }) => {
@@ -13,33 +13,49 @@ const TicketCard = ({ ticket }) => {
   });
 
   return (
-    <div 
-      className="premium-card p-6 flex flex-col h-full cursor-pointer group"
+    <div
+      className="flex flex-col h-full cursor-pointer group rounded-2xl p-6 transition-all duration-300"
+      style={{ backgroundColor: '#253745', border: '1px solid #4A5C6A' }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = '#9BA8AB'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = '#4A5C6A'; e.currentTarget.style.transform = 'translateY(0)'; }}
       onClick={() => navigate(`/tickets/${ticket.id}`)}
     >
+      {/* Priority + Status row */}
       <div className="flex justify-between items-start mb-4">
-        <div className={`px-3 py-1 rounded-lg text-xs font-bold border transition-colors ${getPriorityColor(ticket.priority)}`}>
+        <div className={`px-3 py-1 rounded-lg text-xs font-bold border ${getPriorityColor(ticket.priority)}`}>
           {ticket.priority}
         </div>
         <span className={`px-3 py-1 rounded-lg text-xs font-bold border ${getStatusColor(ticket.status)}`}>
           {ticket.status?.replace('_', ' ')}
         </span>
       </div>
-      
-      <h3 className="text-lg font-bold text-slate-900 group-hover:text-primary-600 transition-colors mb-2 line-clamp-1">
+
+      {/* Title */}
+      <h3
+        className="text-lg font-bold mb-2 line-clamp-1 transition-colors"
+        style={{ color: '#CCD0CF' }}
+      >
         {ticket.title}
       </h3>
-      
-      <p className="text-slate-500 text-sm mb-6 line-clamp-2 flex-1">
+
+      {/* Description */}
+      <p className="text-sm mb-6 line-clamp-2 flex-1" style={{ color: '#9BA8AB' }}>
         {ticket.description}
       </p>
-      
-      <div className="flex items-center justify-between pt-4 border-t border-slate-50 mt-auto">
-        <div className="flex items-center gap-2 text-slate-400 text-xs font-medium">
+
+      {/* Footer */}
+      <div
+        className="flex items-center justify-between pt-4 mt-auto"
+        style={{ borderTop: '1px solid #4A5C6A' }}
+      >
+        <div className="flex items-center gap-2 text-xs font-medium" style={{ color: '#9BA8AB' }}>
           <Calendar className="w-3.5 h-3.5" />
           {formattedDate}
         </div>
-        <div className="text-slate-400 text-xs font-bold bg-slate-50 px-2 py-1 rounded">
+        <div
+          className="text-xs font-bold px-2 py-1 rounded"
+          style={{ backgroundColor: '#11212D', color: '#9BA8AB' }}
+        >
           #{ticket.id}
         </div>
       </div>

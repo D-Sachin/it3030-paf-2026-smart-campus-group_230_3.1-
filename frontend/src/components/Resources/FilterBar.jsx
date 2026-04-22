@@ -69,25 +69,33 @@ const ResourceFilterBar = ({ onFilter, onSearch, isLoading }) => {
       {/* Search Header */}
       <div className="flex flex-col md:flex-row gap-4">
         <form onSubmit={handleSearch} className="flex-1 relative group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-primary-500 transition-colors" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors" style={{ color: '#4A5C6A' }} />
           <input
             type="text"
             placeholder="Search campus resources by name or ID..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             disabled={isLoading}
-            className="w-full pl-12 pr-4 py-3.5 bg-white border border-slate-100 rounded-2xl outline-none focus:ring-4 focus:ring-primary-500/5 focus:border-primary-500 transition-all font-medium text-slate-700 shadow-sm"
+            className="w-full pl-12 pr-4 py-3.5 rounded-2xl outline-none transition-all font-medium border"
+            style={{ 
+              backgroundColor: '#06141B', 
+              borderColor: '#253745', 
+              color: '#CCD0CF' 
+            }}
+            onFocus={e => { e.currentTarget.style.borderColor = '#1c4f78'; e.currentTarget.style.boxShadow = '0 0 0 4px rgba(28, 79, 120, 0.1)'; }}
+            onBlur={e => { e.currentTarget.style.borderColor = '#253745'; e.currentTarget.style.boxShadow = 'none'; }}
           />
         </form>
         
         <div className="flex gap-2">
           <button
             onClick={() => setShowAdvanced(!showAdvanced)}
-            className={`flex items-center gap-2 px-6 py-3.5 rounded-2xl font-bold transition-all ${
-              showAdvanced 
-              ? 'bg-slate-900 text-white shadow-lg shadow-slate-200' 
-              : 'bg-white text-slate-600 border border-slate-100 hover:border-primary-200 shadow-sm'
-            }`}
+            className="flex items-center gap-2 px-6 py-3.5 rounded-2xl font-bold transition-all border"
+            style={{ 
+              backgroundColor: showAdvanced ? '#1c4f78' : '#253745', 
+              color: '#CCD0CF',
+              borderColor: '#4A5C6A'
+            }}
           >
             <SlidersHorizontal className="w-4 h-4" />
             Filters {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -96,7 +104,8 @@ const ResourceFilterBar = ({ onFilter, onSearch, isLoading }) => {
           {hasActiveFilters && (
             <button
               onClick={handleClearFilters}
-              className="flex items-center gap-2 px-4 py-3.5 bg-red-50 text-red-600 rounded-2xl font-bold hover:bg-red-100 transition-all"
+              className="flex items-center gap-2 px-4 py-3.5 rounded-2xl font-bold transition-all"
+              style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}
               title="Reset all filters"
             >
               <X className="w-4 h-4" />
@@ -107,26 +116,30 @@ const ResourceFilterBar = ({ onFilter, onSearch, isLoading }) => {
 
       {/* Advanced Filter Panel */}
       {showAdvanced && (
-        <div className="premium-card p-6 bg-white/60 backdrop-blur-md border-primary-100 animate-fade-in-up">
+        <div 
+          className="p-6 rounded-[32px] border animate-fade-in-up" 
+          style={{ backgroundColor: '#253745', borderColor: '#4A5C6A' }}
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: '#4A5C6A' }}>
                 <LayoutGrid className="w-3 h-3" /> Asset Type
               </label>
               <select
                 name="type"
                 value={filters.type}
                 onChange={handleFilterChange}
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-primary-500 font-bold text-slate-700 text-sm"
+                className="w-full px-4 py-2.5 rounded-xl outline-none font-bold text-sm appearance-none"
+                style={{ backgroundColor: '#06141B', border: '1px solid #4A5C6A', color: '#CCD0CF' }}
               >
                 {resourceTypes.map((type) => (
-                  <option key={type.value} value={type.value}>{type.label}</option>
+                  <option key={type.value} value={type.value} style={{ backgroundColor: '#11212D' }}>{type.label}</option>
                 ))}
               </select>
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: '#4A5C6A' }}>
                 <MapPin className="w-3 h-3" /> Location
               </label>
               <input
@@ -135,12 +148,13 @@ const ResourceFilterBar = ({ onFilter, onSearch, isLoading }) => {
                 placeholder="Building Name..."
                 value={filters.location}
                 onChange={handleFilterChange}
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-primary-500 font-bold text-slate-700 text-sm"
+                className="w-full px-4 py-2.5 rounded-xl outline-none font-bold text-sm"
+                style={{ backgroundColor: '#06141B', border: '1px solid #4A5C6A', color: '#CCD0CF' }}
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: '#4A5C6A' }}>
                 <Users className="w-3 h-3" /> Capacity
               </label>
               <div className="flex items-center gap-2">
@@ -150,47 +164,54 @@ const ResourceFilterBar = ({ onFilter, onSearch, isLoading }) => {
                   placeholder="Min"
                   value={filters.minCapacity}
                   onChange={handleFilterChange}
-                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-primary-500 font-bold text-slate-700 text-xs"
+                  className="w-full px-3 py-2.5 rounded-xl outline-none font-bold text-xs"
+                  style={{ backgroundColor: '#06141B', border: '1px solid #4A5C6A', color: '#CCD0CF' }}
                 />
-                <span className="text-slate-300 font-bold">-</span>
+                <span style={{ color: '#4A5C6A' }}>-</span>
                 <input
                   type="number"
                   name="maxCapacity"
                   placeholder="Max"
                   value={filters.maxCapacity}
                   onChange={handleFilterChange}
-                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-primary-500 font-bold text-slate-700 text-xs"
+                  className="w-full px-3 py-2.5 rounded-xl outline-none font-bold text-xs"
+                  style={{ backgroundColor: '#06141B', border: '1px solid #4A5C6A', color: '#CCD0CF' }}
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: '#4A5C6A' }}>
                 <Filter className="w-3 h-3" /> Status
               </label>
               <select
                 name="status"
                 value={filters.status}
                 onChange={handleFilterChange}
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-primary-500 font-bold text-slate-700 text-sm"
+                className="w-full px-4 py-2.5 rounded-xl outline-none font-bold text-sm appearance-none"
+                style={{ backgroundColor: '#06141B', border: '1px solid #4A5C6A', color: '#CCD0CF' }}
               >
                 {statuses.map((status) => (
-                  <option key={status.value} value={status.value}>{status.label}</option>
+                  <option key={status.value} value={status.value} style={{ backgroundColor: '#11212D' }}>{status.label}</option>
                 ))}
               </select>
             </div>
           </div>
           
-          <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-slate-50">
+          <div className="flex justify-end gap-3 mt-8 pt-6 border-t" style={{ borderColor: '#4A5C6A' }}>
             <button
               onClick={handleClearFilters}
-              className="px-6 py-2 text-slate-500 font-bold hover:text-slate-700 transition-colors"
+              className="px-6 py-2 font-bold transition-colors"
+              style={{ color: '#4A5C6A' }}
+              onMouseEnter={e => e.currentTarget.style.color = '#CCD0CF'}
+              onMouseLeave={e => e.currentTarget.style.color = '#4A5C6A'}
             >
               Reset Filters
             </button>
             <button
               onClick={handleApplyFilters}
-              className="premium-button premium-button-primary px-8"
+              className="premium-button px-8"
+              style={{ backgroundColor: '#1c4f78', color: '#CCD0CF' }}
             >
               Apply Selection
             </button>

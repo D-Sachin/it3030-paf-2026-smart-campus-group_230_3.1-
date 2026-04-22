@@ -147,46 +147,58 @@ public class TicketServiceImpl implements TicketService {
     @Override
     @Transactional
     public TicketResponseDTO updateTicketStatus(Long id, TicketStatus status) {
-        Ticket ticket = ticketRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + id));
+        try {
+            Ticket ticket = ticketRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + id));
 
-        // Get current logged-in user
-        final String currentEmail;
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal instanceof UserDetails) {
-            currentEmail = ((UserDetails) principal).getUsername();
-        } else {
-            currentEmail = principal.toString();
+            // Get current logged-in user
+            final String currentEmail;
+            Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            if (principal instanceof UserDetails) {
+                currentEmail = ((UserDetails) principal).getUsername();
+            } else {
+                currentEmail = principal.toString();
+            }
+
+            User currentUser = userRepository.findByEmail(currentEmail)
+                    .orElseThrow(() -> new RuntimeException("User not found: " + currentEmail));
+
+            // Authorization check: Admin OR Assigned Technician
+            boolean isAdmin = "ADMIN".equalsIgnoreCase(currentUser.getRole());
+            boolean isAssignedTech = ticket.getTechnician() != null && ticket.getTechnician().getId().equals(currentUser.getId());
+
+            if (!isAdmin && !isAssignedTech) {
+                throw new RuntimeException("Only Admins or the assigned Technician can update ticket status.");
+            }
+
+            // Basic transition validation: only block NON-admins from re-opening terminal tickets
+            if (!isAdmin && (ticket.getStatus() == TicketStatus.CLOSED || ticket.getStatus() == TicketStatus.REJECTED)) {
+                throw new RuntimeException("Cannot change status of a " + ticket.getStatus() + " ticket.");
+            }
+
+            ticket.setStatus(status);
+
+            // SLA logic: Set resolvedAt when transitioning to terminal states
+            if (status == TicketStatus.RESOLVED || status == TicketStatus.REJECTED) {
+                ticket.setResolvedAt(LocalDateTime.now());
+            } else if (status == TicketStatus.OPEN || status == TicketStatus.IN_PROGRESS) {
+                // If reopened, clear resolved timestamp? (Standard practice for resolution SLA)
+                ticket.setResolvedAt(null);
+            }
+
+            Ticket updatedTicket = ticketRepository.save(ticket);
+            return mapToResponseDTO(updatedTicket);
+        } catch (Exception e) {
+            try {
+                java.nio.file.Files.writeString(
+                    java.nio.file.Paths.get("debug_status_error.log"), 
+                    "Error updating status for ticket " + id + ": " + e.getMessage() + "\n", 
+                    java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND
+                );
+                e.printStackTrace(new java.io.PrintStream(new java.io.FileOutputStream("debug_status_error.log", true)));
+            } catch (Exception ex) {}
+            throw e;
         }
-
-        User currentUser = userRepository.findByEmail(currentEmail)
-                .orElseThrow(() -> new RuntimeException("User not found: " + currentEmail));
-
-        // Authorization check: Admin OR Assigned Technician
-        boolean isAdmin = "ADMIN".equalsIgnoreCase(currentUser.getRole());
-        boolean isAssignedTech = ticket.getTechnician() != null && ticket.getTechnician().getId().equals(currentUser.getId());
-
-        if (!isAdmin && !isAssignedTech) {
-            throw new RuntimeException("Only Admins or the assigned Technician can update ticket status.");
-        }
-
-        // Basic transition validation
-        if (ticket.getStatus() == TicketStatus.CLOSED || ticket.getStatus() == TicketStatus.REJECTED) {
-            throw new RuntimeException("Cannot change status of a " + ticket.getStatus() + " ticket.");
-        }
-
-        ticket.setStatus(status);
-
-        // SLA logic: Set resolvedAt when transitioning to terminal states
-        if (status == TicketStatus.RESOLVED || status == TicketStatus.REJECTED) {
-            ticket.setResolvedAt(LocalDateTime.now());
-        } else if (status == TicketStatus.OPEN || status == TicketStatus.IN_PROGRESS) {
-            // If reopened, clear resolved timestamp? (Standard practice for resolution SLA)
-            ticket.setResolvedAt(null);
-        }
-
-        Ticket updatedTicket = ticketRepository.save(ticket);
-        return mapToResponseDTO(updatedTicket);
     }
 
     @Override

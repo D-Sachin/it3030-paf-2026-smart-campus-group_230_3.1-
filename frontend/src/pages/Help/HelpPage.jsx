@@ -174,98 +174,144 @@ const HelpPage = () => {
 
   return (
     <div className="space-y-8 animate-fade-in-up">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">Help and Support</h1>
-        <p className="text-slate-500 mt-1 font-medium text-sm">
+      {/* Header Section */}
+      <div className="pb-2">
+        <h1 className="text-4xl font-extrabold tracking-tight" style={{ color: '#CCD0CF' }}>Help and Support</h1>
+        <p className="mt-2 text-base font-medium" style={{ color: '#9BA8AB' }}>
           Need assistance with resources, bookings, or incident management? Send us a message.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <section className="premium-card p-6 xl:col-span-2">
-          <div className="flex items-center gap-2 mb-5">
-            <Mail className="w-5 h-5 text-primary-600" />
-            <h2 className="text-lg font-bold text-slate-900">Contact Support</h2>
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+        {/* Contact Support Form */}
+        <section 
+          className="xl:col-span-3 rounded-2xl p-8 border"
+          style={{ backgroundColor: '#11212D', borderColor: '#253745' }}
+        >
+          <div className="flex items-center gap-3 mb-8">
+            <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(28, 79, 120, 0.2)' }}>
+              <Mail className="w-6 h-6" style={{ color: '#1c4f78' }} />
+            </div>
+            <h2 className="text-2xl font-bold" style={{ color: '#CCD0CF' }}>Contact Support</h2>
           </div>
 
+          <div 
+            className="w-full h-px mb-8" 
+            style={{ backgroundColor: '#253745' }}
+          ></div>
+
           {submitted ? (
-            <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 mt-0.5" />
+            <div 
+              className="rounded-2xl border p-6 flex items-start gap-4"
+              style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', borderColor: 'rgba(16, 185, 129, 0.2)' }}
+            >
+              <CheckCircle2 className="w-6 h-6 text-emerald-500 mt-0.5" />
               <div>
-                <p className="font-bold text-emerald-700">Support request drafted</p>
-                <p className="text-sm text-emerald-700/90 mt-1">
-                  Your message is ready. API submission can be connected in the next step without changing this page layout.
+                <p className="font-bold text-emerald-400 text-lg">Message Submitted Successfully</p>
+                <p className="text-emerald-400/80 mt-1">
+                  We've received your request and our support team will get back to you within one business day.
                 </p>
+                <button 
+                  onClick={() => setSubmitted(false)}
+                  className="mt-4 text-emerald-400 font-bold hover:underline underline-offset-4"
+                >
+                  Send another message
+                </button>
               </div>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <label className="block">
-                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Name</span>
-                  <div className="relative mt-2">
-                    <User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <form onSubmit={handleSubmit} className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-3">
+                  <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#9BA8AB' }}>
+                    Name
+                  </label>
+                  <div className="relative group">
+                    <User className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-200" style={{ color: '#4A5C6A' }} />
                     <input
                       type="text"
                       name="name"
                       value={formData.name}
                       onChange={handleChange}
                       placeholder="Your name"
-                      className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50 border border-slate-100 text-sm font-medium outline-none focus:ring-2 focus:ring-primary-500/20"
+                      className="w-full pl-12 pr-4 py-4 rounded-xl border outline-none transition-all duration-200 font-medium placeholder:text-[#4A5C6A]"
+                      style={{ 
+                        backgroundColor: '#06141B', 
+                        borderColor: '#253745',
+                        color: '#CCD0CF'
+                      }}
                       required
                     />
                   </div>
-                </label>
+                </div>
 
-                <label className="block">
-                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Email</span>
-                  <div className="relative mt-2">
-                    <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <div className="space-y-3">
+                  <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#9BA8AB' }}>
+                    Email Address
+                  </label>
+                  <div className="relative group">
+                    <Mail className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-200" style={{ color: '#4A5C6A' }} />
                     <input
                       type="email"
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
                       placeholder="you@example.com"
-                      className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50 border border-slate-100 text-sm font-medium outline-none focus:ring-2 focus:ring-primary-500/20"
+                      className="w-full pl-12 pr-4 py-4 rounded-xl border outline-none transition-all duration-200 font-medium placeholder:text-[#4A5C6A]"
+                      style={{ 
+                        backgroundColor: '#06141B', 
+                        borderColor: '#253745',
+                        color: '#CCD0CF'
+                      }}
                       required
                     />
                   </div>
-                </label>
+                </div>
               </div>
 
-              <label className="block">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Message</span>
-                <div className="relative mt-2">
-                  <MessageSquareText className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+              <div className="space-y-3">
+                <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#9BA8AB' }}>
+                  Your Message
+                </label>
+                <div className="relative group">
+                  <MessageSquareText className="w-5 h-5 absolute left-4 top-5 transition-colors duration-200" style={{ color: '#4A5C6A' }} />
                   <textarea
                     name="message"
                     value={formData.message}
                     onChange={handleChange}
                     placeholder="Describe the issue or question..."
                     rows={6}
-                    className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50 border border-slate-100 text-sm font-medium outline-none focus:ring-2 focus:ring-primary-500/20 resize-none"
+                    className="w-full pl-12 pr-4 py-4 rounded-xl border outline-none transition-all duration-200 font-medium resize-none placeholder:text-[#4A5C6A]"
+                    style={{ 
+                      backgroundColor: '#06141B', 
+                      borderColor: '#253745',
+                      color: '#CCD0CF'
+                    }}
                     required
                   />
                 </div>
-              </label>
+              </div>
 
-              <button type="submit" className="premium-button premium-button-primary">
-                <HelpCircle className="w-4 h-4" />
-                Submit Message
-              </button>
+              <div className="flex justify-end">
+                <button 
+                  type="submit" 
+                  className="premium-button flex items-center gap-3 px-8 py-4 text-lg"
+                  style={{ backgroundColor: '#1c4f78', color: '#CCD0CF' }}
+                >
+                  <HelpCircle className="w-5 h-5" />
+                  Submit Inquiry
+                </button>
+              </div>
 
               {formStatus.text && (
-                <div className={`rounded-2xl border p-4 flex items-start gap-3 text-sm font-medium ${
-                  formStatus.type === "success"
-                    ? "border-emerald-100 bg-emerald-50 text-emerald-700"
-                    : "border-red-100 bg-red-50 text-red-700"
-                }`}>
-                  {formStatus.type === "success" ? (
-                    <CheckCircle2 className="w-5 h-5 mt-0.5" />
-                  ) : (
-                    <AlertCircle className="w-5 h-5 mt-0.5" />
-                  )}
+                <div 
+                  className="rounded-2xl border p-4 flex items-start gap-4 text-sm font-medium animate-fade-in"
+                  style={formStatus.type === "success" 
+                    ? { backgroundColor: 'rgba(16, 185, 129, 0.1)', borderColor: 'rgba(16, 185, 129, 0.2)', color: '#10b981' }
+                    : { backgroundColor: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.2)', color: '#ef4444' }
+                  }
+                >
+                  {formStatus.type === "success" ? <CheckCircle2 className="w-5 h-5 flex-shrink-0" /> : <AlertCircle className="w-5 h-5 flex-shrink-0" />}
                   <span>{formStatus.text}</span>
                 </div>
               )}
@@ -273,192 +319,244 @@ const HelpPage = () => {
           )}
         </section>
 
-        <section className="premium-card p-6">
-          <div className="flex items-center justify-between gap-3 mb-5">
-            <div className="flex items-center gap-2">
-              <HelpCircle className="w-5 h-5 text-primary-600" />
-              <h2 className="text-lg font-bold text-slate-900">Frequently Asked Questions</h2>
+        {/* General FAQ Sidebar */}
+        <section 
+          className="rounded-2xl p-6 border flex flex-col h-fit"
+          style={{ backgroundColor: '#11212D', borderColor: '#253745' }}
+        >
+          <div className="flex items-center justify-between gap-3 mb-8">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(155, 168, 171, 0.1)' }}>
+                <HelpCircle className="w-5 h-5" style={{ color: '#9BA8AB' }} />
+              </div>
+              <h2 className="text-xl font-bold" style={{ color: '#CCD0CF' }}>General FAQ</h2>
             </div>
             {user?.role === "ADMIN" && (
               <button
                 onClick={() => setShowAddFAQModal(true)}
-                className="inline-flex items-center gap-1 rounded-lg border border-primary-200 bg-primary-50 px-3 py-1.5 text-xs font-bold text-primary-600 transition hover:bg-primary-100"
+                className="p-2 rounded-lg transition-all hover:scale-110"
+                style={{ backgroundColor: '#1c4f78', color: '#CCD0CF' }}
+                title="Add FAQ"
               >
-                <Plus className="w-3.5 h-3.5" />
-                Add FAQ
+                <Plus className="w-4 h-4" />
               </button>
             )}
           </div>
 
-          {loadingFAQs ? (
-            <div className="text-center text-slate-500 text-sm py-8">Loading FAQs...</div>
-          ) : faqs.length === 0 ? (
-            <div className="text-center text-slate-500 text-sm py-8">No FAQs available yet.</div>
-          ) : (
-            <div className="space-y-4">
-              {faqs.map((item) => (
+          <div className="space-y-4">
+            {loadingFAQs ? (
+              <div className="py-12 flex flex-col items-center gap-3">
+                <div className="w-8 h-8 border-2 border-t-transparent animate-spin rounded-full" style={{ borderColor: '#1c4f78' }}></div>
+                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#4A5C6A' }}>Loading FAQs...</p>
+              </div>
+            ) : faqs.length === 0 ? (
+              <div className="py-12 text-center text-sm font-medium" style={{ color: '#4A5C6A' }}>
+                No FAQs available yet.
+              </div>
+            ) : (
+              faqs.map((item) => (
                 <article
                   key={item.id}
-                  className="rounded-2xl border border-slate-100 bg-slate-50 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-md hover:shadow-slate-200/70 flex justify-between items-start gap-3"
+                  className="group rounded-xl border p-5 transition-all duration-300 hover:shadow-lg"
+                  style={{ 
+                    backgroundColor: '#06141B', 
+                    borderColor: '#253745'
+                  }}
                 >
-                  <div className="flex-1">
-                    <h3 className="text-sm font-bold text-slate-900">{item.question}</h3>
-                    <p className="text-sm text-slate-600 mt-2 leading-relaxed">{item.answer}</p>
-                  </div>
-                  {user?.role === "ADMIN" && (
-                    <button
-                      onClick={() => handleDeleteFAQ(item.id)}
-                      disabled={deletingFAQId === item.id}
-                      className="flex-shrink-0 inline-flex items-center gap-1 rounded-lg border border-red-200 bg-white px-2 py-1 text-[11px] font-bold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  )}
-                </article>
-              ))}
-            </div>
-          )}
-
-          {showAddFAQModal && user?.role === "ADMIN" && (
-            <div
-              className="fixed inset-0 z-50 overflow-y-auto bg-black/50 px-4 py-6"
-              onMouseDown={(event) => {
-                if (event.target === event.currentTarget) {
-                  setShowAddFAQModal(false);
-                  setFAQFormError("");
-                }
-              }}
-            >
-              <div className="min-h-full flex items-center justify-center">
-                <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold text-slate-900">Add New FAQ</h3>
-                  <button
-                    onClick={() => {
-                      setShowAddFAQModal(false);
-                      setFAQFormError("");
-                    }}
-                    className="text-slate-400 hover:text-slate-600 transition"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-
-                <form onSubmit={handleAddFAQSubmit} className="space-y-4">
-                  <label className="block">
-                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Question</span>
-                    <input
-                      type="text"
-                      name="question"
-                      autoComplete="off"
-                      value={faqFormData.question}
-                      onChange={handleAddFAQChange}
-                      placeholder="Enter the FAQ question..."
-                      className="w-full mt-2 px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-100 text-sm font-medium outline-none focus:ring-2 focus:ring-primary-500/20 focus:bg-white transition"
-                      required
-                    />
-                  </label>
-
-                  <label className="block">
-                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Answer</span>
-                    <textarea
-                      name="answer"
-                      autoComplete="off"
-                      value={faqFormData.answer}
-                      onChange={handleAddFAQChange}
-                      placeholder="Enter the FAQ answer..."
-                      rows={5}
-                      className="w-full mt-2 px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-100 text-sm font-medium outline-none focus:ring-2 focus:ring-primary-500/20 resize-none focus:bg-white transition"
-                      required
-                    />
-                  </label>
-
-                  {faqFormError && (
-                    <div className="p-3 bg-red-50 border border-red-100 rounded-lg text-red-600 text-xs font-bold flex items-start gap-2">
-                      <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                      <span>{faqFormError}</span>
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="space-y-3">
+                      <h3 className="text-sm font-bold leading-snug" style={{ color: '#CCD0CF' }}>{item.question}</h3>
+                      <p className="text-sm leading-relaxed" style={{ color: '#9BA8AB' }}>{item.answer}</p>
                     </div>
-                  )}
-
-                  <div className="flex gap-3 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowAddFAQModal(false);
-                        setFAQFormError("");
-                      }}
-                      className="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 bg-white text-slate-600 font-bold text-sm transition hover:bg-slate-50"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={submittingFAQ}
-                      className="flex-1 px-4 py-2.5 rounded-lg bg-primary-600 text-white font-bold text-sm transition hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed"
-                    >
-                      {submittingFAQ ? "Creating..." : "Create FAQ"}
-                    </button>
+                    {user?.role === "ADMIN" && (
+                      <button
+                        onClick={() => handleDeleteFAQ(item.id)}
+                        disabled={deletingFAQId === item.id}
+                        className="opacity-0 group-hover:opacity-100 p-2 rounded-lg text-red-500 hover:bg-red-500/10 transition-all"
+                        title="Delete FAQ"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
-                </form>
-              </div>
-              </div>
-            </div>
-          )}
+                </article>
+              ))
+            )}
+          </div>
         </section>
       </div>
 
+      {/* Admin Message Queue Section */}
       {user?.role === "ADMIN" && (
-        <section className="premium-card p-6">
-          <div className="flex items-center justify-between gap-3 mb-5">
-            <div>
-              <h2 className="text-lg font-bold text-slate-900">Support Inbox</h2>
-              <p className="text-sm text-slate-500 mt-1">Recent help messages from users.</p>
+        <section 
+          className="rounded-2xl p-8 border mt-8"
+          style={{ backgroundColor: '#11212D', borderColor: '#253745' }}
+        >
+          <div className="flex items-center justify-between gap-3 mb-8">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(28, 79, 120, 0.2)' }}>
+                <MessageSquareText className="w-6 h-6" style={{ color: '#1c4f78' }} />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold" style={{ color: '#CCD0CF' }}>Support Inbox</h2>
+                <p className="text-sm font-medium mt-1" style={{ color: '#9BA8AB' }}>Manage incoming user inquiries</p>
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
-              <Clock3 className="w-4 h-4" />
-              Live Queue
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full border" style={{ borderColor: '#253745', backgroundColor: '#06141B' }}>
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="text-xs font-bold uppercase tracking-widest" style={{ color: '#9BA8AB' }}>Live Queue</span>
             </div>
           </div>
 
           {messageError && (
-            <div className="p-4 bg-red-50 border border-red-100 rounded-2xl text-red-600 font-bold text-sm mb-4">
-              {messageError}
+            <div className="p-4 rounded-xl border mb-8 flex items-center gap-3" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.2)', color: '#ef4444' }}>
+              <AlertCircle className="w-5 h-5 flex-shrink-0" />
+              <span className="text-sm font-bold">{messageError}</span>
             </div>
           )}
 
           {loadingMessages ? (
-            <div className="p-8 text-center text-slate-500 text-sm">Loading support messages...</div>
+            <div className="py-24 flex flex-col items-center gap-4">
+              <div className="w-12 h-12 border-4 border-t-transparent animate-spin rounded-full" style={{ borderColor: '#1c4f78' }}></div>
+              <p className="font-bold uppercase tracking-widest text-sm" style={{ color: '#4A5C6A' }}>Syncing Inbox...</p>
+            </div>
           ) : adminMessages.length === 0 ? (
-            <div className="p-8 text-center text-slate-500 text-sm">No support messages yet.</div>
+            <div className="py-24 text-center">
+              <div className="w-20 h-20 bg-[#06141B] rounded-full flex items-center justify-center mx-auto mb-6">
+                <CheckCircle2 className="w-10 h-10" style={{ color: '#253745' }} />
+              </div>
+              <h3 className="text-lg font-bold" style={{ color: '#CCD0CF' }}>Inbox Cleared</h3>
+              <p className="text-sm font-medium mt-2" style={{ color: '#9BA8AB' }}>There are no pending support messages at this time.</p>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {adminMessages.map((item) => (
-                <article key={item.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-                  <div className="flex items-center justify-between gap-3 mb-3">
-                    <h3 className="font-bold text-slate-900">{item.name}</h3>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">New</span>
+                <article 
+                  key={item.id} 
+                  className="rounded-2xl border p-6 flex flex-col justify-between"
+                  style={{ backgroundColor: '#06141B', borderColor: '#253745' }}
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-3 mb-6">
+                      <div className="space-y-1">
+                        <h3 className="font-bold text-lg" style={{ color: '#CCD0CF' }}>{item.name}</h3>
+                        <p className="text-xs font-bold" style={{ color: '#9BA8AB' }}>{item.email}</p>
+                      </div>
                       <button
-                        type="button"
                         onClick={() => handleDeleteMessage(item.id)}
                         disabled={deletingMessageId === item.id}
-                        className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-white px-2.5 py-1 text-[11px] font-bold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="p-3 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all duration-200"
+                        title="Delete Message"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        {deletingMessageId === item.id ? "Deleting..." : "Delete"}
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
+                    <p className="text-sm leading-relaxed" style={{ color: '#CCD0CF' }}>{item.message}</p>
                   </div>
-                  <p className="text-xs text-slate-500 mb-2">{item.email}</p>
-                  <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{item.message}</p>
-                  <p className="text-[11px] text-slate-400 mt-4">
-                    {item.createdAt ? new Date(item.createdAt).toLocaleString() : "Just now"}
-                  </p>
+                  <div className="mt-8 pt-4 border-t" style={{ borderColor: '#253745' }}>
+                    <div className="flex items-center gap-2" style={{ color: '#4A5C6A' }}>
+                      <Clock3 className="w-4 h-4" />
+                      <span className="text-xs font-bold uppercase tracking-widest">
+                        {item.createdAt ? new Date(item.createdAt).toLocaleString() : "Received Just Now"}
+                      </span>
+                    </div>
+                  </div>
                 </article>
               ))}
             </div>
           )}
         </section>
+      )}
+
+      {/* FAQ Modal Stays Mostly the Same with Styling Tweaks */}
+      {showAddFAQModal && user?.role === "ADMIN" && (
+        <div
+          className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-sm px-4 py-12"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              setShowAddFAQModal(false);
+              setFAQFormError("");
+            }
+          }}
+        >
+          <div className="min-h-full flex items-center justify-center">
+            <div className="rounded-2xl shadow-2xl max-w-xl w-full p-8 border" style={{ backgroundColor: '#11212D', borderColor: '#253745' }}>
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="text-2xl font-bold" style={{ color: '#CCD0CF' }}>Add New FAQ</h3>
+                <button
+                  onClick={() => {
+                    setShowAddFAQModal(false);
+                    setFAQFormError("");
+                  }}
+                  className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                  style={{ color: '#9BA8AB' }}
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <form onSubmit={handleAddFAQSubmit} className="space-y-8">
+                <div className="space-y-3">
+                  <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#9BA8AB' }}>Question</label>
+                  <input
+                    type="text"
+                    name="question"
+                    autoComplete="off"
+                    value={faqFormData.question}
+                    onChange={handleAddFAQChange}
+                    placeholder="Enter the FAQ question..."
+                    className="w-full px-5 py-4 rounded-xl border outline-none transition-all duration-200 font-medium placeholder:text-[#4A5C6A]"
+                    style={{ backgroundColor: '#06141B', borderColor: '#253745', color: '#CCD0CF' }}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#9BA8AB' }}>Answer</label>
+                  <textarea
+                    name="answer"
+                    autoComplete="off"
+                    value={faqFormData.answer}
+                    onChange={handleAddFAQChange}
+                    placeholder="Enter the FAQ answer..."
+                    rows={6}
+                    className="w-full px-5 py-4 rounded-xl border outline-none transition-all duration-200 font-medium resize-none placeholder:text-[#4A5C6A]"
+                    style={{ backgroundColor: '#06141B', borderColor: '#253745', color: '#CCD0CF' }}
+                    required
+                  />
+                </div>
+
+                {faqFormError && (
+                  <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-sm font-bold flex items-center gap-3">
+                    <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                    <span>{faqFormError}</span>
+                  </div>
+                )}
+
+                <div className="flex gap-4 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAddFAQModal(false);
+                      setFAQFormError("");
+                    }}
+                    className="flex-1 px-8 py-4 rounded-xl border font-bold text-sm transition-all duration-200 hover:bg-white/5"
+                    style={{ borderColor: '#253745', color: '#9BA8AB' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submittingFAQ}
+                    className="flex-1 px-8 py-4 rounded-xl bg-[#1c4f78] text-[#CCD0CF] font-bold text-sm transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:scale-100"
+                  >
+                    {submittingFAQ ? "Creating..." : "Create FAQ Entry"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

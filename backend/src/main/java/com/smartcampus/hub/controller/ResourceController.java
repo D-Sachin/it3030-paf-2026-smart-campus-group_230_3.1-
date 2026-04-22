@@ -112,15 +112,21 @@ public class ResourceController {
 
     @GetMapping("/advanced-search")
     public ResponseEntity<Map<String, Object>> advancedSearch(
-            @RequestParam(required = false) ResourceType type,
-            @RequestParam(required = false) ResourceStatus status,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String status,
             @RequestParam(required = false) String location,
             @RequestParam(required = false) Integer minCapacity,
             @RequestParam(required = false) Integer maxCapacity,
             @RequestParam(required = false) String term,
             @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
+        
+        // Convert empty strings to null for optional enums
+        ResourceType resourceType = (type == null || type.isEmpty()) ? null : ResourceType.valueOf(type);
+        ResourceStatus resourceStatus = (status == null || status.isEmpty()) ? null : ResourceStatus.valueOf(status);
+        location = (location != null && location.isEmpty()) ? null : location;
+        
         Page<ResourceResponseDTO> page = resourceService.advancedSearch(
-                type, status, location, minCapacity, maxCapacity, term, pageable);
+                resourceType, resourceStatus, location, minCapacity, maxCapacity, term, pageable);
         Map<String, Object> paginationMap = new HashMap<>();
         paginationMap.put("currentPage", page.getNumber());
         paginationMap.put("totalPages", page.getTotalPages());

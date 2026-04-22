@@ -71,7 +71,7 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
      * @param pageable Pagination details
      * @return Page of resources matching search term
      */
-    @Query("SELECT r FROM Resource r WHERE LOWER(r.name) LIKE LOWER(CONCAT('%', :term, '%'))")
+    @Query("SELECT r FROM Resource r WHERE LOWER(CAST(r.name AS string)) LIKE LOWER(CONCAT('%', CAST(:term AS string), '%'))")
     Page<Resource> searchByName(@Param("term") String term, Pageable pageable);
 
     /**
@@ -89,10 +89,10 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
     @Query("SELECT r FROM Resource r WHERE " +
             "(:type IS NULL OR r.type = :type) AND " +
             "(:status IS NULL OR r.status = :status) AND " +
-            "(:location IS NULL OR LOWER(r.location) LIKE LOWER(CONCAT('%', :location, '%'))) AND " +
+            "(:location IS NULL OR LOWER(CAST(r.location AS string)) LIKE LOWER(CONCAT('%', CAST(:location AS string), '%'))) AND " +
             "(:minCapacity IS NULL OR r.capacity >= :minCapacity) AND " +
             "(:maxCapacity IS NULL OR r.capacity <= :maxCapacity) AND " +
-            "(:term IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', :term, '%')))")
+            "(:term IS NULL OR LOWER(CAST(r.name AS string)) LIKE LOWER(CONCAT('%', CAST(:term AS string), '%')))")
     Page<Resource> advancedSearch(
             @Param("type") ResourceType type,
             @Param("status") ResourceStatus status,
@@ -108,6 +108,6 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
      * @param prefix Location prefix to search
      * @return List of distinct locations matching prefix
      */
-    @Query("SELECT DISTINCT r.location FROM Resource r WHERE LOWER(r.location) LIKE LOWER(CONCAT(:prefix, '%'))")
+    @Query("SELECT DISTINCT r.location FROM Resource r WHERE LOWER(CAST(r.location AS string)) LIKE LOWER(CONCAT(CAST(:prefix AS string), '%'))")
     List<String> findLocationsByPrefix(@Param("prefix") String prefix);
 }

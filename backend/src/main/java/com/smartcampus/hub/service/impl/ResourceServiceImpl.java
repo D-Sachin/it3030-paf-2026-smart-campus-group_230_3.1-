@@ -8,6 +8,8 @@ import com.smartcampus.hub.model.Resource;
 import com.smartcampus.hub.repository.ResourceRepository;
 import com.smartcampus.hub.service.ResourceService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,7 @@ import java.util.stream.Collectors;
 @Transactional
 public class ResourceServiceImpl implements ResourceService {
 
+    private static final Logger logger = LoggerFactory.getLogger(ResourceServiceImpl.class);
     private final ResourceRepository resourceRepository;
 
     @Override
@@ -133,13 +136,29 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     @Transactional(readOnly = true)
     public Page<ResourceResponseDTO> advancedSearch(
-            ResourceType type,
-            ResourceStatus status,
+            String type,
+            String status,
             String location,
             Integer minCapacity,
             Integer maxCapacity,
             String term,
             Pageable pageable) {
+        
+        // Validate capacity range
+        if (minCapacity != null && maxCapacity != null && minCapacity > maxCapacity) {
+            logger.warn("Invalid capacity range: minCapacity={}, maxCapacity={}", minCapacity, maxCapacity);
+            throw new IllegalArgumentException("minCapacity cannot be greater than maxCapacity");
+        }
+        
+        // Convert empty strings to null for optional filters
+        type = (type != null && type.isEmpty()) ? null : type;
+        status = (status != null && status.isEmpty()) ? null : status;
+        location = (location != null && location.isEmpty()) ? null : location;
+        term = (term != null && term.isEmpty()) ? null : term;
+        
+        logger.info("Advanced search: type={}, status={}, location={}, minCapacity={}, maxCapacity={}, term={}",
+                type, status, location, minCapacity, maxCapacity, term);
+        
         return resourceRepository.advancedSearch(type, status, location, minCapacity, maxCapacity, term, pageable)
                 .map(this::mapToResponseDTO);
     }

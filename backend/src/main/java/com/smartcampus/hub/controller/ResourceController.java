@@ -91,6 +91,12 @@ public class ResourceController {
         return ResponseEntity.ok(result);
     }
 
+    /**
+     * Search resources by name or description
+     * @param term Search term to find in resource name or description
+     * @param pageable Pagination parameters
+     * @return Paginated list of resources matching search term
+     */
     @GetMapping("/search")
     public ResponseEntity<Map<String, Object>> searchResources(
             @RequestParam String term,
@@ -110,31 +116,56 @@ public class ResourceController {
         return ResponseEntity.ok(result);
     }
 
+    /**
+     * Advanced search with multiple filter parameters
+     * @param type Resource type filter (optional)
+     * @param status Resource status filter (optional)
+     * @param location Location filter (optional, case-insensitive)
+     * @param minCapacity Minimum capacity filter (optional)
+     * @param maxCapacity Maximum capacity filter (optional)
+     * @param term Search term for resource name/description (optional)
+     * @param pageable Pagination parameters
+     * @return Paginated list of resources matching all filters
+     */
     @GetMapping("/advanced-search")
     public ResponseEntity<Map<String, Object>> advancedSearch(
-            @RequestParam(required = false) ResourceType type,
-            @RequestParam(required = false) ResourceStatus status,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String status,
             @RequestParam(required = false) String location,
             @RequestParam(required = false) Integer minCapacity,
             @RequestParam(required = false) Integer maxCapacity,
             @RequestParam(required = false) String term,
             @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<ResourceResponseDTO> page = resourceService.advancedSearch(
-                type, status, location, minCapacity, maxCapacity, term, pageable);
-        Map<String, Object> paginationMap = new HashMap<>();
-        paginationMap.put("currentPage", page.getNumber());
-        paginationMap.put("totalPages", page.getTotalPages());
-        paginationMap.put("totalElements", page.getTotalElements());
-        paginationMap.put("pageSize", page.getSize());
         
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", true);
-        result.put("message", "Advanced search completed successfully");
-        result.put("data", page.getContent());
-        result.put("pagination", paginationMap);
-        return ResponseEntity.ok(result);
+        try {
+            Page<ResourceResponseDTO> page = resourceService.advancedSearch(
+                    type, status, location, minCapacity, maxCapacity, term, pageable);
+            Map<String, Object> paginationMap = new HashMap<>();
+            paginationMap.put("currentPage", page.getNumber());
+            paginationMap.put("totalPages", page.getTotalPages());
+            paginationMap.put("totalElements", page.getTotalElements());
+            paginationMap.put("pageSize", page.getSize());
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", "Advanced search completed successfully");
+            result.put("data", page.getContent());
+            result.put("pagination", paginationMap);
+            return ResponseEntity.ok(result);
+        } catch (IllegalArgumentException e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", "Invalid filter parameter: " + e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
     }
 
+    /**
+     * Filter resources by type
+     * @param type Resource type to filter (LECTURE_HALL, LAB, MEETING_ROOM, EQUIPMENT)
+     * @param pageable Pagination parameters
+     * @return Paginated list of resources of specified type
+     */
     @GetMapping("/filter/by-type")
     public ResponseEntity<Map<String, Object>> filterByType(
             @RequestParam ResourceType type,
@@ -192,6 +223,12 @@ public class ResourceController {
         return ResponseEntity.ok(result);
     }
 
+    /**
+     * Filter resources by status
+     * @param status Resource status (ACTIVE, OUT_OF_SERVICE)
+     * @param pageable Pagination parameters
+     * @return Paginated list of resources with specified status
+     */
     @GetMapping("/filter/by-status")
     public ResponseEntity<Map<String, Object>> filterByStatus(
             @RequestParam ResourceStatus status,

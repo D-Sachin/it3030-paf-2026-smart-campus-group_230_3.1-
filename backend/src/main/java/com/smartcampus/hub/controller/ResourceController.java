@@ -164,7 +164,6 @@ public class ResourceController {
             return ResponseEntity.badRequest().body(error);
         }
     }
-    }
 
     /**
      * Filter resources by type

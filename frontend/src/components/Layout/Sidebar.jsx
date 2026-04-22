@@ -55,7 +55,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             key={item.path}
             to={item.path}
             className={({ isActive }) => 
-              `sidebar-link group ${isActive ? 'active' : ''}`
+              `sidebar-link group relative ${isActive ? 'active' : ''}`
             }
             style={({ isActive }) => ({
               display: 'flex',
@@ -81,8 +81,8 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
               }
             }}
           >
-            <item.icon className={`w-5 h-5 shrink-0 transition-colors ${isOpen ? '' : 'mx-auto'}`} />
-            {isOpen && <span className="font-medium">{item.label}</span>}
+            <item.icon className={`w-5 h-5 shrink-0 ${isOpen ? '' : 'mx-auto'}`} />
+            {isOpen && <span>{item.label}</span>}
             {!isOpen && (
               <div 
                 className="absolute left-full ml-4 px-2 py-1 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 shadow-xl"
@@ -120,8 +120,8 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         </button>
       </div>
 
-      {/* Toggle Button */}
-      <button 
+      {/* Toggle */}
+      <button
         onClick={toggleSidebar}
         className="absolute -right-3 top-20 w-6 h-6 border rounded-full flex items-center justify-center transition-colors shadow-xl"
         style={{ backgroundColor: '#11212D', borderColor: '#253745', color: '#9BA8AB' }}

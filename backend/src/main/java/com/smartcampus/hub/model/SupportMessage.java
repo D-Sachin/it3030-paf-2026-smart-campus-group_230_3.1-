@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "support_messages")
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class SupportMessage {

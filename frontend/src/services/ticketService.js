@@ -38,7 +38,7 @@ const ticketService = {
         searchTerm: params.searchTerm,
         startDate: params.startDate,
         endDate: params.endDate,
-      }
+      },
     });
   },
 
@@ -93,6 +93,7 @@ const ticketService = {
 
   // PUT update a comment
   updateComment: (commentId, content) => {
+    // Both paths are supported by the backend, using /comments for simplicity
     return apiClient.put(`/comments/${commentId}`, { content });
   },
 
@@ -111,16 +112,6 @@ const ticketService = {
   // DELETE an attachment from a ticket
   deleteAttachment: (ticketId, attachmentId) => {
     return apiClient.delete(`${TICKETS_PATH}/${ticketId}/attachments/${attachmentId}`);
-  },
-
-  // UPDATE a comment
-  updateComment: (commentId, content) => {
-    return apiClient.put(`${TICKETS_PATH}/comments/${commentId}`, { content });
-  },
-
-  // DELETE a comment
-  deleteComment: (commentId) => {
-    return apiClient.delete(`${TICKETS_PATH}/comments/${commentId}`);
   },
 };
 

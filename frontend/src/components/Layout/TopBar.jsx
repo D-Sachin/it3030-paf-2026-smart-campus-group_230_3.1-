@@ -510,7 +510,7 @@ const TopBar = () => {
         onClose={handleApprovalPopupClose}
       />
     </>
-  );
+);
 };
 
 export default TopBar;

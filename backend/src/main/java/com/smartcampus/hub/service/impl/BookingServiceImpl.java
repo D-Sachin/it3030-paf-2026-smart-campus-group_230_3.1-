@@ -179,7 +179,7 @@ public class BookingServiceImpl implements BookingService {
         }
 
         Booking booking = bookingRepository.findById(bookingId)
-            .orElseThrow(() -> new NoSuchElementException("Booking not found with id: " + bookingId));
+                .orElseThrow(() -> new NoSuchElementException("Booking not found with id: " + bookingId));
 
         if (booking.getStatus() != BookingStatus.PENDING) {
             throw new IllegalStateException("Only PENDING bookings can be rejected.");

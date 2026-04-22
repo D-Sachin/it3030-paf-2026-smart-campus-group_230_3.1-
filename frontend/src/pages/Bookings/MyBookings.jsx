@@ -197,7 +197,7 @@ const MyBookings = () => {
         </div>
       ) : bookings.length === 0 ? (
         <div className="py-24 text-center rounded-[32px] border" style={{ backgroundColor: '#253745', borderColor: '#4A5C6A' }}>
-          <p className="font-bold italic" style={{ color: '#4A5C6A' }}>{searchTerm ? "No records match your search parameters." : "No reservations found for the selected status."}</p>
+          <p className="font-bold italic" style={{ color: '#4A5C6A' }}>{searchTerm ? "No records match your search parameters." : "No reservations found."}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6">
@@ -246,12 +246,12 @@ const MyBookings = () => {
                 >
                   <ChevronRight className="w-5 h-5" />
                 </Link>
-                {(booking.status === "APPROVED" || booking.status === "REJECTED") && (
+                {(booking.status === "PENDING" || booking.status === "REJECTED" || booking.status === "APPROVED") && (
                   <button
                     onClick={() => handleCancel(booking.id)}
                     className="p-3 rounded-xl transition-all border group-hover:scale-110"
                     style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.2)', color: '#ef4444' }}
-                    title="Nullify Reservation"
+                    title="Remove Reservation"
                   >
                     Delete
                   </button>

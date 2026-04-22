@@ -40,8 +40,21 @@ export const UserProvider = ({ children }) => {
 
     try {
       const response = await apiClient.post('/auth/login', { email: normalizedEmail, password: normalizedPassword });
-      const { token: authToken, ...userData } = response.data;
+      const data = response.data;
       
+      // Check if 2FA is required
+      if (data.twoFactorRequired) {
+        return {
+          success: false,
+          twoFactorRequired: true,
+          twoFactorSetup: data.twoFactorSetup,
+          qrCodeUrl: data.qrCodeUrl,
+          tempToken: data.tempToken
+        };
+      }
+
+      // Normal login (no 2FA)
+      const { token: authToken, ...userData } = data;
       setUser(userData);
       setToken(authToken);
       return { success: true };
@@ -51,7 +64,7 @@ export const UserProvider = ({ children }) => {
       if (!error.response) {
         return {
           success: false,
-          message: 'Cannot reach server. Please verify backend is running on port 8080.'
+          message: 'Cannot reach server. Please verify backend is running on port 8081.'
         };
       }
 
@@ -73,13 +86,50 @@ export const UserProvider = ({ children }) => {
     }
   };
 
+  const verifyTwoFactor = async (tempToken, code) => {
+    try {
+      const response = await apiClient.post('/auth/verify-2fa', { tempToken, code });
+      const { token: authToken, ...userData } = response.data;
+      
+      setUser(userData);
+      setToken(authToken);
+      return { success: true };
+    } catch (error) {
+      console.error('2FA verification failed:', error);
+      return {
+        success: false,
+        message: typeof error.response?.data === 'string'
+          ? error.response.data
+          : (error.response?.data?.message || error.response?.data?.error || '2FA verification failed')
+      };
+    }
+  };
+
+  const googleLogin = async (credential) => {
+    try {
+      const response = await apiClient.post('/auth/google', { token: credential });
+      const { token: authToken, ...userData } = response.data;
+      
+      setUser(userData);
+      setToken(authToken);
+      return { success: true };
+    } catch (error) {
+      console.error('Google login failed:', error);
+      return { 
+        success: false, 
+        message: typeof error.response?.data === 'string' 
+          ? error.response.data 
+          : (error.response?.data?.message || error.response?.data?.error || 'Google login failed')
+      };
+    }
+  };
   const logout = () => {
     setUser(null);
     setToken(null);
   };
 
   return (
-    <UserContext.Provider value={{ user, token, login, logout, isAuthenticated: !!user }}>
+    <UserContext.Provider value={{ user, token, login, verifyTwoFactor, googleLogin, logout, isAuthenticated: !!user }}>
       {children}
     </UserContext.Provider>
   );

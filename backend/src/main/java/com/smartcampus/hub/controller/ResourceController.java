@@ -91,6 +91,12 @@ public class ResourceController {
         return ResponseEntity.ok(result);
     }
 
+    /**
+     * Search resources by name or description
+     * @param term Search term to find in resource name or description
+     * @param pageable Pagination parameters
+     * @return Paginated list of resources matching search term
+     */
     @GetMapping("/search")
     public ResponseEntity<Map<String, Object>> searchResources(
             @RequestParam String term,
@@ -223,6 +229,12 @@ public class ResourceController {
         return ResponseEntity.ok(result);
     }
 
+    /**
+     * Filter resources by status
+     * @param status Resource status (ACTIVE, OUT_OF_SERVICE)
+     * @param pageable Pagination parameters
+     * @return Paginated list of resources with specified status
+     */
     @GetMapping("/filter/by-status")
     public ResponseEntity<Map<String, Object>> filterByStatus(
             @RequestParam ResourceStatus status,

@@ -28,17 +28,21 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
   return (
     <aside 
-      className={`fixed top-0 left-0 z-50 h-screen transition-all duration-300 bg-white dark:bg-slate-50 border-r border-slate-100 dark:border-slate-100 flex flex-col ${
+      className={`fixed top-0 left-0 z-50 h-screen transition-all duration-300 flex flex-col ${
         isOpen ? 'w-[280px]' : 'w-[88px]'
       }`}
+      style={{ 
+        backgroundColor: '#06141B', 
+        borderRight: '1px solid #253745' 
+      }}
     >
       {/* Logo Section */}
-      <div className="h-[72px] flex items-center px-6 gap-3 overflow-hidden">
-        <div className="w-10 h-10 rounded-xl bg-primary-600 flex items-center justify-center shrink-0 shadow-lg shadow-primary-200">
+      <div className="h-[72px] flex items-center px-6 gap-3 overflow-hidden" style={{ borderBottom: '1px solid #253745' }}>
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-lg" style={{ backgroundColor: '#1c4f78' }}>
           <Building2 className="text-white w-6 h-6" />
         </div>
         {isOpen && (
-          <span className="font-bold text-lg text-slate-900 dark:text-slate-900 whitespace-nowrap">
+          <span className="font-bold text-lg whitespace-nowrap" style={{ color: '#CCD0CF' }}>
             SmartCampus
           </span>
         )}
@@ -53,11 +57,37 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             className={({ isActive }) => 
               `sidebar-link group ${isActive ? 'active' : ''}`
             }
+            style={({ isActive }) => ({
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '12px',
+              borderRadius: '12px',
+              transition: 'all 0.2s',
+              backgroundColor: isActive ? '#1c4f78' : 'transparent',
+              color: isActive ? '#CCD0CF' : '#9BA8AB',
+              border: isActive ? '1px solid #4A5C6A' : '1px solid transparent'
+            })}
+            onMouseEnter={e => {
+              if (!e.currentTarget.classList.contains('active')) {
+                e.currentTarget.style.backgroundColor = '#11212D';
+                e.currentTarget.style.color = '#CCD0CF';
+              }
+            }}
+            onMouseLeave={e => {
+              if (!e.currentTarget.classList.contains('active')) {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = '#9BA8AB';
+              }
+            }}
           >
             <item.icon className={`w-5 h-5 shrink-0 transition-colors ${isOpen ? '' : 'mx-auto'}`} />
             {isOpen && <span className="font-medium">{item.label}</span>}
             {!isOpen && (
-              <div className="absolute left-full ml-4 px-2 py-1 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+              <div 
+                className="absolute left-full ml-4 px-2 py-1 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 shadow-xl"
+                style={{ backgroundColor: '#11212D', color: '#CCD0CF', border: '1px solid #253745' }}
+              >
                 {item.label}
               </div>
             )}
@@ -66,17 +96,24 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       </nav>
 
       {/* Bottom Actions */}
-      <div className="p-4 border-t border-slate-100 dark:border-slate-100 space-y-2">
+      <div className="p-4 border-t space-y-2" style={{ borderColor: '#253745' }}>
         <NavLink
           to="/help"
-          className={({ isActive }) => `sidebar-link w-full text-left ${isActive ? 'active' : ''}`}
+          className={({ isActive }) => `sidebar-link w-full text-left flex items-center gap-3 p-3 rounded-xl transition-all ${isActive ? 'active' : ''}`}
+          style={({ isActive }) => ({
+            backgroundColor: isActive ? '#1c4f78' : 'transparent',
+            color: isActive ? '#CCD0CF' : '#9BA8AB',
+          })}
         >
           <HelpCircle className="w-5 h-5 shrink-0" />
-          {isOpen && <span>Help Support</span>}
+          {isOpen && <span className="font-medium">Help Support</span>}
         </NavLink>
         <button
           onClick={logout}
-          className="sidebar-link w-full text-left text-error hover:bg-red-50 hover:text-error"
+          className="w-full flex items-center gap-3 p-3 rounded-xl transition-all font-medium"
+          style={{ color: '#ef4444' }}
+          onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.1)'}
+          onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
         >
           <LogOut className="w-5 h-5 shrink-0" />
           {isOpen && <span>Logout</span>}
@@ -86,7 +123,10 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       {/* Toggle Button */}
       <button 
         onClick={toggleSidebar}
-        className="absolute -right-3 top-20 w-6 h-6 bg-white dark:bg-slate-100 border border-slate-200 dark:border-slate-300 rounded-full flex items-center justify-center text-slate-400 dark:text-slate-700 hover:text-primary-600 shadow-sm transition-colors"
+        className="absolute -right-3 top-20 w-6 h-6 border rounded-full flex items-center justify-center transition-colors shadow-xl"
+        style={{ backgroundColor: '#11212D', borderColor: '#253745', color: '#9BA8AB' }}
+        onMouseEnter={e => e.currentTarget.style.color = '#CCD0CF'}
+        onMouseLeave={e => e.currentTarget.style.color = '#9BA8AB'}
       >
         {isOpen ? <ChevronLeft className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
       </button>

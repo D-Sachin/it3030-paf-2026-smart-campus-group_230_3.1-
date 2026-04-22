@@ -24,8 +24,42 @@ const TicketList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [category, setCategory] = useState('');
   const [statusFilter, setStatusFilter] = useState(user.role === 'TECHNICIAN' ? 'OPEN' : '');
+  const [dateFilter, setDateFilter] = useState('today');
   const [showAssignedOnly, setShowAssignedOnly] = useState(user.role === 'TECHNICIAN');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  const getDateRange = useCallback((filter) => {
+    const now = new Date();
+    let start = new Date();
+    let end = new Date();
+
+    const formatLocalISO = (date) => {
+      const pad = (num) => String(num).padStart(2, '0');
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+    };
+    
+    switch (filter) {
+      case 'today':
+        start.setHours(0, 0, 0, 0);
+        return { startDate: formatLocalISO(start), endDate: formatLocalISO(now) };
+      case 'yesterday':
+        start.setDate(now.getDate() - 1);
+        start.setHours(0, 0, 0, 0);
+        const endYesterday = new Date(start);
+        endYesterday.setHours(23, 59, 59, 999);
+        return { startDate: formatLocalISO(start), endDate: formatLocalISO(endYesterday) };
+      case 'week':
+        start.setDate(now.getDate() - 7);
+        start.setHours(0, 0, 0, 0);
+        return { startDate: formatLocalISO(start), endDate: formatLocalISO(now) };
+      case 'month':
+        start.setMonth(now.getMonth() - 1);
+        start.setHours(0, 0, 0, 0);
+        return { startDate: formatLocalISO(start), endDate: formatLocalISO(now) };
+      default:
+        return { startDate: undefined, endDate: undefined };
+    }
+  }, []);
 
   const isAdmin = user.role === 'ADMIN';
   const isTechnician = user.role === 'TECHNICIAN';
@@ -36,7 +70,10 @@ const TicketList = () => {
       setLoading(true);
       setError(null);
       
+      const { startDate, endDate } = getDateRange(dateFilter);
+      
       let response;
+
       if (user.role === 'ADMIN' || user.role === 'TECHNICIAN') {
         response = await ticketService.getAllTickets({
           searchTerm,
@@ -44,11 +81,19 @@ const TicketList = () => {
           status: statusFilter,
           technicianId: (isTechnician && showAssignedOnly) ? user.id : undefined,
           sortBy: "createdAt",
-          sortDirection: "desc"
+          sortDirection: "desc",
+          startDate,
+          endDate
         });
       } else {
-        // For Students/Users: Fetch their own tickets
-        response = await ticketService.getTicketsByUserId(user.id);
+        // For Students/Users: Fetch their own tickets with filters
+        response = await ticketService.getTicketsByUserId(user.id, {
+          searchTerm,
+          category,
+          status: statusFilter,
+          startDate,
+          endDate
+        });
       }
       
       const data = response.data;
@@ -61,7 +106,7 @@ const TicketList = () => {
     } finally {
       setLoading(false);
     }
-  }, [user.id, user.role, searchTerm, category, statusFilter, showAssignedOnly, isTechnician]);
+  }, [user.id, user.role, searchTerm, category, statusFilter, dateFilter, showAssignedOnly, isTechnician, getDateRange]);
 
   useEffect(() => {
     fetchTickets();
@@ -175,6 +220,19 @@ const TicketList = () => {
           {categories.map(cat => (
             <option key={cat} value={cat}>{cat}</option>
           ))}
+        </select>
+
+        <select
+          value={dateFilter}
+          onChange={(e) => setDateFilter(e.target.value)}
+          className="px-4 py-2.5 rounded-xl text-sm font-bold outline-none cursor-pointer w-40"
+          style={{ backgroundColor: '#11212D', border: '1px solid #253745', color: '#9BA8AB' }}
+        >
+          <option value="today">Today</option>
+          <option value="yesterday">Yesterday</option>
+          <option value="week">This Week</option>
+          <option value="month">Last Month</option>
+          <option value="all">All Time</option>
         </select>
 
         {(isAdmin || isTechnician) && (

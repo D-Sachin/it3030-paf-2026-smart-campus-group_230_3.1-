@@ -40,8 +40,10 @@ public class TicketController {
             @RequestParam(required = false) Priority priority,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String searchTerm,
-            @RequestParam(required = false) Long technicianId) {
-        List<TicketResponseDTO> tickets = ticketService.getAllTickets(status, priority, category, searchTerm, technicianId);
+            @RequestParam(required = false) Long technicianId,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime startDate,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime endDate) {
+        List<TicketResponseDTO> tickets = ticketService.getAllTickets(status, priority, category, searchTerm, technicianId, startDate, endDate);
         return ResponseEntity.ok(tickets);
     }
 
@@ -53,8 +55,12 @@ public class TicketController {
     public ResponseEntity<List<TicketResponseDTO>> getTicketsByUserId(
             @PathVariable Long userId,
             @RequestParam(required = false) TicketStatus status,
-            @RequestParam(required = false) Priority priority) {
-        List<TicketResponseDTO> tickets = ticketService.getTicketsByUserId(userId, status, priority);
+            @RequestParam(required = false) Priority priority,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String searchTerm,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime startDate,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime endDate) {
+        List<TicketResponseDTO> tickets = ticketService.getTicketsByUserId(userId, status, priority, category, searchTerm, startDate, endDate);
         return ResponseEntity.ok(tickets);
     }
 

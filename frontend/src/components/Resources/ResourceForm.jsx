@@ -58,9 +58,18 @@ const ResourceForm = ({ resource, onSubmit, onCancel, isLoading }) => {
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.name.trim()) newErrors.name = "Resource name is required";
-    if (!formData.location.trim()) newErrors.location = "Location is required";
-    if (formData.capacity < 1) newErrors.capacity = "Min capacity is 1";
+    if (!formData.name.trim()) {
+      newErrors.name = "Resource name is required";
+    } else if (formData.name.trim().length < 3) {
+      newErrors.name = "Name must be at least 3 characters";
+    }
+
+    if (!formData.location.trim()) {
+      newErrors.location = "Location is required";
+    } else if (formData.location.trim().length < 3) {
+      newErrors.location = "Location must be at least 3 characters";
+    }
+
     if (formData.capacity > 500) newErrors.capacity = "Max capacity is 500";
     
     setErrors(newErrors);

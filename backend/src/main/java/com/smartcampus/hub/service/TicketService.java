@@ -18,7 +18,7 @@ public interface TicketService {
 
     TicketResponseDTO getTicketById(Long id); // Added
 
-    List<TicketResponseDTO> getTicketsByUserId(Long userId, TicketStatus status, Priority priority, java.time.LocalDateTime startDate, java.time.LocalDateTime endDate);
+    List<TicketResponseDTO> getTicketsByUserId(Long userId, TicketStatus status, Priority priority, String category, String searchTerm, java.time.LocalDateTime startDate, java.time.LocalDateTime endDate);
     TicketResponseDTO updateTicketStatus(Long id, TicketStatus status);
     TicketResponseDTO assignTechnician(Long id, Long technicianId);
     AttachmentResponseDTO uploadAttachment(Long ticketId, MultipartFile file);

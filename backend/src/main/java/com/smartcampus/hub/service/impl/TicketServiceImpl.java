@@ -136,8 +136,8 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<TicketResponseDTO> getTicketsByUserId(Long userId, TicketStatus status, Priority priority, LocalDateTime startDate, LocalDateTime endDate) {
-        Specification<Ticket> spec = getTicketSpecification(userId, null, status, priority, null, null, startDate, endDate);
+    public List<TicketResponseDTO> getTicketsByUserId(Long userId, TicketStatus status, Priority priority, String category, String searchTerm, LocalDateTime startDate, LocalDateTime endDate) {
+        Specification<Ticket> spec = getTicketSpecification(userId, null, status, priority, category, searchTerm, startDate, endDate);
         org.springframework.data.domain.Sort sort = org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt");
         return ticketRepository.findAll(spec, sort).stream()
                 .map(this::mapToResponseDTO)

@@ -17,6 +17,8 @@ const ticketService = {
         category: params.category,
         searchTerm: params.searchTerm,
         technicianId: params.technicianId,
+        startDate: params.startDate,
+        endDate: params.endDate,
       },
     });
   },
@@ -27,8 +29,15 @@ const ticketService = {
   },
 
   // GET tickets by User ID (for Students)
-  getTicketsByUserId: (userId) => {
-    return apiClient.get(`${TICKETS_PATH}/user/${userId}`);
+  getTicketsByUserId: (userId, params = {}) => {
+    return apiClient.get(`${TICKETS_PATH}/user/${userId}`, {
+      params: {
+        status: params.status,
+        priority: params.priority,
+        startDate: params.startDate,
+        endDate: params.endDate,
+      }
+    });
   },
 
   // GET ticket by ID

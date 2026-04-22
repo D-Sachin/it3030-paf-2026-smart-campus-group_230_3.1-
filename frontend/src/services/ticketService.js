@@ -16,6 +16,7 @@ const ticketService = {
         priority: params.priority,
         category: params.category,
         searchTerm: params.searchTerm,
+        technicianId: params.technicianId,
       },
     });
   },

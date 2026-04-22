@@ -14,7 +14,7 @@ import java.util.List;
 public interface TicketService {
     TicketResponseDTO createTicket(TicketRequestDTO dto);
     TicketResponseDTO updateTicket(Long id, TicketRequestDTO dto);
-    List<TicketResponseDTO> getAllTickets(TicketStatus status, Priority priority, String category, String searchTerm);
+    List<TicketResponseDTO> getAllTickets(TicketStatus status, Priority priority, String category, String searchTerm, Long technicianId);
 
     TicketResponseDTO getTicketById(Long id); // Added
 

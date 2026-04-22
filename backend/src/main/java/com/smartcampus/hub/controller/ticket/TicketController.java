@@ -39,8 +39,9 @@ public class TicketController {
             @RequestParam(required = false) TicketStatus status,
             @RequestParam(required = false) Priority priority,
             @RequestParam(required = false) String category,
-            @RequestParam(required = false) String searchTerm) {
-        List<TicketResponseDTO> tickets = ticketService.getAllTickets(status, priority, category, searchTerm);
+            @RequestParam(required = false) String searchTerm,
+            @RequestParam(required = false) Long technicianId) {
+        List<TicketResponseDTO> tickets = ticketService.getAllTickets(status, priority, category, searchTerm, technicianId);
         return ResponseEntity.ok(tickets);
     }
 

@@ -24,7 +24,12 @@ const TicketList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [category, setCategory] = useState('');
   const [statusFilter, setStatusFilter] = useState(user.role === 'TECHNICIAN' ? 'OPEN' : '');
+  const [showAssignedOnly, setShowAssignedOnly] = useState(user.role === 'TECHNICIAN');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  const isAdmin = user.role === 'ADMIN';
+  const isTechnician = user.role === 'TECHNICIAN';
+  const isStudent = user.role === 'USER';
 
   const fetchTickets = useCallback(async () => {
     try {
@@ -37,6 +42,7 @@ const TicketList = () => {
           searchTerm,
           category,
           status: statusFilter,
+          technicianId: (isTechnician && showAssignedOnly) ? user.id : undefined,
           sortBy: "createdAt",
           sortDirection: "desc"
         });
@@ -55,7 +61,7 @@ const TicketList = () => {
     } finally {
       setLoading(false);
     }
-  }, [user.id, user.role, searchTerm, category, statusFilter]);
+  }, [user.id, user.role, searchTerm, category, statusFilter, showAssignedOnly, isTechnician]);
 
   useEffect(() => {
     fetchTickets();
@@ -100,10 +106,6 @@ const TicketList = () => {
       setIsSubmitting(false);
     }
   };
-
-  const isAdmin = user.role === 'ADMIN';
-  const isTechnician = user.role === 'TECHNICIAN';
-  const isStudent = user.role === 'USER';
 
   // Role-based header config
   const headerConfig = {
@@ -180,6 +182,32 @@ const TicketList = () => {
             <option value="CLOSED">Closed</option>
             <option value="REJECTED">Rejected</option>
           </select>
+        )}
+
+        {/* Technician-specific Assigned Toggle */}
+        {isTechnician && (
+          <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-100">
+            <button
+              onClick={() => setShowAssignedOnly(true)}
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                showAssignedOnly 
+                ? 'bg-white text-primary-600 shadow-sm' 
+                : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Assigned to Me
+            </button>
+            <button
+              onClick={() => setShowAssignedOnly(false)}
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                !showAssignedOnly 
+                ? 'bg-white text-primary-600 shadow-sm' 
+                : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              All Public Tickets
+            </button>
+          </div>
         )}
       </div>
 

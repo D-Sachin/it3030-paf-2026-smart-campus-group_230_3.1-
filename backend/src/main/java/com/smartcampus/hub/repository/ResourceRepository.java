@@ -66,12 +66,16 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
     List<Resource> findByStatus(ResourceStatus status);
 
     /**
-     * Search resources by name (contains search, case-insensitive)
+     * Search resources by name, ID, or description (contains search, case-insensitive)
      * @param term Search term
      * @param pageable Pagination details
      * @return Page of resources matching search term
      */
-    @Query(value = "SELECT r.* FROM resources r WHERE LOWER(r.name) LIKE LOWER(CONCAT('%', :term, '%')) ORDER BY r.id DESC", 
+    @Query(value = "SELECT r.* FROM resources r WHERE " +
+            "LOWER(r.name) LIKE LOWER(CONCAT('%', :term, '%')) OR " +
+            "LOWER(r.description) LIKE LOWER(CONCAT('%', :term, '%')) OR " +
+            "CAST(r.id AS VARCHAR) LIKE CONCAT('%', :term, '%') " +
+            "ORDER BY r.id DESC", 
            nativeQuery = true)
     Page<Resource> searchByName(@Param("term") String term, Pageable pageable);
 
@@ -83,7 +87,7 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
      * @param location Location filter (optional, partial match)
      * @param minCapacity Minimum capacity filter (optional)
      * @param maxCapacity Maximum capacity filter (optional)
-     * @param term Search term in name/description (optional)
+     * @param term Search term in name/description/id (optional)
      * @param pageable Pagination details
      * @return Page of resources matching all applied filters
      */
@@ -93,7 +97,7 @@ public interface ResourceRepository extends JpaRepository<Resource, Long> {
             "(:location IS NULL OR LOWER(r.location) LIKE LOWER(CONCAT('%', :location, '%'))) AND " +
             "(:minCapacity IS NULL OR r.capacity >= :minCapacity) AND " +
             "(:maxCapacity IS NULL OR r.capacity <= :maxCapacity) AND " +
-            "(:term IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', :term, '%'))) " +
+            "(:term IS NULL OR LOWER(r.name) LIKE LOWER(CONCAT('%', :term, '%')) OR LOWER(r.description) LIKE LOWER(CONCAT('%', :term, '%')) OR CAST(r.id AS VARCHAR) LIKE CONCAT('%', :term, '%')) " +
             "ORDER BY r.id DESC",
             nativeQuery = true)
     Page<Resource> advancedSearch(

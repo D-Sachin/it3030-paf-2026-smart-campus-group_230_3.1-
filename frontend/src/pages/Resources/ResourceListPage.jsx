@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { Plus, AlertCircle, Loader, Building2, CheckCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Plus,
+  AlertCircle,
+  Loader,
+  Building2,
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import resourceService from "../../services/resourceService";
 import ResourceCard from "../../components/Resources/ResourceCard";
 import ResourceForm from "../../components/Resources/ResourceForm";
@@ -22,11 +30,21 @@ const ResourceList = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [pageSize, setPageSize] = useState(10);
 
+  // Search and filter state
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeFilters, setActiveFilters] = useState({
+    type: "",
+    status: "",
+    location: "",
+    minCapacity: "",
+    maxCapacity: "",
+  });
+
   // Form state
   const [showForm, setShowForm] = useState(false);
   const [editingResource, setEditingResource] = useState(null);
 
-  const isAdmin = user?.role === 'ADMIN';
+  const isAdmin = user?.role === "ADMIN";
 
   // Load resources on mount and when pagination changes
   useEffect(() => {
@@ -41,7 +59,14 @@ const ResourceList = () => {
         currentPage,
         pageSize,
       );
-      setResources(response.data.data);
+      let data = response.data.data;
+
+      // For non-admin users, filter to show only ACTIVE resources
+      if (!isAdmin) {
+        data = data.filter((resource) => resource.status === "ACTIVE");
+      }
+
+      setResources(data);
       setTotalPages(response.data.pagination.totalPages);
     } catch (err) {
       setError("Failed to load resources. Please try again.");
@@ -55,9 +80,11 @@ const ResourceList = () => {
     setLoading(true);
     setError("");
     setCurrentPage(0);
+    setSearchTerm(term);
     try {
-      const response = await resourceService.searchResources(
-        term,
+      // Use advanced search with both term and current filters
+      const response = await resourceService.advancedSearch(
+        { ...activeFilters, term },
         0,
         pageSize,
       );
@@ -75,9 +102,11 @@ const ResourceList = () => {
     setLoading(true);
     setError("");
     setCurrentPage(0);
+    setActiveFilters(filters);
     try {
+      // Use advanced search with both filters and current search term
       const response = await resourceService.advancedSearch(
-        filters,
+        { ...filters, term: searchTerm },
         0,
         pageSize,
       );
@@ -106,10 +135,7 @@ const ResourceList = () => {
     setError("");
     try {
       if (editingResource) {
-        await resourceService.updateResource(
-          editingResource.id,
-          formData,
-        );
+        await resourceService.updateResource(editingResource.id, formData);
         setSuccess("Resource updated successfully!");
       } else {
         await resourceService.createResource(formData);
@@ -154,8 +180,16 @@ const ResourceList = () => {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold" style={{ color: '#CCD0CF' }}>Campus Resources</h1>
-          <p className="mt-1 font-medium text-sm" style={{ color: '#9BA8AB' }}>Manage facilities, laboratories, and operational equipment catalogue.</p>
+          <h1 className="text-3xl font-bold" style={{ color: "#CCD0CF" }}>
+            {isAdmin
+              ? "Campus Resources Management"
+              : "Available Campus Resources"}
+          </h1>
+          <p className="mt-1 font-medium text-sm" style={{ color: "#9BA8AB" }}>
+            {isAdmin
+              ? "Manage facilities, laboratories, and operational equipment catalogue."
+              : "Browse and book available resources for your campus needs."}
+          </p>
         </div>
         <div className="flex items-center gap-3">
           {isAdmin && (
@@ -163,7 +197,7 @@ const ResourceList = () => {
               onClick={handleCreateClick}
               disabled={loading}
               className="premium-button"
-              style={{ backgroundColor: '#1c4f78', color: '#CCD0CF' }}
+              style={{ backgroundColor: "#1c4f78", color: "#CCD0CF" }}
             >
               <Plus className="w-4 h-4" />
               Register Asset
@@ -172,23 +206,39 @@ const ResourceList = () => {
         </div>
       </div>
 
-      {/* Filter Bar */}
-      <ResourceFilterBar
-        onFilter={handleFilter}
-        onSearch={handleSearch}
-        isLoading={loading}
-      />
+      {/* Filter Bar - Admin Only */}
+      {isAdmin && (
+        <ResourceFilterBar
+          onFilter={handleFilter}
+          onSearch={handleSearch}
+          isLoading={loading}
+        />
+      )}
 
       {/* Messages */}
       {success && (
-        <div className="p-4 rounded-2xl flex items-center gap-3 font-bold text-sm animate-fade-in" style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', color: '#10b981' }}>
+        <div
+          className="p-4 rounded-2xl flex items-center gap-3 font-bold text-sm animate-fade-in"
+          style={{
+            backgroundColor: "rgba(16, 185, 129, 0.1)",
+            border: "1px solid rgba(16, 185, 129, 0.2)",
+            color: "#10b981",
+          }}
+        >
           <CheckCircle className="w-5 h-5" />
           {success}
         </div>
       )}
 
       {error && (
-        <div className="p-4 rounded-2xl flex items-center gap-3 font-bold text-sm animate-shake" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444' }}>
+        <div
+          className="p-4 rounded-2xl flex items-center gap-3 font-bold text-sm animate-shake"
+          style={{
+            backgroundColor: "rgba(239, 68, 68, 0.1)",
+            border: "1px solid rgba(239, 68, 68, 0.2)",
+            color: "#ef4444",
+          }}
+        >
           <AlertCircle className="w-5 h-5" />
           {error}
         </div>
@@ -197,8 +247,16 @@ const ResourceList = () => {
       {/* Content Area */}
       {loading && resources.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20">
-          <Loader className="w-10 h-10 animate-spin mb-4" style={{ color: '#1c4f78' }} />
-          <p className="font-bold uppercase tracking-widest text-[10px]" style={{ color: '#4A5C6A' }}>Synchronizing Campus Assets...</p>
+          <Loader
+            className="w-10 h-10 animate-spin mb-4"
+            style={{ color: "#1c4f78" }}
+          />
+          <p
+            className="font-bold uppercase tracking-widest text-[10px]"
+            style={{ color: "#4A5C6A" }}
+          >
+            Synchronizing Campus Assets...
+          </p>
         </div>
       ) : (
         <>
@@ -219,33 +277,51 @@ const ResourceList = () => {
               {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-12 pb-8">
-                  <div className="text-sm font-bold uppercase tracking-widest" style={{ color: '#4A5C6A' }}>
-                    Page <span style={{ color: '#CCD0CF' }}>{currentPage + 1}</span> of {totalPages}
+                  <div
+                    className="text-sm font-bold uppercase tracking-widest"
+                    style={{ color: "#4A5C6A" }}
+                  >
+                    Page{" "}
+                    <span style={{ color: "#CCD0CF" }}>{currentPage + 1}</span>{" "}
+                    of {totalPages}
                   </div>
 
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
+                      onClick={() =>
+                        setCurrentPage(Math.max(0, currentPage - 1))
+                      }
                       disabled={currentPage === 0 || loading}
                       className="p-3 rounded-xl border disabled:opacity-30 transition-all shadow-sm"
-                      style={{ backgroundColor: '#253745', borderColor: '#4A5C6A', color: '#CCD0CF' }}
+                      style={{
+                        backgroundColor: "#253745",
+                        borderColor: "#4A5C6A",
+                        color: "#CCD0CF",
+                      }}
                     >
                       <ChevronLeft className="w-4 h-4" />
                     </button>
-                    
-                    <div className="flex items-center gap-1 p-1 rounded-xl border shadow-inner" style={{ backgroundColor: '#11212D', borderColor: '#253745' }}>
+
+                    <div
+                      className="flex items-center gap-1 p-1 rounded-xl border shadow-inner"
+                      style={{
+                        backgroundColor: "#11212D",
+                        borderColor: "#253745",
+                      }}
+                    >
                       {[...Array(totalPages)].map((_, i) => (
                         <button
                           key={i}
                           onClick={() => setCurrentPage(i)}
                           className={`w-9 h-9 rounded-lg font-bold text-xs transition-all ${
-                            currentPage === i 
-                            ? 'shadow-sm' 
-                            : 'hover:text-white/80'
+                            currentPage === i
+                              ? "shadow-sm"
+                              : "hover:text-white/80"
                           }`}
-                          style={{ 
-                            backgroundColor: currentPage === i ? '#1c4f78' : 'transparent',
-                            color: currentPage === i ? '#CCD0CF' : '#4A5C6A'
+                          style={{
+                            backgroundColor:
+                              currentPage === i ? "#1c4f78" : "transparent",
+                            color: currentPage === i ? "#CCD0CF" : "#4A5C6A",
                           }}
                         >
                           {i + 1}
@@ -254,10 +330,18 @@ const ResourceList = () => {
                     </div>
 
                     <button
-                      onClick={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))}
+                      onClick={() =>
+                        setCurrentPage(
+                          Math.min(totalPages - 1, currentPage + 1),
+                        )
+                      }
                       disabled={currentPage >= totalPages - 1 || loading}
                       className="p-3 rounded-xl border disabled:opacity-30 transition-all shadow-sm"
-                      style={{ backgroundColor: '#253745', borderColor: '#4A5C6A', color: '#CCD0CF' }}
+                      style={{
+                        backgroundColor: "#253745",
+                        borderColor: "#4A5C6A",
+                        color: "#CCD0CF",
+                      }}
                     >
                       <ChevronRight className="w-4 h-4" />
                     </button>
@@ -270,23 +354,48 @@ const ResourceList = () => {
                       setCurrentPage(0);
                     }}
                     className="text-xs font-bold rounded-xl px-3 py-2 outline-none appearance-none cursor-pointer"
-                    style={{ backgroundColor: '#11212D', border: '1px solid #253745', color: '#CCD0CF' }}
+                    style={{
+                      backgroundColor: "#11212D",
+                      border: "1px solid #253745",
+                      color: "#CCD0CF",
+                    }}
                   >
-                    <option value="5" style={{ backgroundColor: '#11212D' }}>5 / Page</option>
-                    <option value="10" style={{ backgroundColor: '#11212D' }}>10 / Page</option>
-                    <option value="20" style={{ backgroundColor: '#11212D' }}>20 / Page</option>
+                    <option value="5" style={{ backgroundColor: "#11212D" }}>
+                      5 / Page
+                    </option>
+                    <option value="10" style={{ backgroundColor: "#11212D" }}>
+                      10 / Page
+                    </option>
+                    <option value="20" style={{ backgroundColor: "#11212D" }}>
+                      20 / Page
+                    </option>
                   </select>
                 </div>
               )}
             </>
           ) : (
-            <div className="rounded-[32px] p-20 flex flex-col items-center text-center shadow-xl" style={{ backgroundColor: '#253745', border: '1px solid #4A5C6A' }}>
-              <div className="w-20 h-20 rounded-3xl flex items-center justify-center mb-6" style={{ backgroundColor: '#11212D', color: '#4A5C6A' }}>
+            <div
+              className="rounded-[32px] p-20 flex flex-col items-center text-center shadow-xl"
+              style={{
+                backgroundColor: "#253745",
+                border: "1px solid #4A5C6A",
+              }}
+            >
+              <div
+                className="w-20 h-20 rounded-3xl flex items-center justify-center mb-6"
+                style={{ backgroundColor: "#11212D", color: "#4A5C6A" }}
+              >
                 <Building2 className="w-10 h-10" />
               </div>
-              <h3 className="text-xl font-bold" style={{ color: '#CCD0CF' }}>No resources found</h3>
-              <p className="mt-2 max-w-sm font-medium" style={{ color: '#9BA8AB' }}>
-                We couldn't find any campus assets matching your current search or filter criteria.
+              <h3 className="text-xl font-bold" style={{ color: "#CCD0CF" }}>
+                No resources found
+              </h3>
+              <p
+                className="mt-2 max-w-sm font-medium"
+                style={{ color: "#9BA8AB" }}
+              >
+                We couldn't find any campus assets matching your current search
+                or filter criteria.
               </p>
             </div>
           )}

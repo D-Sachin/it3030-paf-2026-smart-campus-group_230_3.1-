@@ -23,11 +23,13 @@ public class SupportMessageController {
 
     @PostMapping
     public ResponseEntity<Map<String, Object>> createSupportMessage(@Valid @RequestBody SupportMessageRequest request) {
-        SupportMessage supportMessage = SupportMessage.builder()
-                .name(request.getName().trim())
-                .email(request.getEmail().trim().toLowerCase())
-                .message(request.getMessage().trim())
-                .build();
+        SupportMessage supportMessage = new SupportMessage(
+                null,  // id auto-generated
+                request.getName().trim(),
+                request.getEmail().trim().toLowerCase(),
+                request.getMessage().trim(),
+                null   // createdAt auto-populated
+        );
 
         SupportMessage savedSupportMessage = supportMessageRepository.save(supportMessage);
         return ResponseEntity.status(HttpStatus.CREATED).body(buildResponse(true, "Support message submitted successfully", savedSupportMessage));

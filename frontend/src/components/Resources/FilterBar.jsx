@@ -1,5 +1,15 @@
-import React, { useState } from "react";
-import { Search, Filter, X, LayoutGrid, MapPin, Users, SlidersHorizontal, ChevronDown, ChevronUp } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import {
+  Search,
+  Filter,
+  X,
+  LayoutGrid,
+  MapPin,
+  Users,
+  SlidersHorizontal,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 
 /**
  * ResourceFilterBar Component
@@ -15,6 +25,7 @@ const ResourceFilterBar = ({ onFilter, onSearch, isLoading }) => {
     minCapacity: "",
     maxCapacity: "",
   });
+  const debounceTimer = useRef(null);
 
   const resourceTypes = [
     { value: "", label: "All Asset Types" },
@@ -30,8 +41,27 @@ const ResourceFilterBar = ({ onFilter, onSearch, isLoading }) => {
     { value: "OUT_OF_SERVICE", label: "Under Maintenance" },
   ];
 
+  // Debounced search handler
+  const handleSearchInputChange = (value) => {
+    setSearchTerm(value);
+
+    // Clear previous timer
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+
+    // Set new timer for debounced search
+    debounceTimer.current = setTimeout(() => {
+      onSearch(value);
+    }, 500);
+  };
+
   const handleSearch = (e) => {
     e.preventDefault();
+    // Clear timer and search immediately on form submit
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
     onSearch(searchTerm);
   };
 
@@ -58,55 +88,77 @@ const ResourceFilterBar = ({ onFilter, onSearch, isLoading }) => {
     };
     setFilters(cleared);
     setSearchTerm("");
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
     onSearch("");
     onFilter(cleared);
   };
 
-  const hasActiveFilters = Object.values(filters).some((v) => v !== "") || searchTerm !== "";
+  const hasActiveFilters =
+    Object.values(filters).some((v) => v !== "") || searchTerm !== "";
 
   return (
     <div className="space-y-4 mb-8">
       {/* Search Header */}
       <div className="flex flex-col md:flex-row gap-4">
         <form onSubmit={handleSearch} className="flex-1 relative group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors" style={{ color: '#4A5C6A' }} />
+          <Search
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors"
+            style={{ color: "#4A5C6A" }}
+          />
           <input
             type="text"
             placeholder="Search campus resources by name or ID..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => handleSearchInputChange(e.target.value)}
             disabled={isLoading}
             className="w-full pl-12 pr-4 py-3.5 rounded-2xl outline-none transition-all font-medium border"
-            style={{ 
-              backgroundColor: '#06141B', 
-              borderColor: '#253745', 
-              color: '#CCD0CF' 
+            style={{
+              backgroundColor: "#06141B",
+              borderColor: "#253745",
+              color: "#CCD0CF",
             }}
-            onFocus={e => { e.currentTarget.style.borderColor = '#1c4f78'; e.currentTarget.style.boxShadow = '0 0 0 4px rgba(28, 79, 120, 0.1)'; }}
-            onBlur={e => { e.currentTarget.style.borderColor = '#253745'; e.currentTarget.style.boxShadow = 'none'; }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = "#1c4f78";
+              e.currentTarget.style.boxShadow =
+                "0 0 0 4px rgba(28, 79, 120, 0.1)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "#253745";
+              e.currentTarget.style.boxShadow = "none";
+            }}
           />
         </form>
-        
+
         <div className="flex gap-2">
           <button
             onClick={() => setShowAdvanced(!showAdvanced)}
             className="flex items-center gap-2 px-6 py-3.5 rounded-2xl font-bold transition-all border"
-            style={{ 
-              backgroundColor: showAdvanced ? '#1c4f78' : '#253745', 
-              color: '#CCD0CF',
-              borderColor: '#4A5C6A'
+            style={{
+              backgroundColor: showAdvanced ? "#1c4f78" : "#253745",
+              color: "#CCD0CF",
+              borderColor: "#4A5C6A",
             }}
           >
             <SlidersHorizontal className="w-4 h-4" />
-            Filters {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            Filters{" "}
+            {showAdvanced ? (
+              <ChevronUp className="w-4 h-4" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
+            )}
           </button>
-          
-          {hasActiveFilters && (
+
+          {(hasActiveFilters || searchTerm) && (
             <button
               onClick={handleClearFilters}
               className="flex items-center gap-2 px-4 py-3.5 rounded-2xl font-bold transition-all"
-              style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}
-              title="Reset all filters"
+              style={{
+                backgroundColor: "rgba(239, 68, 68, 0.1)",
+                color: "#ef4444",
+              }}
+              title="Reset all filters and search"
             >
               <X className="w-4 h-4" />
             </button>
@@ -114,15 +166,50 @@ const ResourceFilterBar = ({ onFilter, onSearch, isLoading }) => {
         </div>
       </div>
 
+      {/* Active Search/Filter Indicator */}
+      {(searchTerm || hasActiveFilters) && (
+        <div
+          className="p-3 rounded-2xl flex items-center gap-2 text-xs font-bold animate-fade-in"
+          style={{
+            backgroundColor: "rgba(28, 79, 120, 0.1)",
+            border: "1px solid rgba(28, 79, 120, 0.2)",
+            color: "#1c4f78",
+          }}
+        >
+          <Search className="w-3 h-3" />
+          {searchTerm && (
+            <span>
+              Search: "<strong>{searchTerm}</strong>"
+            </span>
+          )}
+          {searchTerm && hasActiveFilters && <span className="mx-1">•</span>}
+          {hasActiveFilters && (
+            <span>
+              <strong>
+                {Object.values(filters).filter((v) => v !== "").length}
+              </strong>{" "}
+              filter
+              {Object.values(filters).filter((v) => v !== "").length !== 1
+                ? "s"
+                : ""}{" "}
+              active
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Advanced Filter Panel */}
       {showAdvanced && (
-        <div 
-          className="p-6 rounded-[32px] border animate-fade-in-up" 
-          style={{ backgroundColor: '#253745', borderColor: '#4A5C6A' }}
+        <div
+          className="p-6 rounded-[32px] border animate-fade-in-up"
+          style={{ backgroundColor: "#253745", borderColor: "#4A5C6A" }}
         >
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: '#4A5C6A' }}>
+              <label
+                className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5"
+                style={{ color: "#4A5C6A" }}
+              >
                 <LayoutGrid className="w-3 h-3" /> Asset Type
               </label>
               <select
@@ -130,16 +217,29 @@ const ResourceFilterBar = ({ onFilter, onSearch, isLoading }) => {
                 value={filters.type}
                 onChange={handleFilterChange}
                 className="w-full px-4 py-2.5 rounded-xl outline-none font-bold text-sm appearance-none"
-                style={{ backgroundColor: '#06141B', border: '1px solid #4A5C6A', color: '#CCD0CF' }}
+                style={{
+                  backgroundColor: "#06141B",
+                  border: "1px solid #4A5C6A",
+                  color: "#CCD0CF",
+                }}
               >
                 {resourceTypes.map((type) => (
-                  <option key={type.value} value={type.value} style={{ backgroundColor: '#11212D' }}>{type.label}</option>
+                  <option
+                    key={type.value}
+                    value={type.value}
+                    style={{ backgroundColor: "#11212D" }}
+                  >
+                    {type.label}
+                  </option>
                 ))}
               </select>
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: '#4A5C6A' }}>
+              <label
+                className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5"
+                style={{ color: "#4A5C6A" }}
+              >
                 <MapPin className="w-3 h-3" /> Location
               </label>
               <input
@@ -149,12 +249,19 @@ const ResourceFilterBar = ({ onFilter, onSearch, isLoading }) => {
                 value={filters.location}
                 onChange={handleFilterChange}
                 className="w-full px-4 py-2.5 rounded-xl outline-none font-bold text-sm"
-                style={{ backgroundColor: '#06141B', border: '1px solid #4A5C6A', color: '#CCD0CF' }}
+                style={{
+                  backgroundColor: "#06141B",
+                  border: "1px solid #4A5C6A",
+                  color: "#CCD0CF",
+                }}
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: '#4A5C6A' }}>
+              <label
+                className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5"
+                style={{ color: "#4A5C6A" }}
+              >
                 <Users className="w-3 h-3" /> Capacity
               </label>
               <div className="flex items-center gap-2">
@@ -165,9 +272,13 @@ const ResourceFilterBar = ({ onFilter, onSearch, isLoading }) => {
                   value={filters.minCapacity}
                   onChange={handleFilterChange}
                   className="w-full px-3 py-2.5 rounded-xl outline-none font-bold text-xs"
-                  style={{ backgroundColor: '#06141B', border: '1px solid #4A5C6A', color: '#CCD0CF' }}
+                  style={{
+                    backgroundColor: "#06141B",
+                    border: "1px solid #4A5C6A",
+                    color: "#CCD0CF",
+                  }}
                 />
-                <span style={{ color: '#4A5C6A' }}>-</span>
+                <span style={{ color: "#4A5C6A" }}>-</span>
                 <input
                   type="number"
                   name="maxCapacity"
@@ -175,13 +286,20 @@ const ResourceFilterBar = ({ onFilter, onSearch, isLoading }) => {
                   value={filters.maxCapacity}
                   onChange={handleFilterChange}
                   className="w-full px-3 py-2.5 rounded-xl outline-none font-bold text-xs"
-                  style={{ backgroundColor: '#06141B', border: '1px solid #4A5C6A', color: '#CCD0CF' }}
+                  style={{
+                    backgroundColor: "#06141B",
+                    border: "1px solid #4A5C6A",
+                    color: "#CCD0CF",
+                  }}
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: '#4A5C6A' }}>
+              <label
+                className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5"
+                style={{ color: "#4A5C6A" }}
+              >
                 <Filter className="w-3 h-3" /> Status
               </label>
               <select
@@ -189,29 +307,42 @@ const ResourceFilterBar = ({ onFilter, onSearch, isLoading }) => {
                 value={filters.status}
                 onChange={handleFilterChange}
                 className="w-full px-4 py-2.5 rounded-xl outline-none font-bold text-sm appearance-none"
-                style={{ backgroundColor: '#06141B', border: '1px solid #4A5C6A', color: '#CCD0CF' }}
+                style={{
+                  backgroundColor: "#06141B",
+                  border: "1px solid #4A5C6A",
+                  color: "#CCD0CF",
+                }}
               >
                 {statuses.map((status) => (
-                  <option key={status.value} value={status.value} style={{ backgroundColor: '#11212D' }}>{status.label}</option>
+                  <option
+                    key={status.value}
+                    value={status.value}
+                    style={{ backgroundColor: "#11212D" }}
+                  >
+                    {status.label}
+                  </option>
                 ))}
               </select>
             </div>
           </div>
-          
-          <div className="flex justify-end gap-3 mt-8 pt-6 border-t" style={{ borderColor: '#4A5C6A' }}>
+
+          <div
+            className="flex justify-end gap-3 mt-8 pt-6 border-t"
+            style={{ borderColor: "#4A5C6A" }}
+          >
             <button
               onClick={handleClearFilters}
               className="px-6 py-2 font-bold transition-colors"
-              style={{ color: '#4A5C6A' }}
-              onMouseEnter={e => e.currentTarget.style.color = '#CCD0CF'}
-              onMouseLeave={e => e.currentTarget.style.color = '#4A5C6A'}
+              style={{ color: "#4A5C6A" }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "#CCD0CF")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "#4A5C6A")}
             >
               Reset Filters
             </button>
             <button
               onClick={handleApplyFilters}
               className="premium-button px-8"
-              style={{ backgroundColor: '#1c4f78', color: '#CCD0CF' }}
+              style={{ backgroundColor: "#1c4f78", color: "#CCD0CF" }}
             >
               Apply Selection
             </button>

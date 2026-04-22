@@ -14,11 +14,11 @@ import java.util.List;
 public interface TicketService {
     TicketResponseDTO createTicket(TicketRequestDTO dto);
     TicketResponseDTO updateTicket(Long id, TicketRequestDTO dto);
-    List<TicketResponseDTO> getAllTickets(TicketStatus status, Priority priority, String category, String searchTerm, Long technicianId);
+    List<TicketResponseDTO> getAllTickets(TicketStatus status, Priority priority, String category, String searchTerm, Long technicianId, java.time.LocalDateTime startDate, java.time.LocalDateTime endDate);
 
     TicketResponseDTO getTicketById(Long id); // Added
 
-    List<TicketResponseDTO> getTicketsByUserId(Long userId, TicketStatus status, Priority priority);
+    List<TicketResponseDTO> getTicketsByUserId(Long userId, TicketStatus status, Priority priority, String category, String searchTerm, java.time.LocalDateTime startDate, java.time.LocalDateTime endDate);
     TicketResponseDTO updateTicketStatus(Long id, TicketStatus status);
     TicketResponseDTO assignTechnician(Long id, Long technicianId);
     AttachmentResponseDTO uploadAttachment(Long ticketId, MultipartFile file);

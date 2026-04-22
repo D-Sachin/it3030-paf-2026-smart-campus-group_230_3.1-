@@ -48,9 +48,20 @@ const ResourceForm = ({ resource, onSubmit, onCancel, isLoading }) => {
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.name.trim()) newErrors.name = "Resource name is required";
-    if (!formData.location.trim()) newErrors.location = "Location is required";
+    if (!formData.name.trim()) {
+      newErrors.name = "Resource name is required";
+    } else if (formData.name.trim().length < 3) {
+      newErrors.name = "Name must be at least 3 characters";
+    }
+
+    if (!formData.location.trim()) {
+      newErrors.location = "Location is required";
+    } else if (formData.location.trim().length < 3) {
+      newErrors.location = "Location must be at least 3 characters";
+    }
+
     if (formData.capacity < 1) newErrors.capacity = "Min capacity is 1";
+    if (formData.capacity > 500) newErrors.capacity = "Max capacity cannot exceed 500";
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -67,7 +78,17 @@ const ResourceForm = ({ resource, onSubmit, onCancel, isLoading }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validateForm()) {
-      onSubmit(formData);
+      // Format time fields to include seconds as required by backend HH:mm:ss pattern
+      const formattedData = {
+        ...formData,
+        availableFrom: formData.availableFrom ? `${formData.availableFrom}:00` : null,
+        availableTo: formData.availableTo ? `${formData.availableTo}:00` : null,
+      };
+      
+      // Handle empty description or other fields that might be empty strings
+      if (!formattedData.description) formattedData.description = null;
+      
+      onSubmit(formattedData);
     }
   };
 

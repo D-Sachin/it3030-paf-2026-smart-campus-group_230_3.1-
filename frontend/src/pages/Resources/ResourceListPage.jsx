@@ -12,6 +12,7 @@ import resourceService from "../../services/resourceService";
 import ResourceCard from "../../components/Resources/ResourceCard";
 import ResourceForm from "../../components/Resources/ResourceForm";
 import ResourceFilterBar from "../../components/Resources/FilterBar";
+import ResourceSearchBar from "../../components/Resources/ResourceSearchBar";
 import { useUser } from "../../context/UserContext";
 
 /**
@@ -210,6 +211,14 @@ const ResourceList = () => {
       {isAdmin && (
         <ResourceFilterBar
           onFilter={handleFilter}
+          onSearch={handleSearch}
+          isLoading={loading}
+        />
+      )}
+
+      {/* Search Bar - Non-Admin Only */}
+      {!isAdmin && (
+        <ResourceSearchBar
           onSearch={handleSearch}
           isLoading={loading}
         />

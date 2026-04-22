@@ -138,7 +138,7 @@ public class AuthController {
         }
 
         // Mark 2FA as enabled if this was the first setup
-        if (!user.isTwoFactorEnabled()) {
+        if (user.getTwoFactorEnabled() == null || !user.getTwoFactorEnabled()) {
             user.setTwoFactorEnabled(true);
             userRepository.save(user);
         }

@@ -28,6 +28,7 @@ public class TicketResponseDTO {
     private LocalDateTime updatedAt;
     private String userName;
     private String technicianName;
+    private Long technicianId;
     private List<AttachmentResponseDTO> attachments;
     private List<CommentResponseDTO> comments;
 

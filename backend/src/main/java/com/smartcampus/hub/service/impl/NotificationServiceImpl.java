@@ -239,4 +239,19 @@ public class NotificationServiceImpl implements NotificationService {
         return bookingRepository.findById(booking.getId())
                 .orElseThrow(() -> new NoSuchElementException("Booking not found with id: " + booking.getId()));
     }
+    @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public Notification createTicketNotification(com.smartcampus.hub.model.User recipient, String title, String message, Long ticketId) {
+        Notification notification = Notification.builder()
+                .title(title)
+                .message(message)
+                .type(NotificationType.TICKET_UPDATED)
+                .recipientRole(normalizeRole(recipient.getRole()))
+                .recipientEmail(normalizeEmail(recipient.getEmail()))
+                .relatedEntityId(ticketId)
+                .isRead(false)
+                .build();
+
+        return notificationRepository.save(notification);
+    }
 }

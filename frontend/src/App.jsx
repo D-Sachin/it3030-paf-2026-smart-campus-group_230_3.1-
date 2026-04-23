@@ -54,6 +54,7 @@ function App() {
 
           {/* Member 3 - Incident Ticketing */}
           <Route path="tickets" element={<TicketList />} />
+          <Route path="tickets/new" element={<Navigate to="/tickets" replace />} />
           <Route path="tickets/:id" element={<TicketDetails />} />
 
           {/* Member 2 - Booking Management */}

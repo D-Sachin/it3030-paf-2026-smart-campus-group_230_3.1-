@@ -40,4 +40,6 @@ public interface NotificationService {
     Notification markAsRead(Long notificationId, String role, String email);
 
     List<Notification> markAllAsRead(String role, String email);
+
+    Notification createTicketNotification(com.smartcampus.hub.model.User recipient, String title, String message, Long ticketId);
 }

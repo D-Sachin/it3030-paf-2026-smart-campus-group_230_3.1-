@@ -18,8 +18,8 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/', roles: ['ADMIN', 'TECHNICIAN', 'USER'] },
-    { icon: Building2, label: 'Resources', path: '/resources', roles: ['ADMIN', 'TECHNICIAN', 'USER'] },
-    { icon: CalendarCheck, label: 'Bookings', path: '/bookings', roles: ['ADMIN', 'TECHNICIAN', 'USER'] },
+    { icon: Building2, label: 'Resources', path: '/resources', roles: ['ADMIN', 'USER'] },
+    { icon: CalendarCheck, label: 'Bookings', path: '/bookings', roles: ['ADMIN', 'USER'] },
     { icon: Ticket, label: 'Incidents', path: '/tickets', roles: ['ADMIN', 'TECHNICIAN', 'USER'] },
     { icon: Settings, label: 'Settings', path: '/settings', roles: ['ADMIN'] },
   ];

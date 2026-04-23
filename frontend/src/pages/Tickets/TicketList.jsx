@@ -23,9 +23,9 @@ const TicketList = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [category, setCategory] = useState('');
-  const [statusFilter, setStatusFilter] = useState(user.role === 'TECHNICIAN' ? 'OPEN' : '');
-  const [dateFilter, setDateFilter] = useState('today');
-  const [showAssignedOnly, setShowAssignedOnly] = useState(user.role === 'TECHNICIAN');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [dateFilter, setDateFilter] = useState(user?.role === 'TECHNICIAN' ? 'all' : 'today');
+  const [showAssignedOnly, setShowAssignedOnly] = useState(user?.role === 'TECHNICIAN');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const getDateRange = useCallback((filter) => {

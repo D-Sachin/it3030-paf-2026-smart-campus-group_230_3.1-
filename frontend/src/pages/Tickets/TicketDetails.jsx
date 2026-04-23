@@ -11,6 +11,10 @@ import {
   Download, 
   Paperclip, 
   MessageSquare,
+  X,
+  ChevronDown,
+  Lock,
+  AlertTriangle,
   ShieldCheck,
   Send,
   Loader2,
@@ -23,9 +27,7 @@ import {
   Archive,
   UserPlus,
   UserCheck,
-  Pencil,
-  X,
-  ChevronDown
+  Pencil
 } from 'lucide-react';
 import ticketService from '../../services/ticketService';
 import CommentSection from '../../components/Tickets/CommentSection';
@@ -88,12 +90,8 @@ const TicketDetails = () => {
   const handleStatusChange = async (newStatus) => {
     try {
       if (newStatus === "RESOLVED" || newStatus === "REJECTED") {
-        const promptMsg = newStatus === "RESOLVED" ? "Enter resolution notes:" : "Enter rejection reason:";
-        const notes = prompt(promptMsg) || "";
-        if (!notes.trim()) {
-          alert("Notes are required for final status transitions.");
-          return;
-        }
+        const promptMsg = newStatus === "RESOLVED" ? "Enter resolution notes (optional):" : "Enter rejection reason:";
+        const notes = window.prompt(promptMsg) || (newStatus === "RESOLVED" ? "Resolved by technician." : "No reason provided.");
         
         setStatusUpdateLoading(true);
         await ticketService.updateResolutionNotes(id, notes);
@@ -647,36 +645,103 @@ const TicketDetails = () => {
             </div>
           </div>
 
-          {(isAdmin || isTechnician) && ticket.status !== 'CLOSED' && ticket.status !== 'REJECTED' && (
+          {/* Status Transition Actions */}
+          {((currentUser?.role === 'ADMIN') || (currentUser?.role === 'TECHNICIAN' && (!ticket.technicianId || ticket.technicianId == currentUser.id))) && 
+           (ticket.status !== 'CLOSED' && ticket.status !== 'REJECTED') && (
             <div className="rounded-2xl p-6 shadow-xl" style={{ backgroundColor: '#253745', border: '1px solid #4A5C6A' }}>
               <h3 className="text-lg font-bold mb-6 flex items-center gap-2" style={{ color: '#CCD0CF' }}>
                 <Zap className="w-5 h-5 text-amber-500" />
                 Actions
               </h3>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {ticket.status === 'OPEN' && (
-                  <button onClick={() => handleStatusChange('IN_PROGRESS')} className="flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all hover:bg-white/5" style={{ borderColor: '#4A5C6A' }}>
-                    <Play className="w-6 h-6 text-blue-500" />
-                    <span className="text-[10px] font-bold uppercase" style={{ color: '#9BA8AB' }}>Start Work</span>
+                  <button
+                    onClick={() => handleStatusChange('IN_PROGRESS')}
+                    className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed transition-all duration-300 group hover:border-blue-500/50 hover:bg-blue-500/5"
+                    style={{ borderColor: '#2A3C46' }}
+                  >
+                    <div className="p-3 rounded-full bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
+                      <Play className="w-6 h-6 text-blue-500" />
+                    </div>
+                    <span className="mt-2 text-[10px] font-bold uppercase tracking-wider transition-colors" style={{ color: '#9BA8AB' }}>
+                      Start Work
+                    </span>
                   </button>
                 )}
-                {(ticket.status === 'IN_PROGRESS' || ticket.status === 'OPEN') && (
+
+                {ticket.status === 'IN_PROGRESS' && (
                   <>
-                    <button onClick={() => handleStatusChange('RESOLVED')} className="flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all hover:bg-white/5" style={{ borderColor: '#4A5C6A' }}>
-                      <CheckCircle className="w-6 h-6 text-emerald-500" />
-                      <span className="text-[10px] font-bold uppercase" style={{ color: '#9BA8AB' }}>Resolve</span>
+                    <button
+                      onClick={() => handleStatusChange('RESOLVED')}
+                      className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed transition-all duration-300 group hover:border-green-500/50 hover:bg-green-500/5"
+                      style={{ borderColor: '#2A3C46' }}
+                    >
+                      <div className="p-3 rounded-full bg-green-500/10 group-hover:bg-green-500/20 transition-colors">
+                        <CheckCircle className="w-6 h-6 text-green-500" />
+                      </div>
+                      <span className="mt-2 text-[10px] font-bold uppercase tracking-wider transition-colors" style={{ color: '#9BA8AB' }}>
+                        Mark Resolved
+                      </span>
                     </button>
-                    <button onClick={() => handleStatusChange('REJECTED')} className="flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all hover:bg-white/5" style={{ borderColor: '#4A5C6A' }}>
-                      <XCircle className="w-6 h-6 text-red-500" />
-                      <span className="text-[10px] font-bold uppercase" style={{ color: '#9BA8AB' }}>Reject</span>
+
+                    <button
+                      onClick={() => handleStatusChange('ON_HOLD')}
+                      className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed transition-all duration-300 group hover:border-yellow-500/50 hover:bg-yellow-500/5"
+                      style={{ borderColor: '#2A3C46' }}
+                    >
+                      <div className="p-3 rounded-full bg-yellow-500/10 group-hover:bg-yellow-500/20 transition-colors">
+                        <Clock className="w-6 h-6 text-yellow-500" />
+                      </div>
+                      <span className="mt-2 text-[10px] font-bold uppercase tracking-wider transition-colors" style={{ color: '#9BA8AB' }}>
+                        On Hold
+                      </span>
                     </button>
                   </>
                 )}
-                {ticket.status === 'RESOLVED' && (
-                  <button onClick={() => handleStatusChange('CLOSED')} className="col-span-2 flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all hover:bg-primary-500/10" style={{ borderColor: '#4A5C6A' }}>
-                    <Archive className="w-6 h-6" style={{ color: '#9BA8AB' }} />
-                    <span className="text-[10px] font-bold uppercase" style={{ color: '#9BA8AB' }}>Close Ticket Permanently</span>
+
+                {ticket.status === 'ON_HOLD' && (
+                  <button
+                    onClick={() => handleStatusChange('IN_PROGRESS')}
+                    className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed transition-all duration-300 group hover:border-blue-500/50 hover:bg-blue-500/5"
+                    style={{ borderColor: '#2A3C46' }}
+                  >
+                    <div className="p-3 rounded-full bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
+                      <Play className="w-6 h-6 text-blue-500" />
+                    </div>
+                    <span className="mt-2 text-[10px] font-bold uppercase tracking-wider transition-colors" style={{ color: '#9BA8AB' }}>
+                      Resume Work
+                    </span>
                   </button>
+                )}
+
+                {currentUser?.role === 'ADMIN' && (ticket.status !== 'CLOSED' && ticket.status !== 'REJECTED') && (
+                  <>
+                    <button
+                      onClick={() => handleStatusChange('CLOSED')}
+                      className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed transition-all duration-300 group hover:border-purple-500/50 hover:bg-purple-500/5"
+                      style={{ borderColor: '#2A3C46' }}
+                    >
+                      <div className="p-3 rounded-full bg-purple-500/10 group-hover:bg-purple-500/20 transition-colors">
+                        <Lock className="w-6 h-6 text-purple-500" />
+                      </div>
+                      <span className="mt-2 text-[10px] font-bold uppercase tracking-wider transition-colors" style={{ color: '#9BA8AB' }}>
+                        Close Ticket
+                      </span>
+                    </button>
+
+                    <button
+                      onClick={() => handleStatusChange('REJECTED')}
+                      className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed transition-all duration-300 group hover:border-red-500/50 hover:bg-red-500/5"
+                      style={{ borderColor: '#2A3C46' }}
+                    >
+                      <div className="p-3 rounded-full bg-red-500/10 group-hover:bg-red-500/20 transition-colors">
+                        <AlertTriangle className="w-6 h-6 text-red-500" />
+                      </div>
+                      <span className="mt-2 text-[10px] font-bold uppercase tracking-wider transition-colors" style={{ color: '#9BA8AB' }}>
+                        Reject
+                      </span>
+                    </button>
+                  </>
                 )}
               </div>
             </div>

@@ -11,6 +11,7 @@ import com.smartcampus.hub.repository.AttachmentRepository;
 import com.smartcampus.hub.repository.CommentRepository;
 import com.smartcampus.hub.repository.TicketRepository;
 import com.smartcampus.hub.repository.UserRepository;
+import com.smartcampus.hub.service.NotificationService;
 import com.smartcampus.hub.service.TicketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,6 +38,7 @@ public class TicketServiceImpl implements TicketService {
     private final TicketRepository ticketRepository;
     private final UserRepository userRepository;
     private final CommentRepository commentRepository;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional
@@ -147,58 +149,65 @@ public class TicketServiceImpl implements TicketService {
     @Override
     @Transactional
     public TicketResponseDTO updateTicketStatus(Long id, TicketStatus status) {
-        try {
-            Ticket ticket = ticketRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + id));
+        Ticket ticket = ticketRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + id));
 
-            // Get current logged-in user
-            final String currentEmail;
-            Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-            if (principal instanceof UserDetails) {
-                currentEmail = ((UserDetails) principal).getUsername();
-            } else {
-                currentEmail = principal.toString();
-            }
-
-            User currentUser = userRepository.findByEmail(currentEmail)
-                    .orElseThrow(() -> new RuntimeException("User not found: " + currentEmail));
-
-            // Authorization check: Admin OR Assigned Technician
-            boolean isAdmin = "ADMIN".equalsIgnoreCase(currentUser.getRole());
-            boolean isAssignedTech = ticket.getTechnician() != null && ticket.getTechnician().getId().equals(currentUser.getId());
-
-            if (!isAdmin && !isAssignedTech) {
-                throw new RuntimeException("Only Admins or the assigned Technician can update ticket status.");
-            }
-
-            // Basic transition validation: only block NON-admins from re-opening terminal tickets
-            if (!isAdmin && (ticket.getStatus() == TicketStatus.CLOSED || ticket.getStatus() == TicketStatus.REJECTED)) {
-                throw new RuntimeException("Cannot change status of a " + ticket.getStatus() + " ticket.");
-            }
-
-            ticket.setStatus(status);
-
-            // SLA logic: Set resolvedAt when transitioning to terminal states
-            if (status == TicketStatus.RESOLVED || status == TicketStatus.REJECTED) {
-                ticket.setResolvedAt(LocalDateTime.now());
-            } else if (status == TicketStatus.OPEN || status == TicketStatus.IN_PROGRESS) {
-                // If reopened, clear resolved timestamp? (Standard practice for resolution SLA)
-                ticket.setResolvedAt(null);
-            }
-
-            Ticket updatedTicket = ticketRepository.save(ticket);
-            return mapToResponseDTO(updatedTicket);
-        } catch (Exception e) {
-            try {
-                java.nio.file.Files.writeString(
-                    java.nio.file.Paths.get("debug_status_error.log"), 
-                    "Error updating status for ticket " + id + ": " + e.getMessage() + "\n", 
-                    java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND
-                );
-                e.printStackTrace(new java.io.PrintStream(new java.io.FileOutputStream("debug_status_error.log", true)));
-            } catch (Exception ex) {}
-            throw e;
+        // Get current logged-in user
+        final String currentEmail;
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof UserDetails) {
+            currentEmail = ((UserDetails) principal).getUsername();
+        } else {
+            currentEmail = principal.toString();
         }
+
+        User currentUser = userRepository.findByEmail(currentEmail)
+                .orElseThrow(() -> new RuntimeException("User not found: " + currentEmail));
+
+        // Authorization check
+        String role = currentUser.getRole();
+        boolean isAdmin = "ADMIN".equalsIgnoreCase(role);
+        boolean isTechnician = "TECHNICIAN".equalsIgnoreCase(role);
+        boolean isAssignedTech = ticket.getTechnician() != null && ticket.getTechnician().getId().equals(currentUser.getId());
+        boolean isUnassigned = ticket.getTechnician() == null;
+
+        // Allow technicians to update status if they are already assigned, 
+        // OR if it's an unassigned ticket and they are transitioning it to IN_PROGRESS or RESOLVED
+        boolean isTechnicianCanSelfAssign = isTechnician && isUnassigned && (status == TicketStatus.IN_PROGRESS || status == TicketStatus.RESOLVED);
+        boolean canUpdate = isAdmin || isAssignedTech || isTechnicianCanSelfAssign;
+
+        if (!canUpdate) {
+            throw new RuntimeException("Only Admins or the assigned Technician can update ticket status.");
+        }
+
+        // IF technician is self-assigning
+        if (isTechnicianCanSelfAssign) {
+            ticket.setTechnician(currentUser);
+            if (ticket.getAssignedAt() == null) {
+                ticket.setAssignedAt(LocalDateTime.now());
+            }
+        }
+
+        ticket.setStatus(status);
+
+        // SLA logic: Set resolvedAt when transitioning to terminal states
+        if (status == TicketStatus.RESOLVED || status == TicketStatus.REJECTED) {
+            ticket.setResolvedAt(LocalDateTime.now());
+        } else if (status == TicketStatus.OPEN || status == TicketStatus.IN_PROGRESS) {
+            ticket.setResolvedAt(null);
+        }
+
+        Ticket updatedTicket = ticketRepository.save(ticket);
+
+        // Notify user about status change
+        notificationService.createTicketNotification(
+            ticket.getUser(),
+            "Ticket Updated",
+            "Ticket status updated to " + status + " for ticket #" + id,
+            id
+        );
+
+        return mapToResponseDTO(updatedTicket);
     }
 
     @Override
@@ -219,8 +228,12 @@ public class TicketServiceImpl implements TicketService {
         User currentUser = userRepository.findByEmail(currentEmail)
                 .orElseThrow(() -> new RuntimeException("Logged in user not found: " + currentEmail));
 
-        if (!"ADMIN".equalsIgnoreCase(currentUser.getRole())) {
-            throw new RuntimeException("Only Admins can assign technicians.");
+        // Authorization check: Admin OR Technician self-assigning
+        boolean isAdmin = "ADMIN".equalsIgnoreCase(currentUser.getRole());
+        boolean isSelfAssign = "TECHNICIAN".equalsIgnoreCase(currentUser.getRole()) && technicianId.equals(currentUser.getId());
+
+        if (!isAdmin && !isSelfAssign) {
+            throw new RuntimeException("Only Admins can assign technicians, or Technicians can self-assign.");
         }
 
         User technician = userRepository.findById(technicianId)
@@ -490,6 +503,7 @@ public class TicketServiceImpl implements TicketService {
                 .updatedAt(ticket.getUpdatedAt())
                 .userName(ticket.getUser() != null ? ticket.getUser().getName() : "Unknown")
                 .technicianName(ticket.getTechnician() != null ? ticket.getTechnician().getName() : "Unassigned")
+                .technicianId(ticket.getTechnician() != null ? ticket.getTechnician().getId() : null)
                 .attachments(ticket.getAttachments() != null ? ticket.getAttachments().stream()
                         .map(att -> AttachmentResponseDTO.builder()
                                 .id(att.getId())

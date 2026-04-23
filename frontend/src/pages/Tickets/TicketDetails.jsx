@@ -157,7 +157,9 @@ const TicketDetails = () => {
   const resolveFileUrl = (url) => {
     if (!url) return '';
     if (url.startsWith('http')) return url;
-    return `http://localhost:8080${url}`;
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+    const host = baseUrl.split('/api')[0];
+    return `${host}${url}`;
   };
 
   const ImagePreview = ({ file, className }) => {

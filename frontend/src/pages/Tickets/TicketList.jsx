@@ -24,7 +24,7 @@ const TicketList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [category, setCategory] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [dateFilter, setDateFilter] = useState(user?.role === 'TECHNICIAN' ? 'all' : 'today');
+  const [dateFilter, setDateFilter] = useState('today');
   const [showAssignedOnly, setShowAssignedOnly] = useState(user?.role === 'TECHNICIAN');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 

@@ -113,6 +113,11 @@ const ticketService = {
   deleteAttachment: (ticketId, attachmentId) => {
     return apiClient.delete(`${TICKETS_PATH}/${ticketId}/attachments/${attachmentId}`);
   },
+
+  // GET technician statistics
+  getTechnicianStats: (technicianId) => {
+    return apiClient.get(`${TICKETS_PATH}/stats/technician/${technicianId}`);
+  },
 };
 
 export default ticketService;

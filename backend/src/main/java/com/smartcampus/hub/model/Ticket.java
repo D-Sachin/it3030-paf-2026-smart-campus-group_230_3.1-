@@ -55,6 +55,12 @@ public class Ticket {
     private String resolutionNotes;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "resolution_notes_added_by_id")
+    private User resolutionNotesAddedBy;
+
+    private LocalDateTime resolutionNotesAddedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 

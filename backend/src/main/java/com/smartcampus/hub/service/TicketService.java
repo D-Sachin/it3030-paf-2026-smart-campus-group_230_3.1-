@@ -11,6 +11,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
+import com.smartcampus.hub.dto.TechnicianStatsDTO;
+
 public interface TicketService {
     TicketResponseDTO createTicket(TicketRequestDTO dto);
     TicketResponseDTO updateTicket(Long id, TicketRequestDTO dto);
@@ -25,4 +27,5 @@ public interface TicketService {
     void updateComment(Long commentId, CommentRequestDTO dto);
     void deleteComment(Long commentId);
     TicketResponseDTO updateResolutionNotes(Long id, String notes);
+    TechnicianStatsDTO getTechnicianStats(Long technicianId);
 }

@@ -11,4 +11,5 @@ import java.util.List;
 @Repository
 public interface TicketRepository extends JpaRepository<Ticket, Long>, JpaSpecificationExecutor<Ticket> {
     List<Ticket> findByUser(User user);
+    List<Ticket> findByTechnician(User technician);
 }

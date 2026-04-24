@@ -1,0 +1,8 @@
+@echo off
+set DB_NAME=paf_sliit
+set DB_USERNAME=postgres
+set DB_PASSWORD=password123
+set JWT_SECRET=default_secret_key_for_development_purposes_only
+set GOOGLE_CLIENT_ID=900186992458-bgtm5pp199t0tbflueat3dga22b6bg12.apps.googleusercontent.com
+set GOOGLE_CLIENT_SECRET=replace_with_your_actual_google_client_secret
+mvn spring-boot:run

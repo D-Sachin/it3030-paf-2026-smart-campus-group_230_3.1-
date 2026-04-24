@@ -35,9 +35,14 @@ public class TicketResponseDTO {
     private String resourceLocation;
     private String preferredContactDetails;
     private String resolutionNotes;
+    private String resolutionNotesAddedByName;
+    private Long resolutionNotesAddedById;
+    private LocalDateTime resolutionNotesAddedAt;
 
     private LocalDateTime assignedAt;
     private LocalDateTime resolvedAt;
     private String timeToFirstResponse;
     private String timeToResolution;
+
+    private List<StatusHistoryDTO> statusHistory;
 }

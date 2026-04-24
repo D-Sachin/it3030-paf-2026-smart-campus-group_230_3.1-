@@ -27,7 +27,8 @@ import {
   Archive,
   UserPlus,
   UserCheck,
-  Pencil
+  Pencil,
+  History
 } from 'lucide-react';
 import ticketService from '../../services/ticketService';
 import CommentSection from '../../components/Tickets/CommentSection';
@@ -683,36 +684,10 @@ const TicketDetails = () => {
                         Mark Resolved
                       </span>
                     </button>
-
-                    <button
-                      onClick={() => handleStatusChange('ON_HOLD')}
-                      className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed transition-all duration-300 group hover:border-yellow-500/50 hover:bg-yellow-500/5"
-                      style={{ borderColor: '#2A3C46' }}
-                    >
-                      <div className="p-3 rounded-full bg-yellow-500/10 group-hover:bg-yellow-500/20 transition-colors">
-                        <Clock className="w-6 h-6 text-yellow-500" />
-                      </div>
-                      <span className="mt-2 text-[10px] font-bold uppercase tracking-wider transition-colors" style={{ color: '#9BA8AB' }}>
-                        On Hold
-                      </span>
-                    </button>
                   </>
                 )}
 
-                {ticket.status === 'ON_HOLD' && (
-                  <button
-                    onClick={() => handleStatusChange('IN_PROGRESS')}
-                    className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed transition-all duration-300 group hover:border-blue-500/50 hover:bg-blue-500/5"
-                    style={{ borderColor: '#2A3C46' }}
-                  >
-                    <div className="p-3 rounded-full bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
-                      <Play className="w-6 h-6 text-blue-500" />
-                    </div>
-                    <span className="mt-2 text-[10px] font-bold uppercase tracking-wider transition-colors" style={{ color: '#9BA8AB' }}>
-                      Resume Work
-                    </span>
-                  </button>
-                )}
+
 
                 {currentUser?.role === 'ADMIN' && (ticket.status !== 'CLOSED' && ticket.status !== 'REJECTED') && (
                   <>
@@ -746,6 +721,38 @@ const TicketDetails = () => {
               </div>
             </div>
           )}
+
+          <div className="rounded-2xl p-6 shadow-xl" style={{ backgroundColor: '#253745', border: '1px solid #4A5C6A' }}>
+            <h3 className="text-lg font-bold mb-6 flex items-center gap-2" style={{ color: '#CCD0CF' }}>
+              <History className="w-5 h-5" style={{ color: '#1c4f78' }} />
+              Status History
+            </h3>
+            
+            {ticket.statusHistory && ticket.statusHistory.length > 0 ? (
+              <div className="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:w-0.5 before:bg-gray-700/50">
+                {ticket.statusHistory.map((history, idx) => (
+                  <div key={history.id || idx} className="relative pl-12">
+                    <div className="absolute left-3 top-0 w-4 h-4 rounded-full border-4 border-[#253745] z-10" style={{ backgroundColor: getStatusColor(history.status).split(' ')[0] === 'text-blue-500' ? '#3B82F6' : '#10B981' }} />
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-bold px-2 py-0.5 rounded-md border" style={{ color: '#CCD0CF', borderColor: '#4A5C6A', backgroundColor: '#11212D' }}>
+                          {history.status}
+                        </span>
+                        <span className="text-[10px] font-bold" style={{ color: '#4A5C6A' }}>
+                          {new Date(history.timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <p className="text-xs font-medium" style={{ color: '#9BA8AB' }}>
+                        By <span style={{ color: '#CCD0CF' }}>{history.changedByName}</span>
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-center italic text-sm" style={{ color: '#4A5C6A' }}>No status changes recorded</p>
+            )}
+          </div>
 
           <div className="rounded-2xl p-6 shadow-xl" style={{ backgroundColor: '#253745', border: '1px solid #4A5C6A' }}>
             <h3 className="text-lg font-bold mb-6 flex items-center gap-2" style={{ color: '#CCD0CF' }}>

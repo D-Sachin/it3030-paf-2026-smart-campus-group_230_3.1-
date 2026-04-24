@@ -64,7 +64,7 @@ export const UserProvider = ({ children }) => {
       if (!error.response) {
         return {
           success: false,
-          message: 'Cannot reach server. Please verify backend is running on port 8081.'
+          message: 'Cannot reach server. Please verify backend is running on port 8080.'
         };
       }
 

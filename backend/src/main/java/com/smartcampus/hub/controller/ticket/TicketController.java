@@ -137,4 +137,9 @@ public class TicketController {
         ticketService.deleteComment(commentId);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/stats/technician/{id}")
+    public ResponseEntity<com.smartcampus.hub.dto.TechnicianStatsDTO> getTechnicianStats(@PathVariable Long id) {
+        return ResponseEntity.ok(ticketService.getTechnicianStats(id));
+    }
 }

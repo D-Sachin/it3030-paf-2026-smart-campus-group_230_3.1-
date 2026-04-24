@@ -3,14 +3,8 @@ package com.smartcampus.hub.service.impl;
 import com.smartcampus.hub.dto.*;
 import com.smartcampus.hub.enums.Priority;
 import com.smartcampus.hub.enums.TicketStatus;
-import com.smartcampus.hub.model.Attachment;
-import com.smartcampus.hub.model.Comment;
-import com.smartcampus.hub.model.Ticket;
-import com.smartcampus.hub.model.User;
-import com.smartcampus.hub.repository.AttachmentRepository;
-import com.smartcampus.hub.repository.CommentRepository;
-import com.smartcampus.hub.repository.TicketRepository;
-import com.smartcampus.hub.repository.UserRepository;
+import com.smartcampus.hub.model.*;
+import com.smartcampus.hub.repository.*;
 import com.smartcampus.hub.service.NotificationService;
 import com.smartcampus.hub.service.TicketService;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +33,7 @@ public class TicketServiceImpl implements TicketService {
     private final UserRepository userRepository;
     private final CommentRepository commentRepository;
     private final NotificationService notificationService;
+    private final TicketStatusHistoryRepository ticketStatusHistoryRepository;
 
     @Override
     @Transactional
@@ -47,12 +42,18 @@ public class TicketServiceImpl implements TicketService {
         
         // Use explicit userId if provided (for demo/role-switcher support)
         if (dto.getUserId() != null) {
-            user = userRepository.findById(dto.getUserId())
-                    .orElseThrow(() -> new RuntimeException("User not found with id: " + dto.getUserId()));
+            final Long uid = dto.getUserId();
+            user = userRepository.findById(uid)
+                    .orElseThrow(() -> new RuntimeException("User not found with id: " + uid));
         } else {
             // Get current logged-in user from SecurityContext
+            var authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || authentication.getPrincipal() == null || "anonymousUser".equals(authentication.getPrincipal().toString())) {
+                 throw new RuntimeException("Authentication required. Please ensure you are logged in.");
+            }
+
             final String email;
-            Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            Object principal = authentication.getPrincipal();
             if (principal instanceof UserDetails) {
                 email = ((UserDetails) principal).getUsername();
             } else {
@@ -75,6 +76,13 @@ public class TicketServiceImpl implements TicketService {
 
         Ticket savedTicket = ticketRepository.save(ticket);
 
+        // Record initial OPEN status in history
+        ticketStatusHistoryRepository.save(TicketStatusHistory.builder()
+                .ticket(savedTicket)
+                .status(savedTicket.getStatus())
+                .changedBy(user)
+                .build());
+
         return mapToResponseDTO(savedTicket);
     }
 
@@ -95,7 +103,12 @@ public class TicketServiceImpl implements TicketService {
             requestingUser = userRepository.findById(dto.getUserId())
                     .orElseThrow(() -> new RuntimeException("User not found with id: " + dto.getUserId()));
         } else {
-            Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            var authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || authentication.getPrincipal() == null || "anonymousUser".equals(authentication.getPrincipal().toString())) {
+                 throw new RuntimeException("Authentication required. Please ensure you are logged in.");
+            }
+
+            Object principal = authentication.getPrincipal();
             String email = (principal instanceof UserDetails)
                     ? ((UserDetails) principal).getUsername()
                     : principal.toString();
@@ -153,8 +166,13 @@ public class TicketServiceImpl implements TicketService {
                 .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + id));
 
         // Get current logged-in user
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getPrincipal() == null || "anonymousUser".equals(authentication.getPrincipal().toString())) {
+             throw new RuntimeException("Authentication required. Please ensure you are logged in.");
+        }
+        
         final String currentEmail;
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Object principal = authentication.getPrincipal();
         if (principal instanceof UserDetails) {
             currentEmail = ((UserDetails) principal).getUsername();
         } else {
@@ -171,10 +189,12 @@ public class TicketServiceImpl implements TicketService {
         boolean isAssignedTech = ticket.getTechnician() != null && ticket.getTechnician().getId().equals(currentUser.getId());
         boolean isUnassigned = ticket.getTechnician() == null;
 
-        // Allow technicians to update status if they are already assigned, 
-        // OR if it's an unassigned ticket and they are transitioning it to IN_PROGRESS or RESOLVED
+        // Ensure we still keep the variable so the self-assign logic below works
         boolean isTechnicianCanSelfAssign = isTechnician && isUnassigned && (status == TicketStatus.IN_PROGRESS || status == TicketStatus.RESOLVED);
-        boolean canUpdate = isAdmin || isAssignedTech || isTechnicianCanSelfAssign;
+
+        // Allow any technician to update status (assigned to them, or unassigned ticket they pick up).
+        // The frontend UI already limits which action buttons are visible to the correct users.
+        boolean canUpdate = isAdmin || isAssignedTech || (isTechnician && isUnassigned);
 
         if (!canUpdate) {
             throw new RuntimeException("Only Admins or the assigned Technician can update ticket status.");
@@ -199,6 +219,13 @@ public class TicketServiceImpl implements TicketService {
 
         Ticket updatedTicket = ticketRepository.save(ticket);
 
+        // Record status change in history
+        ticketStatusHistoryRepository.save(TicketStatusHistory.builder()
+                .ticket(updatedTicket)
+                .status(status)
+                .changedBy(currentUser)
+                .build());
+
         // Notify user about status change
         notificationService.createTicketNotification(
             ticket.getUser(),
@@ -217,8 +244,13 @@ public class TicketServiceImpl implements TicketService {
                 .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + id));
 
         // Get current logged-in user to check if they are ADMIN
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getPrincipal() == null || "anonymousUser".equals(authentication.getPrincipal().toString())) {
+             throw new RuntimeException("Authentication required. Please ensure you are logged in.");
+        }
+
         final String currentEmail;
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Object principal = authentication.getPrincipal();
         if (principal instanceof UserDetails) {
             currentEmail = ((UserDetails) principal).getUsername();
         } else {
@@ -252,6 +284,14 @@ public class TicketServiceImpl implements TicketService {
         }
 
         Ticket savedTicket = ticketRepository.save(ticket);
+
+        // Record status change in history if it changed
+        ticketStatusHistoryRepository.save(TicketStatusHistory.builder()
+                .ticket(savedTicket)
+                .status(savedTicket.getStatus())
+                .changedBy(currentUser)
+                .build());
+
         return mapToResponseDTO(savedTicket);
     }
 
@@ -366,6 +406,16 @@ public class TicketServiceImpl implements TicketService {
 
         commentRepository.save(comment);
 
+        // Notify ticket owner about new comment (if commenter is not the owner)
+        if (!ticket.getUser().getId().equals(user.getId())) {
+            notificationService.createTicketNotification(
+                ticket.getUser(),
+                "New Comment",
+                "A new comment was added to your ticket #" + ticketId + " by " + user.getName(),
+                ticketId
+            );
+        }
+
         // Return updated comment list
         return commentRepository.findByTicket(ticket).stream()
                 .map(this::mapToCommentResponseDTO)
@@ -378,8 +428,13 @@ public class TicketServiceImpl implements TicketService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new RuntimeException("Comment not found with id: " + commentId));
 
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getPrincipal() == null || "anonymousUser".equals(authentication.getPrincipal().toString())) {
+             throw new RuntimeException("Authentication required. Please ensure you are logged in.");
+        }
+
         final String currentEmail;
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Object principal = authentication.getPrincipal();
         if (principal instanceof UserDetails) {
             currentEmail = ((UserDetails) principal).getUsername();
         } else {
@@ -404,8 +459,13 @@ public class TicketServiceImpl implements TicketService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new RuntimeException("Comment not found with id: " + commentId));
 
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getPrincipal() == null || "anonymousUser".equals(authentication.getPrincipal().toString())) {
+             throw new RuntimeException("Authentication required. Please ensure you are logged in.");
+        }
+
         final String currentEmail;
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Object principal = authentication.getPrincipal();
         if (principal instanceof UserDetails) {
             currentEmail = ((UserDetails) principal).getUsername();
         } else {
@@ -432,8 +492,13 @@ public class TicketServiceImpl implements TicketService {
         Ticket ticket = ticketRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + id));
 
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getPrincipal() == null || "anonymousUser".equals(authentication.getPrincipal().toString())) {
+             throw new RuntimeException("Authentication required. Please ensure you are logged in.");
+        }
+
         final String currentEmail;
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Object principal = authentication.getPrincipal();
         if (principal instanceof UserDetails) {
             currentEmail = ((UserDetails) principal).getUsername();
         } else {
@@ -444,13 +509,39 @@ public class TicketServiceImpl implements TicketService {
                 .orElseThrow(() -> new RuntimeException("User not found: " + currentEmail));
 
         boolean isAdmin = "ADMIN".equalsIgnoreCase(currentUser.getRole());
+        boolean isTechnician = "TECHNICIAN".equalsIgnoreCase(currentUser.getRole());
         boolean isAssignedTech = ticket.getTechnician() != null && ticket.getTechnician().getId().equals(currentUser.getId());
+        boolean isUnassigned = ticket.getTechnician() == null;
 
-        if (!isAdmin && !isAssignedTech) {
+        boolean canUpdate = isAdmin || isAssignedTech || (isTechnician && isUnassigned);
+
+        if (!canUpdate) {
             throw new RuntimeException("Only Admins or the assigned Technician can add resolution notes.");
         }
 
-        ticket.setResolutionNotes(notes);
+        // IF technician is self-assigning while resolving
+        if (isTechnician && isUnassigned) {
+            ticket.setTechnician(currentUser);
+            if (ticket.getAssignedAt() == null) {
+                ticket.setAssignedAt(LocalDateTime.now());
+            }
+        }
+
+        // Check if resolution notes already exist
+        // Relaxed check: Allow updating if notes were previously added by the SAME user, if current user is ADMIN, 
+        // OR if the current user is the ASSIGNED technician.
+        if (ticket.getResolutionNotes() != null && !ticket.getResolutionNotes().isBlank()) {
+            boolean isAuthor = ticket.getResolutionNotesAddedBy() != null && ticket.getResolutionNotesAddedBy().getId().equals(currentUser.getId());
+            if (!isAdmin && !isAuthor && !isAssignedTech) {
+                throw new RuntimeException("Resolution notes have already been added by " + 
+                        (ticket.getResolutionNotesAddedBy() != null ? ticket.getResolutionNotesAddedBy().getName() : "another user") + 
+                        ". Only Admins or the assigned Technician can modify resolution notes.");
+            }
+        }
+
+        ticket.setResolutionNotes(notes != null ? notes.replace("\"", "") : ""); // Cleanup potential JSON quotes
+        ticket.setResolutionNotesAddedBy(currentUser);
+        ticket.setResolutionNotesAddedAt(LocalDateTime.now());
         Ticket updatedTicket = ticketRepository.save(ticket);
         return mapToResponseDTO(updatedTicket);
     }
@@ -517,10 +608,16 @@ public class TicketServiceImpl implements TicketService {
                 .preferredContactDetails(ticket.getPreferredContactDetails())
                 .resourceLocation(ticket.getResourceLocation())
                 .resolutionNotes(ticket.getResolutionNotes())
+                .resolutionNotesAddedByName(ticket.getResolutionNotesAddedBy() != null ? ticket.getResolutionNotesAddedBy().getName() : null)
+                .resolutionNotesAddedById(ticket.getResolutionNotesAddedBy() != null ? ticket.getResolutionNotesAddedBy().getId() : null)
+                .resolutionNotesAddedAt(ticket.getResolutionNotesAddedAt())
                 .assignedAt(ticket.getAssignedAt())
                 .resolvedAt(ticket.getResolvedAt())
                 .timeToFirstResponse(calculateDuration(ticket.getCreatedAt(), ticket.getAssignedAt()))
                 .timeToResolution(calculateDuration(ticket.getCreatedAt(), ticket.getResolvedAt()))
+                .statusHistory(ticketStatusHistoryRepository.findByTicketOrderByTimestampDesc(ticket).stream()
+                        .map(this::mapToStatusHistoryDTO)
+                        .collect(Collectors.toList()))
                 .build();
     }
 
@@ -534,6 +631,16 @@ public class TicketServiceImpl implements TicketService {
         return hours + "h " + minutes + "m";
     }
 
+    private StatusHistoryDTO mapToStatusHistoryDTO(TicketStatusHistory history) {
+        return StatusHistoryDTO.builder()
+                .id(history.getId())
+                .status(history.getStatus())
+                .changedByName(history.getChangedBy() != null ? history.getChangedBy().getName() : "System")
+                .changedByEmail(history.getChangedBy() != null ? history.getChangedBy().getEmail() : "system")
+                .timestamp(history.getTimestamp())
+                .build();
+    }
+
     private CommentResponseDTO mapToCommentResponseDTO(Comment comment) {
         return CommentResponseDTO.builder()
                 .id(comment.getId())
@@ -541,6 +648,40 @@ public class TicketServiceImpl implements TicketService {
                 .content(comment.getContent())
                 .userName(comment.getUser() != null ? comment.getUser().getName() : "Unknown")
                 .createdAt(comment.getCreatedAt())
+                .build();
+    }
+
+    @Override
+    public TechnicianStatsDTO getTechnicianStats(Long technicianId) {
+        if (technicianId == null) {
+            throw new IllegalArgumentException("Technician ID cannot be null");
+        }
+        
+        User tech = userRepository.findById(technicianId)
+                .orElseThrow(() -> new RuntimeException("Technician not found with id: " + technicianId));
+        
+        List<Ticket> tickets = ticketRepository.findByTechnician(tech);
+
+        long total = tickets.size();
+        long resolved = tickets.stream().filter(t -> t.getStatus() == TicketStatus.RESOLVED).count();
+        long inProgress = tickets.stream().filter(t -> t.getStatus() == TicketStatus.IN_PROGRESS).count();
+        long open = tickets.stream().filter(t -> t.getStatus() == TicketStatus.OPEN).count();
+
+        double resolutionRate = total > 0 ? (double) resolved / total * 100 : 0.0;
+
+        double avgResolutionTime = tickets.stream()
+                .filter(t -> t.getCreatedAt() != null && t.getResolvedAt() != null)
+                .mapToLong(t -> java.time.Duration.between(t.getCreatedAt(), t.getResolvedAt()).toMinutes())
+                .average()
+                .orElse(0.0) / 60.0;
+
+        return TechnicianStatsDTO.builder()
+                .totalAssigned(total)
+                .resolvedCount(resolved)
+                .inProgressCount(inProgress)
+                .openCount(open)
+                .resolutionRate(Math.round(resolutionRate * 10.0) / 10.0)
+                .averageResolutionTimeHours(Math.round(avgResolutionTime * 10.0) / 10.0)
                 .build();
     }
 }

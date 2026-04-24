@@ -234,6 +234,16 @@ public class TicketServiceImpl implements TicketService {
             id
         );
 
+        // Also notify technician if assigned and if they are not the one who changed it
+        if (ticket.getTechnician() != null && !ticket.getTechnician().getEmail().equals(currentEmail)) {
+            notificationService.createTicketNotification(
+                ticket.getTechnician(),
+                "Ticket Updated",
+                "Assigned ticket #" + id + " status was updated to " + status + " by an Admin",
+                id
+            );
+        }
+
         return mapToResponseDTO(updatedTicket);
     }
 
@@ -291,6 +301,24 @@ public class TicketServiceImpl implements TicketService {
                 .status(savedTicket.getStatus())
                 .changedBy(currentUser)
                 .build());
+
+        // Notify technical if assigned (and not self-assigning)
+        if (!isSelfAssign) {
+            notificationService.createTicketNotification(
+                technician,
+                "New Ticket Assigned",
+                "You have been assigned to ticket #" + id + ": " + ticket.getTitle(),
+                id
+            );
+        }
+
+        // Always notify the student that a technician has been assigned
+        notificationService.createTicketNotification(
+            ticket.getUser(),
+            "Technician Assigned",
+            "A technician (" + technician.getName() + ") has been assigned to your ticket #" + id,
+            id
+        );
 
         return mapToResponseDTO(savedTicket);
     }

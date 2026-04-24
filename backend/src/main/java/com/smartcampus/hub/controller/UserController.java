@@ -96,6 +96,26 @@ public class UserController {
         return ResponseEntity.ok(dtos);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getUserById(@PathVariable Long id) {
+        Optional<User> userOptional = userRepository.findById(id);
+
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+        User user = userOptional.get();
+        UserProfileDTO profile = UserProfileDTO.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .twoFactorEnabled(user.isTwoFactorEnabled())
+                .build();
+
+        return ResponseEntity.ok(profile);
+    }
+
     // Inner DTO for simple user info
     public record UserSummaryDTO(Long id, String name, String email) {}
 }

@@ -3,6 +3,9 @@ package com.smartcampus.hub.controller;
 import com.smartcampus.hub.model.User;
 import com.smartcampus.hub.repository.UserRepository;
 import com.smartcampus.hub.dto.UserProfileDTO;
+import com.smartcampus.hub.dto.AdminUserUpdateDTO;
+import com.smartcampus.hub.dto.PasswordChangeDTO;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -74,6 +77,21 @@ public class UserController {
         List<User> users = userRepository.findByRole(role);
         List<UserSummaryDTO> dtos = users.stream()
                 .map(user -> new UserSummaryDTO(user.getId(), user.getName(), user.getEmail()))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<UserProfileDTO>> getAllUsers() {
+        List<User> users = userRepository.findAll();
+        List<UserProfileDTO> dtos = users.stream()
+                .map(user -> UserProfileDTO.builder()
+                        .id(user.getId())
+                        .name(user.getName())
+                        .email(user.getEmail())
+                        .role(user.getRole())
+                        .twoFactorEnabled(user.isTwoFactorEnabled())
+                        .build())
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
     }

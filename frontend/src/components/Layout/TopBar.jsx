@@ -303,6 +303,22 @@ const TopBar = () => {
     }
   };
 
+  const handleClearAll = async () => {
+    try {
+      if (isAdmin || isTechnician) {
+        await notificationService.deleteAllNotifications();
+        setNotifications([]);
+        setUnreadCount(0);
+      } else if (isStudent) {
+        saveStudentReadMap({});
+        setNotifications([]);
+        setUnreadCount(0);
+      }
+    } catch (error) {
+      setNotificationError("Failed to clear notifications.");
+    }
+  };
+
   const handleApprovalPopupClose = () => {
     if (approvalRedirectTimerRef.current) {
       window.clearTimeout(approvalRedirectTimerRef.current);
@@ -390,13 +406,22 @@ const TopBar = () => {
                       </span>
                     )}
                   </div>
-                  <button 
-                    onClick={handleMarkAllAsRead}
-                    className="text-[10px] font-black uppercase tracking-widest hover:opacity-80 transition-opacity"
-                    style={{ color: '#1c4f78' }}
-                  >
-                    Mark all read
-                  </button>
+                    <div className="flex items-center gap-3">
+                      <button 
+                        onClick={handleMarkAllAsRead}
+                        className="text-[10px] font-black uppercase tracking-widest hover:opacity-80 transition-opacity"
+                        style={{ color: '#1c4f78' }}
+                      >
+                        Mark all read
+                      </button>
+                      <span className="h-3 w-[1px]" style={{ backgroundColor: '#253745' }}></span>
+                      <button 
+                        onClick={handleClearAll}
+                        className="text-[10px] font-black uppercase tracking-widest hover:opacity-80 transition-opacity text-red-500"
+                      >
+                        Clear all
+                      </button>
+                    </div>
                 </div>
                 
                 <div className="max-h-[480px] overflow-y-auto custom-scrollbar">

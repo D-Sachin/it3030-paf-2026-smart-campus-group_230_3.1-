@@ -72,6 +72,40 @@ public class UserController {
         return ResponseEntity.ok(updatedProfile);
     }
 
+    @PutMapping("/profile/password")
+    public ResponseEntity<?> updatePassword(@Valid @RequestBody PasswordChangeDTO passwordChangeDTO) {
+        String email = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Optional<User> userOptional = userRepository.findByEmail(email);
+
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+        User user = userOptional.get();
+
+        if (user.getPassword() != null && !user.getPassword().equals(passwordChangeDTO.getOldPassword())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Incorrect old password.");
+        }
+
+        user.setPassword(passwordChangeDTO.getNewPassword());
+        userRepository.save(user);
+
+        return ResponseEntity.ok("Password updated successfully.");
+    }
+
+    @DeleteMapping("/profile")
+    public ResponseEntity<?> deleteOwnProfile() {
+        String email = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Optional<User> userOptional = userRepository.findByEmail(email);
+
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+        userRepository.delete(userOptional.get());
+        return ResponseEntity.ok("Account deleted successfully.");
+    }
+
     @GetMapping("/role/{role}")
     public ResponseEntity<List<UserSummaryDTO>> getUsersByRole(@PathVariable String role) {
         List<User> users = userRepository.findByRole(role);

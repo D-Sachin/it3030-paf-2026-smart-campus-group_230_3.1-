@@ -20,6 +20,7 @@ import MyBookings from "./pages/Bookings/MyBookings";
 import AdminBookings from "./pages/Bookings/AdminBookings";
 import BookingDetails from "./pages/Bookings/BookingDetails";
 import SettingsPage from "./pages/Admin/SettingsPage";
+import UserManagement from "./pages/Admin/UserManagement";
 
 const AppLayout = () => {
   const { isAuthenticated } = useUser();
@@ -76,6 +77,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={["ADMIN"]} redirectTo="/">
                 <SettingsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="users"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]} redirectTo="/">
+                <UserManagement />
               </ProtectedRoute>
             }
           />

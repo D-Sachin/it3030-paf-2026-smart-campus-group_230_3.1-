@@ -116,6 +116,37 @@ public class UserController {
         return ResponseEntity.ok(profile);
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody AdminUserUpdateDTO updateDTO) {
+        Optional<User> userOptional = userRepository.findById(id);
+
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+        User user = userOptional.get();
+
+        if (updateDTO.getName() != null && !updateDTO.getName().isBlank()) {
+            user.setName(updateDTO.getName());
+        }
+
+        if (updateDTO.getRole() != null && !updateDTO.getRole().isBlank()) {
+            user.setRole(updateDTO.getRole().toUpperCase());
+        }
+
+        userRepository.save(user);
+
+        UserProfileDTO profile = UserProfileDTO.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .twoFactorEnabled(user.isTwoFactorEnabled())
+                .build();
+
+        return ResponseEntity.ok(profile);
+    }
+
     // Inner DTO for simple user info
     public record UserSummaryDTO(Long id, String name, String email) {}
 }

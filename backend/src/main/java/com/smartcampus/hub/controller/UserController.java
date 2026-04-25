@@ -147,6 +147,18 @@ public class UserController {
         return ResponseEntity.ok(profile);
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+        Optional<User> userOptional = userRepository.findById(id);
+
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+        userRepository.deleteById(id);
+        return ResponseEntity.ok("User deleted successfully.");
+    }
+
     // Inner DTO for simple user info
     public record UserSummaryDTO(Long id, String name, String email) {}
 }

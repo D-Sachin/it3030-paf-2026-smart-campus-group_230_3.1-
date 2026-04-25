@@ -37,13 +37,14 @@ import { getPriorityColor, getStatusColor } from '../../utils/ticketUtils';
 
 const TicketDetails = () => {
   const { user: currentUser } = useUser();
-  const { id } = useParams();
+  const { id } = useParams();       // ticket ID from URL (e.g. /tickets/14)
   const navigate = useNavigate();
-  
+
+  // ── State ──────────────────────────────────────────────
   const [ticket, setTicket] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [technicians, setTechnicians] = useState([]);
+  const [technicians, setTechnicians] = useState([]);    // populate assign dropdown
   const [isAssigning, setIsAssigning] = useState(false);
   const [selectedTechId, setSelectedTechId] = useState("");
   const [statusUpdateLoading, setStatusUpdateLoading] = useState(false);
@@ -51,20 +52,25 @@ const TicketDetails = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editSaving, setEditSaving] = useState(false);
   const [editForm, setEditForm] = useState({});
-  const [viewingImageUrl, setViewingImageUrl] = useState(null);
+  const [viewingImageUrl, setViewingImageUrl] = useState(null); // lightbox image
   const [editExistingAttachments, setEditExistingAttachments] = useState([]);
   const [editNewAttachments, setEditNewAttachments] = useState([]);
 
-  const isAdmin = currentUser?.role === 'ADMIN';
-  const isTechnician = currentUser?.role === 'TECHNICIAN';
+  // ── Role & Permission Flags ─────────────────────────────
+  // toUpperCase() guards against inconsistent casing from the DB
+  const isAdmin = currentUser?.role?.toUpperCase() === 'ADMIN';
+  const isTechnician = currentUser?.role?.toUpperCase() === 'TECHNICIAN';
   const isOwner = ticket && currentUser && (ticket.userId === currentUser.id || ticket.userEmail === currentUser.email);
-  const canEdit = isOwner && ticket?.status === 'OPEN';
+  const canEdit = isOwner && ticket?.status === 'OPEN'; // only owner can edit, only when OPEN
 
+  // ── Data Fetching ────────────────────────────────────────
+  // Load ticket + technician list on mount and whenever ticket ID changes
   useEffect(() => {
     fetchTicketDetails();
     fetchTechnicians();
   }, [id]);
 
+  // GET /api/tickets/{id} — full ticket object including comments, attachments, resolution data
   const fetchTicketDetails = async () => {
     try {
       setLoading(true);
@@ -79,6 +85,7 @@ const TicketDetails = () => {
     }
   };
 
+  // GET /api/users?role=TECHNICIAN — used to populate the 'Assign Technician' dropdown
   const fetchTechnicians = async () => {
     try {
       const response = await ticketService.getUsersByRole("TECHNICIAN");
@@ -88,14 +95,32 @@ const TicketDetails = () => {
     }
   };
 
+  // ── Status Update ────────────────────────────────────────
+  // For RESOLVED/REJECTED: prompts for resolution notes first, then updates status
+  // For other statuses: directly calls PUT /api/tickets/{id}/status
   const handleStatusChange = async (newStatus) => {
     try {
       if (newStatus === "RESOLVED" || newStatus === "REJECTED") {
-        const promptMsg = newStatus === "RESOLVED" ? "Enter resolution notes (optional):" : "Enter rejection reason:";
-        const notes = window.prompt(promptMsg) || (newStatus === "RESOLVED" ? "Resolved by technician." : "No reason provided.");
+        const isReResolving = ticket.resolutionNotes && ticket.resolutionNotes.trim() !== "";
+        const promptMsg = isReResolving 
+          ? `Overwriting existing ${newStatus === "RESOLVED" ? 'resolution notes' : 'rejection reason'}:\n"${ticket.resolutionNotes}"\n\nEnter new details:`
+          : (newStatus === "RESOLVED" ? "Enter resolution notes (optional):" : "Enter rejection reason:");
+        
+        const defaultNotes = isReResolving ? ticket.resolutionNotes : (newStatus === "RESOLVED" ? "Resolved by technician." : "No reason provided.");
+        const notes = window.prompt(promptMsg, defaultNotes);
+        
+        // If user cancelled prompt, stop
+        if (notes === null) return;
         
         setStatusUpdateLoading(true);
-        await ticketService.updateResolutionNotes(id, notes);
+        try {
+          await ticketService.updateResolutionNotes(id, notes);
+        } catch (err) {
+          console.error('Error updating resolution notes:', err);
+          // If the backend specifically blocks us, we might still want to proceed with status update if the notes were the only issue
+          // but usually it's better to fail fast.
+          throw err; 
+        }
       } else {
         setStatusUpdateLoading(true);
       }
@@ -110,6 +135,7 @@ const TicketDetails = () => {
     }
   };
 
+  // PUT /api/tickets/{id}/assign — calls assignTechnician; auto-sets status to IN_PROGRESS
   const handleAssignTechnician = async (techId) => {
     if (!techId) return;
     
@@ -126,6 +152,8 @@ const TicketDetails = () => {
     }
   };
 
+  // ── Comment Actions ────────────────────────────────────────
+  // Author-only edit; Admin or author delete (enforced both here + backend)
   const handleUpdateComment = async (commentId, newContent) => {
     try {
       await ticketService.updateComment(commentId, newContent);
@@ -136,6 +164,7 @@ const TicketDetails = () => {
     }
   };
 
+  // DELETE /api/tickets/{id}/comments/{commentId} — requires confirmation dialog
   const handleDeleteComment = async (commentId) => {
     if (!window.confirm("Permanently delete this progress update?")) return;
     try {
@@ -147,6 +176,8 @@ const TicketDetails = () => {
     }
   };
 
+  // ── Attachment Helpers ──────────────────────────────────────
+  // Detect image files by extension (for lightbox vs download link)
   const isImageFile = (fileName) => {
     if (!fileName) return false;
     const ext = fileName.split('.').pop().toLowerCase();
@@ -172,6 +203,7 @@ const TicketDetails = () => {
     return <img src={previewUrl} alt={file.name} className={className} />;
   };
 
+  // POST /api/tickets/{id}/comments — adds comment, then refreshes full ticket
   const handleAddComment = async (content) => {
     try {
       setCommentSubmitting(true);
@@ -185,6 +217,7 @@ const TicketDetails = () => {
     }
   };
 
+  // Triggers browser download for any attachment via GET /api/files/uploads/{fileName}
   const handleDownloadAttachment = async (attachment) => {
     try {
       const response = await ticketService.downloadAttachment(attachment.fileName);
@@ -202,6 +235,8 @@ const TicketDetails = () => {
     }
   };
 
+  // ── Edit Modal ─────────────────────────────────────────────
+  // Populates editForm with current ticket values before opening modal
   const openEditModal = () => {
     setEditForm({
       title: ticket.title,
@@ -492,7 +527,7 @@ const TicketDetails = () => {
                 <option value="IN_PROGRESS">IN PROGRESS</option>
                 <option value="RESOLVED">RESOLVED</option>
                 <option value="CLOSED">CLOSED</option>
-                <option value="REJECTED">REJECTED</option>
+                {isAdmin && <option value="REJECTED">REJECTED</option>}
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: 'currentColor' }} />
               {statusUpdateLoading && <Loader2 className="w-4 h-4 animate-spin" style={{ color: '#1c4f78' }} />}
@@ -647,7 +682,7 @@ const TicketDetails = () => {
           </div>
 
           {/* Status Transition Actions */}
-          {((currentUser?.role === 'ADMIN') || (currentUser?.role === 'TECHNICIAN' && (!ticket.technicianId || ticket.technicianId == currentUser.id))) && 
+          {((currentUser?.role?.toUpperCase() === 'ADMIN') || (currentUser?.role?.toUpperCase() === 'TECHNICIAN' && (!ticket.technicianId || ticket.technicianId == currentUser.id))) && 
            (ticket.status !== 'CLOSED' && ticket.status !== 'REJECTED') && (
             <div className="rounded-2xl p-6 shadow-xl" style={{ backgroundColor: '#253745', border: '1px solid #4A5C6A' }}>
               <h3 className="text-lg font-bold mb-6 flex items-center gap-2" style={{ color: '#CCD0CF' }}>
@@ -728,30 +763,49 @@ const TicketDetails = () => {
               Status History
             </h3>
             
-            {ticket.statusHistory && ticket.statusHistory.length > 0 ? (
-              <div className="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:w-0.5 before:bg-gray-700/50">
-                {ticket.statusHistory.map((history, idx) => (
-                  <div key={history.id || idx} className="relative pl-12">
-                    <div className="absolute left-3 top-0 w-4 h-4 rounded-full border-4 border-[#253745] z-10" style={{ backgroundColor: getStatusColor(history.status).split(' ')[0] === 'text-blue-500' ? '#3B82F6' : '#10B981' }} />
-                    <div>
+            {(() => {
+              // Build a status timeline from existing ticket SLA timestamp fields
+              const timeline = [];
+              if (ticket.createdAt) {
+                timeline.push({ status: 'OPEN', timestamp: ticket.createdAt, actor: ticket.userName || 'System' });
+              }
+              if (ticket.assignedAt) {
+                timeline.push({ status: 'IN_PROGRESS', timestamp: ticket.assignedAt, actor: ticket.technicianName || 'Technician' });
+              }
+              if (ticket.resolvedAt) {
+                timeline.push({ status: ticket.status === 'REJECTED' ? 'REJECTED' : 'RESOLVED', timestamp: ticket.resolvedAt, actor: ticket.technicianName || ticket.userName || 'System' });
+              }
+
+              const dotColor = (status) => {
+                if (status === 'RESOLVED') return '#10b981';
+                if (status === 'REJECTED') return '#ef4444';
+                if (status === 'IN_PROGRESS') return '#3b82f6';
+                return '#f59e0b';
+              };
+
+              return timeline.length > 0 ? (
+                <div className="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:w-0.5 before:bg-gray-700/50">
+                  {timeline.map((entry, idx) => (
+                    <div key={idx} className="relative pl-12">
+                      <div className="absolute left-3 top-0 w-4 h-4 rounded-full border-4 border-[#253745] z-10" style={{ backgroundColor: dotColor(entry.status) }} />
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-xs font-bold px-2 py-0.5 rounded-md border" style={{ color: '#CCD0CF', borderColor: '#4A5C6A', backgroundColor: '#11212D' }}>
-                          {history.status}
+                          {entry.status.replace('_', ' ')}
                         </span>
                         <span className="text-[10px] font-bold" style={{ color: '#4A5C6A' }}>
-                          {new Date(history.timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                          {new Date(entry.timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
                       <p className="text-xs font-medium" style={{ color: '#9BA8AB' }}>
-                        By <span style={{ color: '#CCD0CF' }}>{history.changedByName}</span>
+                        By <span style={{ color: '#CCD0CF' }}>{entry.actor}</span>
                       </p>
                     </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-center italic text-sm" style={{ color: '#4A5C6A' }}>No status changes recorded</p>
-            )}
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center italic text-sm" style={{ color: '#4A5C6A' }}>No status changes recorded</p>
+              );
+            })()}
           </div>
 
           <div className="rounded-2xl p-6 shadow-xl" style={{ backgroundColor: '#253745', border: '1px solid #4A5C6A' }}>

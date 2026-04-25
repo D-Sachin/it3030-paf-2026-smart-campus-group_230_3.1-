@@ -192,13 +192,13 @@ const Dashboard = () => {
             <div className="relative z-10">
               <h3 className="text-xs font-black uppercase tracking-[0.2em]" style={{ color: '#2d70a3' }}>Resolution Rate</h3>
               <div className="mt-4 flex items-end gap-2">
-                <span className="text-4xl font-black" style={{ color: '#CCD0CF' }}>{techStats.resolutionRate}%</span>
+                <span className="text-4xl font-black" style={{ color: '#CCD0CF' }}>{Number(techStats.resolutionRate).toFixed(1)}%</span>
                 <span className="text-xs font-bold mb-1" style={{ color: '#9BA8AB' }}>success</span>
               </div>
               <div className="mt-4 w-full h-2 bg-gray-800 rounded-full overflow-hidden">
                 <div 
                   className="h-full transition-all duration-1000" 
-                  style={{ width: `${techStats.resolutionRate}%`, backgroundColor: '#10b981' }}
+                  style={{ width: `${Math.min(100, Number(techStats.resolutionRate)).toFixed(1)}%`, backgroundColor: '#10b981' }}
                 ></div>
               </div>
             </div>
@@ -208,7 +208,7 @@ const Dashboard = () => {
           <div className="md:col-span-1 rounded-2xl p-6" style={{ backgroundColor: '#11212D', border: '1px solid #4A5C6A' }}>
             <h3 className="text-xs font-black uppercase tracking-[0.2em]" style={{ color: '#9BA8AB' }}>Efficiency</h3>
             <div className="mt-4 flex items-end gap-2">
-              <span className="text-4xl font-black" style={{ color: '#CCD0CF' }}>{techStats.averageResolutionTimeHours}</span>
+              <span className="text-4xl font-black" style={{ color: '#CCD0CF' }}>{Number(techStats.averageResolutionTimeHours).toFixed(2)}</span>
               <span className="text-xs font-bold mb-1" style={{ color: '#9BA8AB' }}>avg. hours / fix</span>
             </div>
             <div className="mt-4 flex gap-1">

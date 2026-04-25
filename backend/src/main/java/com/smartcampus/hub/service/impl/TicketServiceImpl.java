@@ -3,8 +3,14 @@ package com.smartcampus.hub.service.impl;
 import com.smartcampus.hub.dto.*;
 import com.smartcampus.hub.enums.Priority;
 import com.smartcampus.hub.enums.TicketStatus;
-import com.smartcampus.hub.model.*;
-import com.smartcampus.hub.repository.*;
+import com.smartcampus.hub.model.Attachment;
+import com.smartcampus.hub.model.Comment;
+import com.smartcampus.hub.model.Ticket;
+import com.smartcampus.hub.model.User;
+import com.smartcampus.hub.repository.AttachmentRepository;
+import com.smartcampus.hub.repository.CommentRepository;
+import com.smartcampus.hub.repository.TicketRepository;
+import com.smartcampus.hub.repository.UserRepository;
 import com.smartcampus.hub.service.NotificationService;
 import com.smartcampus.hub.service.TicketService;
 import lombok.RequiredArgsConstructor;
@@ -33,8 +39,8 @@ public class TicketServiceImpl implements TicketService {
     private final UserRepository userRepository;
     private final CommentRepository commentRepository;
     private final NotificationService notificationService;
-    private final TicketStatusHistoryRepository ticketStatusHistoryRepository;
 
+    // POST /api/tickets — Create ticket; defaults status to OPEN, links to authenticated user
     @Override
     @Transactional
     public TicketResponseDTO createTicket(TicketRequestDTO dto) {
@@ -42,18 +48,12 @@ public class TicketServiceImpl implements TicketService {
         
         // Use explicit userId if provided (for demo/role-switcher support)
         if (dto.getUserId() != null) {
-            final Long uid = dto.getUserId();
-            user = userRepository.findById(uid)
-                    .orElseThrow(() -> new RuntimeException("User not found with id: " + uid));
+            user = userRepository.findById(dto.getUserId())
+                    .orElseThrow(() -> new RuntimeException("User not found with id: " + dto.getUserId()));
         } else {
             // Get current logged-in user from SecurityContext
-            var authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication == null || authentication.getPrincipal() == null || "anonymousUser".equals(authentication.getPrincipal().toString())) {
-                 throw new RuntimeException("Authentication required. Please ensure you are logged in.");
-            }
-
             final String email;
-            Object principal = authentication.getPrincipal();
+            Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             if (principal instanceof UserDetails) {
                 email = ((UserDetails) principal).getUsername();
             } else {
@@ -76,16 +76,10 @@ public class TicketServiceImpl implements TicketService {
 
         Ticket savedTicket = ticketRepository.save(ticket);
 
-        // Record initial OPEN status in history
-        ticketStatusHistoryRepository.save(TicketStatusHistory.builder()
-                .ticket(savedTicket)
-                .status(savedTicket.getStatus())
-                .changedBy(user)
-                .build());
-
         return mapToResponseDTO(savedTicket);
     }
 
+    // PUT /api/tickets/{id} — Edit fields; only owner can edit, only OPEN tickets allowed
     @Override
     @Transactional
     public TicketResponseDTO updateTicket(Long id, TicketRequestDTO dto) {
@@ -103,12 +97,7 @@ public class TicketServiceImpl implements TicketService {
             requestingUser = userRepository.findById(dto.getUserId())
                     .orElseThrow(() -> new RuntimeException("User not found with id: " + dto.getUserId()));
         } else {
-            var authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication == null || authentication.getPrincipal() == null || "anonymousUser".equals(authentication.getPrincipal().toString())) {
-                 throw new RuntimeException("Authentication required. Please ensure you are logged in.");
-            }
-
-            Object principal = authentication.getPrincipal();
+            Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             String email = (principal instanceof UserDetails)
                     ? ((UserDetails) principal).getUsername()
                     : principal.toString();
@@ -131,6 +120,7 @@ public class TicketServiceImpl implements TicketService {
         return mapToResponseDTO(ticketRepository.save(ticket));
     }
 
+    // GET /api/tickets — Returns all tickets sorted by createdAt DESC; supports dynamic filtering
     @Override
     @Transactional(readOnly = true)
     public List<TicketResponseDTO> getAllTickets(TicketStatus status, Priority priority, String category, String searchTerm, Long technicianId, LocalDateTime startDate, LocalDateTime endDate) {
@@ -149,6 +139,7 @@ public class TicketServiceImpl implements TicketService {
         return mapToResponseDTO(ticket);
     }
 
+    // GET /api/tickets/user/{userId} — Scoped to one student's tickets; same filters apply
     @Override
     @Transactional(readOnly = true)
     public List<TicketResponseDTO> getTicketsByUserId(Long userId, TicketStatus status, Priority priority, String category, String searchTerm, LocalDateTime startDate, LocalDateTime endDate) {
@@ -159,6 +150,8 @@ public class TicketServiceImpl implements TicketService {
                 .collect(Collectors.toList());
     }
 
+    // PUT /api/tickets/{id}/status — Status transition; ADMIN or assigned TECHNICIAN only
+    // Sets resolvedAt on RESOLVED/REJECTED; clears it on re-open; fires notification to submitter
     @Override
     @Transactional
     public TicketResponseDTO updateTicketStatus(Long id, TicketStatus status) {
@@ -166,13 +159,8 @@ public class TicketServiceImpl implements TicketService {
                 .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + id));
 
         // Get current logged-in user
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || authentication.getPrincipal() == null || "anonymousUser".equals(authentication.getPrincipal().toString())) {
-             throw new RuntimeException("Authentication required. Please ensure you are logged in.");
-        }
-        
         final String currentEmail;
-        Object principal = authentication.getPrincipal();
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (principal instanceof UserDetails) {
             currentEmail = ((UserDetails) principal).getUsername();
         } else {
@@ -219,13 +207,6 @@ public class TicketServiceImpl implements TicketService {
 
         Ticket updatedTicket = ticketRepository.save(ticket);
 
-        // Record status change in history
-        ticketStatusHistoryRepository.save(TicketStatusHistory.builder()
-                .ticket(updatedTicket)
-                .status(status)
-                .changedBy(currentUser)
-                .build());
-
         // Notify user about status change
         notificationService.createTicketNotification(
             ticket.getUser(),
@@ -234,19 +215,11 @@ public class TicketServiceImpl implements TicketService {
             id
         );
 
-        // Also notify technician if assigned and if they are not the one who changed it
-        if (ticket.getTechnician() != null && !ticket.getTechnician().getEmail().equals(currentEmail)) {
-            notificationService.createTicketNotification(
-                ticket.getTechnician(),
-                "Ticket Updated",
-                "Assigned ticket #" + id + " status was updated to " + status + " by an Admin",
-                id
-            );
-        }
-
         return mapToResponseDTO(updatedTicket);
     }
 
+    // PUT /api/tickets/{id}/assign — ADMIN assigns any tech; TECHNICIAN can only self-assign
+    // Auto-sets assignedAt and transitions OPEN → IN_PROGRESS
     @Override
     @Transactional
     public TicketResponseDTO assignTechnician(Long id, Long technicianId) {
@@ -254,13 +227,8 @@ public class TicketServiceImpl implements TicketService {
                 .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + id));
 
         // Get current logged-in user to check if they are ADMIN
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || authentication.getPrincipal() == null || "anonymousUser".equals(authentication.getPrincipal().toString())) {
-             throw new RuntimeException("Authentication required. Please ensure you are logged in.");
-        }
-
         final String currentEmail;
-        Object principal = authentication.getPrincipal();
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (principal instanceof UserDetails) {
             currentEmail = ((UserDetails) principal).getUsername();
         } else {
@@ -294,34 +262,11 @@ public class TicketServiceImpl implements TicketService {
         }
 
         Ticket savedTicket = ticketRepository.save(ticket);
-
-        // Record status change in history if it changed
-        ticketStatusHistoryRepository.save(TicketStatusHistory.builder()
-                .ticket(savedTicket)
-                .status(savedTicket.getStatus())
-                .changedBy(currentUser)
-                .build());
-
-        // Notify technical if assigned (and not self-assigning)
-        if (!isSelfAssign) {
-            notificationService.createTicketNotification(
-                technician,
-                "New Ticket Assigned",
-                "You have been assigned to ticket #" + id + ": " + ticket.getTitle(),
-                id
-            );
-        }
-
-        // Always notify the student that a technician has been assigned
-        notificationService.createTicketNotification(
-            ticket.getUser(),
-            "Technician Assigned",
-            "A technician (" + technician.getName() + ") has been assigned to your ticket #" + id,
-            id
-        );
-
         return mapToResponseDTO(savedTicket);
     }
+
+    // POST /api/tickets/{id}/attachments — Upload file; max 3 per ticket; stored at app.upload.dir
+    // Filename gets timestamp prefix to avoid conflicts; public URL: /api/files/uploads/{fileName}
 
     @Value("${app.upload.dir}")
     private String uploadDir;
@@ -373,6 +318,7 @@ public class TicketServiceImpl implements TicketService {
         }
     }
 
+    // DELETE /api/tickets/{ticketId}/attachments/{attachmentId} — Deletes file from disk and DB
     @Override
     @Transactional
     public void deleteAttachment(Long attachmentId) {
@@ -391,6 +337,7 @@ public class TicketServiceImpl implements TicketService {
         attachmentRepository.delete(attachment);
     }
 
+    // POST /api/tickets/{id}/comments — Add comment; resolves user from SecurityContext or dto.userId
     @Override
     @Transactional
     public List<CommentResponseDTO> addComment(Long ticketId, CommentRequestDTO dto) {
@@ -434,35 +381,21 @@ public class TicketServiceImpl implements TicketService {
 
         commentRepository.save(comment);
 
-        // Notify ticket owner about new comment (if commenter is not the owner)
-        if (!ticket.getUser().getId().equals(user.getId())) {
-            notificationService.createTicketNotification(
-                ticket.getUser(),
-                "New Comment",
-                "A new comment was added to your ticket #" + ticketId + " by " + user.getName(),
-                ticketId
-            );
-        }
-
         // Return updated comment list
         return commentRepository.findByTicket(ticket).stream()
                 .map(this::mapToCommentResponseDTO)
                 .collect(Collectors.toList());
     }
 
+    // PUT /api/comments/{commentId} — Edit comment content (author only)
     @Override
     @Transactional
     public void updateComment(Long commentId, CommentRequestDTO dto) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new RuntimeException("Comment not found with id: " + commentId));
 
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || authentication.getPrincipal() == null || "anonymousUser".equals(authentication.getPrincipal().toString())) {
-             throw new RuntimeException("Authentication required. Please ensure you are logged in.");
-        }
-
         final String currentEmail;
-        Object principal = authentication.getPrincipal();
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (principal instanceof UserDetails) {
             currentEmail = ((UserDetails) principal).getUsername();
         } else {
@@ -481,19 +414,15 @@ public class TicketServiceImpl implements TicketService {
         commentRepository.save(comment);
     }
 
+    // DELETE /api/comments/{commentId} — Delete comment (author or ADMIN)
     @Override
     @Transactional
     public void deleteComment(Long commentId) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new RuntimeException("Comment not found with id: " + commentId));
 
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || authentication.getPrincipal() == null || "anonymousUser".equals(authentication.getPrincipal().toString())) {
-             throw new RuntimeException("Authentication required. Please ensure you are logged in.");
-        }
-
         final String currentEmail;
-        Object principal = authentication.getPrincipal();
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (principal instanceof UserDetails) {
             currentEmail = ((UserDetails) principal).getUsername();
         } else {
@@ -514,19 +443,17 @@ public class TicketServiceImpl implements TicketService {
         commentRepository.delete(comment);
     }
 
+    // PUT /api/tickets/{id}/resolution — Add/overwrite resolution notes
+    // Auth: ADMIN always allowed; TECHNICIAN if assigned or ticket unassigned
+    // Overwrite protection: only ADMIN or original author can overwrite existing notes
     @Override
     @Transactional
     public TicketResponseDTO updateResolutionNotes(Long id, String notes) {
         Ticket ticket = ticketRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + id));
 
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || authentication.getPrincipal() == null || "anonymousUser".equals(authentication.getPrincipal().toString())) {
-             throw new RuntimeException("Authentication required. Please ensure you are logged in.");
-        }
-
         final String currentEmail;
-        Object principal = authentication.getPrincipal();
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (principal instanceof UserDetails) {
             currentEmail = ((UserDetails) principal).getUsername();
         } else {
@@ -541,39 +468,34 @@ public class TicketServiceImpl implements TicketService {
         boolean isAssignedTech = ticket.getTechnician() != null && ticket.getTechnician().getId().equals(currentUser.getId());
         boolean isUnassigned = ticket.getTechnician() == null;
 
-        boolean canUpdate = isAdmin || isAssignedTech || (isTechnician && isUnassigned);
+        // Allow Admin, Assigned Tech, or any Technician for an unassigned ticket
+        boolean canAddNotes = isAdmin || isAssignedTech || (isTechnician && isUnassigned);
 
-        if (!canUpdate) {
+        if (!canAddNotes) {
             throw new RuntimeException("Only Admins or the assigned Technician can add resolution notes.");
         }
 
-        // IF technician is self-assigning while resolving
-        if (isTechnician && isUnassigned) {
-            ticket.setTechnician(currentUser);
-            if (ticket.getAssignedAt() == null) {
-                ticket.setAssignedAt(LocalDateTime.now());
-            }
-        }
-
-        // Check if resolution notes already exist
-        // Relaxed check: Allow updating if notes were previously added by the SAME user, if current user is ADMIN, 
-        // OR if the current user is the ASSIGNED technician.
+        // Check if resolution notes already exist and if the current user is authorized to update them
         if (ticket.getResolutionNotes() != null && !ticket.getResolutionNotes().isBlank()) {
-            boolean isAuthor = ticket.getResolutionNotesAddedBy() != null && ticket.getResolutionNotesAddedBy().getId().equals(currentUser.getId());
-            if (!isAdmin && !isAuthor && !isAssignedTech) {
+            boolean isOriginalAuthor = ticket.getResolutionNotesAddedBy() != null && 
+                                       ticket.getResolutionNotesAddedBy().getId().equals(currentUser.getId());
+            
+            if (!isAdmin && !isOriginalAuthor) {
                 throw new RuntimeException("Resolution notes have already been added by " + 
-                        (ticket.getResolutionNotesAddedBy() != null ? ticket.getResolutionNotesAddedBy().getName() : "another user") + 
-                        ". Only Admins or the assigned Technician can modify resolution notes.");
+                        (ticket.getResolutionNotesAddedBy() != null ? ticket.getResolutionNotesAddedBy().getEmail() : "another user") + 
+                        ". Only Admins or the original author can overwrite resolution notes.");
             }
         }
 
-        ticket.setResolutionNotes(notes != null ? notes.replace("\"", "") : ""); // Cleanup potential JSON quotes
+        ticket.setResolutionNotes(notes);
         ticket.setResolutionNotesAddedBy(currentUser);
         ticket.setResolutionNotesAddedAt(LocalDateTime.now());
         Ticket updatedTicket = ticketRepository.save(ticket);
         return mapToResponseDTO(updatedTicket);
     }
 
+    // Dynamic filter builder — each param is optional; all applied as AND predicates
+    // Supports: userId, technicianId, status, priority, category, date range, searchTerm (ILIKE)
     private Specification<Ticket> getTicketSpecification(Long userId, Long technicianId, TicketStatus status, Priority priority, String category, String searchTerm, LocalDateTime startDate, LocalDateTime endDate) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -609,6 +531,8 @@ public class TicketServiceImpl implements TicketService {
         };
     }
 
+    // Maps Ticket entity → TicketResponseDTO
+    // Includes: core fields, user/tech names, attachments, comments, resolution data, SLA timestamps
     private TicketResponseDTO mapToResponseDTO(Ticket ticket) {
         return TicketResponseDTO.builder()
                 .id(ticket.getId())
@@ -643,9 +567,6 @@ public class TicketServiceImpl implements TicketService {
                 .resolvedAt(ticket.getResolvedAt())
                 .timeToFirstResponse(calculateDuration(ticket.getCreatedAt(), ticket.getAssignedAt()))
                 .timeToResolution(calculateDuration(ticket.getCreatedAt(), ticket.getResolvedAt()))
-                .statusHistory(ticketStatusHistoryRepository.findByTicketOrderByTimestampDesc(ticket).stream()
-                        .map(this::mapToStatusHistoryDTO)
-                        .collect(Collectors.toList()))
                 .build();
     }
 
@@ -659,16 +580,6 @@ public class TicketServiceImpl implements TicketService {
         return hours + "h " + minutes + "m";
     }
 
-    private StatusHistoryDTO mapToStatusHistoryDTO(TicketStatusHistory history) {
-        return StatusHistoryDTO.builder()
-                .id(history.getId())
-                .status(history.getStatus())
-                .changedByName(history.getChangedBy() != null ? history.getChangedBy().getName() : "System")
-                .changedByEmail(history.getChangedBy() != null ? history.getChangedBy().getEmail() : "system")
-                .timestamp(history.getTimestamp())
-                .build();
-    }
-
     private CommentResponseDTO mapToCommentResponseDTO(Comment comment) {
         return CommentResponseDTO.builder()
                 .id(comment.getId())
@@ -679,37 +590,45 @@ public class TicketServiceImpl implements TicketService {
                 .build();
     }
 
+    // GET /api/tickets/stats/technician/{id} — Calculates dashboard metrics for a technician
+    // resolutionRate = (resolved / total) * 100 | avgHours = sum(resolvedAt-createdAt) / resolved
     @Override
     public TechnicianStatsDTO getTechnicianStats(Long technicianId) {
-        if (technicianId == null) {
-            throw new IllegalArgumentException("Technician ID cannot be null");
+        List<Ticket> tickets = ticketRepository.findAll().stream()
+                .filter(t -> t.getTechnician() != null && t.getTechnician().getId().equals(technicianId))
+                .toList();
+
+        long totalAssigned = tickets.size();
+        long resolvedCount = tickets.stream()
+                .filter(t -> t.getStatus() == TicketStatus.RESOLVED || t.getStatus() == TicketStatus.REJECTED)
+                .count();
+        long inProgressCount = tickets.stream()
+                .filter(t -> t.getStatus() == TicketStatus.IN_PROGRESS)
+                .count();
+        long openCount = tickets.stream()
+                .filter(t -> t.getStatus() == TicketStatus.OPEN)
+                .count();
+
+        double resolutionRate = totalAssigned > 0 ? (resolvedCount * 100.0) / totalAssigned : 0.0;
+
+        // Calculate average resolution time in hours
+        double averageResolutionTimeHours = 0.0;
+        if (resolvedCount > 0) {
+            long totalHours = tickets.stream()
+                    .filter(t -> (t.getStatus() == TicketStatus.RESOLVED || t.getStatus() == TicketStatus.REJECTED) &&
+                            t.getCreatedAt() != null && t.getResolvedAt() != null)
+                    .mapToLong(t -> java.time.Duration.between(t.getCreatedAt(), t.getResolvedAt()).toHours())
+                    .sum();
+            averageResolutionTimeHours = (double) totalHours / resolvedCount;
         }
-        
-        User tech = userRepository.findById(technicianId)
-                .orElseThrow(() -> new RuntimeException("Technician not found with id: " + technicianId));
-        
-        List<Ticket> tickets = ticketRepository.findByTechnician(tech);
-
-        long total = tickets.size();
-        long resolved = tickets.stream().filter(t -> t.getStatus() == TicketStatus.RESOLVED).count();
-        long inProgress = tickets.stream().filter(t -> t.getStatus() == TicketStatus.IN_PROGRESS).count();
-        long open = tickets.stream().filter(t -> t.getStatus() == TicketStatus.OPEN).count();
-
-        double resolutionRate = total > 0 ? (double) resolved / total * 100 : 0.0;
-
-        double avgResolutionTime = tickets.stream()
-                .filter(t -> t.getCreatedAt() != null && t.getResolvedAt() != null)
-                .mapToLong(t -> java.time.Duration.between(t.getCreatedAt(), t.getResolvedAt()).toMinutes())
-                .average()
-                .orElse(0.0) / 60.0;
 
         return TechnicianStatsDTO.builder()
-                .totalAssigned(total)
-                .resolvedCount(resolved)
-                .inProgressCount(inProgress)
-                .openCount(open)
-                .resolutionRate(Math.round(resolutionRate * 10.0) / 10.0)
-                .averageResolutionTimeHours(Math.round(avgResolutionTime * 10.0) / 10.0)
+                .totalAssigned(totalAssigned)
+                .resolvedCount(resolvedCount)
+                .inProgressCount(inProgressCount)
+                .openCount(openCount)
+                .resolutionRate(resolutionRate)
+                .averageResolutionTimeHours(averageResolutionTimeHours)
                 .build();
     }
 }

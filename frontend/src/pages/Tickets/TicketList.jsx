@@ -17,17 +17,26 @@ import { useUser } from '../../context/UserContext';
 const TicketList = () => {
   const navigate = useNavigate();
   const { user } = useUser();
+
+  // ── State ──────────────────────────────────────────────────
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+
+  // Filter state — each change triggers a re-fetch via useEffect
   const [searchTerm, setSearchTerm] = useState('');
   const [category, setCategory] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [dateFilter, setDateFilter] = useState('today');
+
+  // Technicians default to viewing only their assigned queue
   const [showAssignedOnly, setShowAssignedOnly] = useState(user?.role === 'TECHNICIAN');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
+  // ── Date Range Helper ──────────────────────────────────────
+  // Converts the date filter dropdown value into ISO startDate/endDate params
+  // sent to the backend as query parameters
   const getDateRange = useCallback((filter) => {
     const now = new Date();
     let start = new Date();
@@ -61,10 +70,16 @@ const TicketList = () => {
     }
   }, []);
 
+  // ── Role Flags ─────────────────────────────────────────────
+  // Used throughout to conditionally show/hide UI elements
   const isAdmin = user.role === 'ADMIN';
   const isTechnician = user.role === 'TECHNICIAN';
   const isStudent = user.role === 'USER';
 
+  // ── Data Fetching ──────────────────────────────────────────
+  // ADMIN/TECHNICIAN → GET /api/tickets (all tickets, technicianId filter for 'Assigned to Me')
+  // USER/Student    → GET /api/tickets/user/{userId} (own tickets only)
+  // Re-runs whenever any filter state changes
   const fetchTickets = useCallback(async () => {
     try {
       setLoading(true);
@@ -119,6 +134,9 @@ const TicketList = () => {
     "Other"
   ];
 
+  // ── Ticket Creation ────────────────────────────────────────
+  // POST /api/tickets, then upload each attachment via POST /api/tickets/{id}/attachments
+  // After success, navigates to the newly created ticket's detail page
   const handleCreateSubmit = async (formData, attachments) => {
     try {
       setIsSubmitting(true);
@@ -151,7 +169,7 @@ const TicketList = () => {
     }
   };
 
-  // Role-based header config
+  // ── Role-based Page Header ─────────────────────────────────
   const headerConfig = {
     ADMIN:      { title: 'Incident Management',   subtitle: 'Review, assign, and resolve all campus incident reports.' },
     TECHNICIAN: { title: 'My Work Queue',          subtitle: 'Manage and resolve assigned maintenance incidents.' },
@@ -250,6 +268,7 @@ const TicketList = () => {
           </select>
         )}
 
+        {/* Technician toggle: show assigned-to-me vs all public tickets */}
         {isTechnician && (
           <div className="flex p-1 rounded-xl" style={{ backgroundColor: '#11212D', border: '1px solid #253745' }}>
             <button

@@ -67,7 +67,9 @@ const UserManagement = () => {
       await fetchUsers();
       handleCloseModal();
     } catch (err) {
-      setError(err.response?.data || 'An error occurred while saving the user.');
+      const data = err.response?.data;
+      const errorMessage = typeof data === 'string' ? data : (data?.message || data?.error || 'An error occurred while saving the user.');
+      setError(errorMessage);
     } finally {
       setSubmitLoading(false);
     }

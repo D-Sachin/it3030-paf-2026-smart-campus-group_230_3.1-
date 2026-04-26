@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Bell, Search, User, ChevronDown, Clock3, Loader2, CheckCircle2 } from 'lucide-react';
+import { Bell, Search, User, ChevronDown, Clock3, Loader2, CheckCircle2, XCircle, Wrench, MessageSquare, Ticket, CalendarCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
 import ThemeToggle from '../Theme/ThemeToggle';
@@ -384,33 +384,47 @@ const TopBar = () => {
                     </div>
                   ) : (
                     <div className="divide-y" style={{ divideColor: '#253745' }}>
-                      {notifications.map((n) => (
+                      {notifications.map((n) => {
+                        // Determine icon and accent colour per notification type
+                        const typeConfig = {
+                          BOOKING_APPROVED: { Icon: CheckCircle2, color: '#22c55e', bg: 'rgba(34,197,94,0.12)' },
+                          BOOKING_REJECTED: { Icon: XCircle, color: '#ef4444', bg: 'rgba(239,68,68,0.12)' },
+                          BOOKING_CREATED:  { Icon: CalendarCheck, color: '#3b82f6', bg: 'rgba(59,130,246,0.12)' },
+                          TICKET_CREATED:   { Icon: Ticket, color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
+                          TICKET_ASSIGNED:  { Icon: Wrench, color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
+                          TICKET_UPDATED:   { Icon: Wrench, color: '#3b82f6', bg: 'rgba(59,130,246,0.12)' },
+                          TICKET_COMMENTED: { Icon: MessageSquare, color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)' },
+                        }[n.type] || { Icon: Bell, color: '#9BA8AB', bg: 'rgba(155,168,171,0.1)' };
+                        const { Icon, color, bg } = typeConfig;
+                        return (
                         <div 
                           key={n.id} 
                           onClick={() => handleNotificationClick(n)}
                           className="p-4 transition-all hover:bg-[#253745] cursor-pointer group"
+                          style={{ borderBottom: '1px solid #1a2e3a' }}
                         >
-                          <div className="flex gap-4">
-                            <div className="mt-1">
-                              {!n.isRead ? (
-                                <div className="w-2 h-2 rounded-full bg-[#1c4f78]" />
-                              ) : (
-                                <div className="w-2 h-2 rounded-full border border-[#4A5C6A]" />
-                              )}
+                          <div className="flex gap-3">
+                            {/* Type icon */}
+                            <div className="shrink-0 w-8 h-8 rounded-xl flex items-center justify-center mt-0.5" style={{ backgroundColor: bg }}>
+                              <Icon className="w-4 h-4" style={{ color }} />
                             </div>
-                            <div className="flex-1">
-                              <p className={`text-sm ${!n.isRead ? 'font-black' : 'font-medium'}`} style={{ color: '#CCD0CF' }}>{n.title}</p>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <p className={`text-sm ${!n.isRead ? 'font-black' : 'font-medium'} truncate`} style={{ color: '#CCD0CF' }}>{n.title}</p>
+                                {!n.isRead && <span className="shrink-0 w-2 h-2 rounded-full" style={{ backgroundColor: color }} />}
+                              </div>
                               <p className="text-xs mt-1 leading-relaxed" style={{ color: '#9BA8AB' }}>{n.message}</p>
                               <div className="flex items-center gap-2 mt-2">
                                 <Clock3 className="w-3 h-3" style={{ color: '#4A5C6A' }} />
                                 <span className="text-[10px] font-bold" style={{ color: '#4A5C6A' }}>
-                                  {new Date(n.createdAt).toLocaleDateString()}
+                                  {new Date(n.createdAt).toLocaleString()}
                                 </span>
                               </div>
                             </div>
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>

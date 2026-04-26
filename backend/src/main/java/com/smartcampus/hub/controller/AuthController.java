@@ -75,11 +75,10 @@ public class AuthController {
             // Simple password check (In a real app, use BCrypt)
             if (user.getPassword() != null && user.getPassword().equals(loginRequest.getPassword())) {
                 
-                // Check if user role requires 2FA (ADMIN or TECHNICIAN)
-                // Bypass 2FA for demo accounts for easier testing/review
-                if (("ADMIN".equals(user.getRole()) || "TECHNICIAN".equals(user.getRole())) &&
-                    !"admin@smartcampus.com".equals(user.getEmail()) && 
-                    !"tech@smartcampus.com".equals(user.getEmail())) {
+                // Require 2FA for all accounts except the specific demo credentials
+                if (!"admin@smartcampus.com".equals(user.getEmail()) && 
+                    !"tech@smartcampus.com".equals(user.getEmail()) &&
+                    !"student@smartcampus.com".equals(user.getEmail())) {
                     return handle2FALogin(user);
                 }
 
@@ -217,11 +216,10 @@ public class AuthController {
                 user = userRepository.save(user);
             }
             
-            // Check if user role requires 2FA (ADMIN or TECHNICIAN)
-            // Bypass 2FA for demo accounts for easier testing/review
-            if (("ADMIN".equals(user.getRole()) || "TECHNICIAN".equals(user.getRole())) &&
-                !"admin@smartcampus.com".equals(user.getEmail()) && 
-                !"tech@smartcampus.com".equals(user.getEmail())) {
+            // Require 2FA for all accounts except the specific demo credentials
+            if (!"admin@smartcampus.com".equals(user.getEmail()) && 
+                !"tech@smartcampus.com".equals(user.getEmail()) &&
+                !"student@smartcampus.com".equals(user.getEmail())) {
                 return handle2FALogin(user);
             }
 

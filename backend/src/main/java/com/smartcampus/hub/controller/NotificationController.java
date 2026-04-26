@@ -84,6 +84,25 @@ public class NotificationController {
         }
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> deleteNotificationById(
+            @PathVariable(name = "id") Long id,
+            @RequestHeader(value = "X-User-Role", required = false) String userRole,
+            @RequestHeader(value = "X-User-Email", required = false) String userEmail
+    ) {
+        try {
+            String normalizedRole = requireRole(userRole);
+            String normalizedEmail = normalizeEmail(userEmail);
+            notificationService.deleteNotificationById(id, normalizedRole, normalizedEmail);
+            long unreadCount = notificationService.getUnreadCountForRecipient(normalizedRole, normalizedEmail);
+            return ResponseEntity.ok(buildResponse(true, "Notification deleted", null, unreadCount));
+        } catch (IllegalArgumentException ex) {
+            return buildError(ex.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (RuntimeException ex) {
+            return buildError(ex.getMessage(), HttpStatus.NOT_FOUND);
+        }
+    }
+
     private String requireRole(String userRole) {
         if (userRole == null || userRole.trim().isEmpty()) {
             throw new IllegalArgumentException("User role is required");

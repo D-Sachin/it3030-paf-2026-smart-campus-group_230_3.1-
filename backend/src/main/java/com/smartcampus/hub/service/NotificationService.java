@@ -43,7 +43,7 @@ public interface NotificationService {
 
     List<Notification> markAllAsRead(String role, String email);
 
-    /** Generic ticket notification for status updates (legacy) */
+    /** Generic ticket notification for status updates */
     Notification createTicketNotification(User recipient, String title, String message, Long ticketId);
 
     /** Notify all ADMINs that a new ticket has been submitted */
@@ -55,5 +55,11 @@ public interface NotificationService {
     /** Notify ticket owner that a new comment was posted */
     void createCommentNotification(User recipient, Ticket ticket, User commenter);
 
+    /** Notify a user that their role was changed by an admin */
+    void createRoleChangedNotification(User user, String oldRole, String newRole);
+
     void deleteAllNotifications(String role, String email);
+
+    /** Delete a single notification by ID (scoped to the requesting user) */
+    void deleteNotificationById(Long id, String role, String email);
 }

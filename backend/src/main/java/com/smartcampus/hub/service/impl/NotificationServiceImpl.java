@@ -381,4 +381,38 @@ public class NotificationServiceImpl implements NotificationService {
             notificationRepository.deleteAll(notifications);
         }
     }
+
+    @Override
+    @Transactional
+    public void deleteNotificationById(Long id, String role, String email) {
+        String normalizedRole = normalizeRole(role);
+        Notification notification;
+        if (ADMIN_ROLE.equals(normalizedRole)) {
+            notification = notificationRepository.findByIdAndRecipientRole(id, normalizedRole)
+                    .orElseThrow(() -> new RuntimeException("Notification not found: " + id));
+        } else {
+            String normalizedEmail = requireScopedEmail(email);
+            notification = notificationRepository.findByIdAndRecipientRoleAndRecipientEmailIgnoreCase(id, normalizedRole, normalizedEmail)
+                    .orElseThrow(() -> new RuntimeException("Notification not found: " + id));
+        }
+        notificationRepository.delete(notification);
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void createRoleChangedNotification(User user, String oldRole, String newRole) {
+        if (user == null) return;
+        String role = user.getRole() != null ? normalizeRole(user.getRole()) : USER_ROLE;
+        Notification notification = Notification.builder()
+                .title("Your Account Role Was Changed")
+                .message(String.format(
+                        "An administrator updated your role from %s to %s. Your access level has been updated.",
+                        oldRole.toUpperCase(), newRole.toUpperCase()))
+                .type(NotificationType.TICKET_UPDATED)
+                .recipientRole(role)
+                .recipientEmail(normalizeEmail(user.getEmail()))
+                .isRead(false)
+                .build();
+        notificationRepository.save(notification);
+    }
 }

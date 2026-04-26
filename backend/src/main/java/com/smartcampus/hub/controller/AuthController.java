@@ -44,7 +44,7 @@ public class AuthController {
                     .body("Email is already taken.");
         }
 
-        String role = (request.getRole() != null && !request.getRole().isBlank()) ? request.getRole().toUpperCase() : "USER";
+        String role = (request.getRole() != null && !request.getRole().isBlank()) ? request.getRole().toUpperCase() : "STUDENT";
 
         User user = User.builder()
                 .name(request.getName())

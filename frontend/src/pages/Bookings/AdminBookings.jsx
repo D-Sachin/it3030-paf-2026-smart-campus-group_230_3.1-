@@ -29,7 +29,7 @@ const getStatusCardClasses = (statusFilter, targetStatus) => {
 const AdminBookings = () => {
   const { user } = useUser();
   const [bookings, setBookings] = useState([]);
-  const [statusFilter, setStatusFilter] = useState("PENDING");
+  const [statusFilter, setStatusFilter] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("dateDesc");
   const [loading, setLoading] = useState(false);

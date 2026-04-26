@@ -23,6 +23,13 @@ import SettingsPage from "./pages/Admin/SettingsPage";
 import UserManagement from "./pages/Admin/UserManagement";
 import TechnicianPerformance from "./pages/Admin/TechnicianPerformance";
 
+// Smart redirect component for bookings
+const BookingsRedirect = () => {
+  const { user } = useUser();
+  // Admins go to admin central, others go to my bookings
+  return <Navigate to={user?.role === "ADMIN" ? "/bookings/admin" : "/bookings/my"} replace />;
+};
+
 const AppLayout = () => {
   const { isAuthenticated } = useUser();
 
@@ -60,7 +67,7 @@ function App() {
           <Route path="tickets/:id" element={<TicketDetails />} />
 
           {/* Member 2 - Booking Management */}
-          <Route path="bookings" element={<Navigate to="/bookings/my" replace />} />
+          <Route path="bookings" element={<BookingsRedirect />} />
           <Route path="bookings/new" element={<CreateBooking />} />
           <Route path="bookings/my" element={<MyBookings />} />
           <Route

@@ -65,6 +65,14 @@ const ResourceFilterBar = ({ onFilter, onSearch, isLoading }) => {
     onSearch(searchTerm);
   };
 
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+  }, []);
+
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters((prev) => ({
@@ -91,8 +99,8 @@ const ResourceFilterBar = ({ onFilter, onSearch, isLoading }) => {
     if (debounceTimer.current) {
       clearTimeout(debounceTimer.current);
     }
-    onSearch("");
     onFilter(cleared);
+    onSearch("");
   };
 
   const hasActiveFilters =
@@ -133,6 +141,7 @@ const ResourceFilterBar = ({ onFilter, onSearch, isLoading }) => {
 
         <div className="flex gap-2">
           <button
+            type="button"
             onClick={() => setShowAdvanced(!showAdvanced)}
             className="flex items-center gap-2 px-6 py-3.5 rounded-2xl font-bold transition-all border"
             style={{
@@ -152,6 +161,7 @@ const ResourceFilterBar = ({ onFilter, onSearch, isLoading }) => {
 
           {(hasActiveFilters || searchTerm) && (
             <button
+              type="button"
               onClick={handleClearFilters}
               className="flex items-center gap-2 px-4 py-3.5 rounded-2xl font-bold transition-all"
               style={{
@@ -331,6 +341,7 @@ const ResourceFilterBar = ({ onFilter, onSearch, isLoading }) => {
             style={{ borderColor: "#4A5C6A" }}
           >
             <button
+              type="button"
               onClick={handleClearFilters}
               className="px-6 py-2 font-bold transition-colors"
               style={{ color: "#4A5C6A" }}
@@ -340,6 +351,7 @@ const ResourceFilterBar = ({ onFilter, onSearch, isLoading }) => {
               Reset Filters
             </button>
             <button
+              type="button"
               onClick={handleApplyFilters}
               className="premium-button px-8"
               style={{ backgroundColor: "#1c4f78", color: "#CCD0CF" }}

@@ -567,7 +567,6 @@ public class TicketServiceImpl implements TicketService {
                 .createdAt(comment.getCreatedAt())
                 .build();
     }
-
     @Override
     public TechnicianStatsDTO getTechnicianStats(Long technicianId) {
         List<Ticket> tickets = ticketRepository.findAll().stream()
@@ -575,31 +574,39 @@ public class TicketServiceImpl implements TicketService {
                 .toList();
 
         long totalAssigned = tickets.size();
-        // Count only tickets that were actually resolved (resolvedAt is set) and now are RESOLVED or CLOSED
-        // This excludes tickets that went directly to CLOSED without being RESOLVED first
+        
+        // Count Resolved and Closed together as completed/resolved
         long resolvedCount = tickets.stream()
-                .filter(t -> t.getResolvedAt() != null && 
-                           (t.getStatus() == TicketStatus.RESOLVED || t.getStatus() == TicketStatus.CLOSED))
+                .filter(t -> t.getStatus() == TicketStatus.RESOLVED || t.getStatus() == TicketStatus.CLOSED)
                 .count();
+                
         long inProgressCount = tickets.stream()
                 .filter(t -> t.getStatus() == TicketStatus.IN_PROGRESS)
                 .count();
+                
         long openCount = tickets.stream()
                 .filter(t -> t.getStatus() == TicketStatus.OPEN)
+                .count();
+                
+        long rejectedCount = tickets.stream()
+                .filter(t -> t.getStatus() == TicketStatus.REJECTED)
                 .count();
 
         double resolutionRate = totalAssigned > 0 ? (resolvedCount * 100.0) / totalAssigned : 0.0;
 
-        // Calculate average resolution time in hours (only from actually resolved tickets)
+        // Calculate average resolution time in hours (only for tickets that were actually RESOLVED or CLOSED with a timestamp)
         double averageResolutionTimeHours = 0.0;
-        if (resolvedCount > 0) {
-            long totalHours = tickets.stream()
-                    .filter(t -> t.getResolvedAt() != null && 
-                               (t.getStatus() == TicketStatus.RESOLVED || t.getStatus() == TicketStatus.CLOSED) &&
-                               t.getCreatedAt() != null)
+        List<Ticket> resolvedTickets = tickets.stream()
+                .filter(t -> t.getResolvedAt() != null && 
+                           (t.getStatus() == TicketStatus.RESOLVED || t.getStatus() == TicketStatus.CLOSED) &&
+                           t.getCreatedAt() != null)
+                .toList();
+                
+        if (!resolvedTickets.isEmpty()) {
+            long totalHours = resolvedTickets.stream()
                     .mapToLong(t -> java.time.Duration.between(t.getCreatedAt(), t.getResolvedAt()).toHours())
                     .sum();
-            averageResolutionTimeHours = (double) totalHours / resolvedCount;
+            averageResolutionTimeHours = (double) totalHours / resolvedTickets.size();
         }
 
         return TechnicianStatsDTO.builder()
@@ -607,8 +614,10 @@ public class TicketServiceImpl implements TicketService {
                 .resolvedCount(resolvedCount)
                 .inProgressCount(inProgressCount)
                 .openCount(openCount)
+                .rejectedCount(rejectedCount)
                 .resolutionRate(resolutionRate)
                 .averageResolutionTimeHours(averageResolutionTimeHours)
                 .build();
     }
 }
+

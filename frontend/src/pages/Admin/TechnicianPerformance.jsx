@@ -1,8 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, ComposedChart } from 'recharts';
 import { TrendingUp, Users, CheckCircle2, Clock, Zap, Loader2, BarChart3 } from 'lucide-react';
 import { userService } from '../../services/userService';
 import ticketService from '../../services/ticketService';
+
+// Custom label renderer for pie chart
+const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+  const x = cx + radius * Math.cos(-midAngle * Math.PI / 180);
+  const y = cy + radius * Math.sin(-midAngle * Math.PI / 180);
+
+  return (
+    <text 
+      x={x} 
+      y={y} 
+      fill="white" 
+      textAnchor={x > cx ? 'start' : 'end'} 
+      dominantBaseline="central"
+      className="text-xs font-bold"
+    >
+      {`${(percent * 100).toFixed(0)}%`}
+    </text>
+  );
+};
 
 const TechnicianPerformance = () => {
   const [technicians, setTechnicians] = useState([]);
@@ -53,12 +73,13 @@ const TechnicianPerformance = () => {
     { name: 'Resolved', value: stats.resolvedCount, color: '#10b981' },
     { name: 'In Progress', value: stats.inProgressCount, color: '#f59e0b' },
     { name: 'Open', value: stats.openCount, color: '#ef4444' },
+    { name: 'Rejected', value: stats.rejectedCount, color: '#8b5cf6' },
   ] : [];
 
   // Calculate total for percentage
-  const totalTickets = stats ? (stats.resolvedCount + stats.inProgressCount + stats.openCount) : 0;
+  const totalTickets = stats ? (stats.resolvedCount + stats.inProgressCount + stats.openCount + stats.rejectedCount) : 0;
 
-  const COLORS = ['#10b981', '#f59e0b', '#ef4444'];
+  const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
   return (
     <div className="space-y-8 animate-fade-in-up pb-8">
@@ -201,15 +222,15 @@ const TechnicianPerformance = () => {
                     <h3 className="text-sm font-bold uppercase tracking-wider mb-4" style={{ color: '#CCD0CF' }}>
                       Ticket Distribution
                     </h3>
-                    <ResponsiveContainer width="100%" height={250}>
+                    <ResponsiveContainer width="100%" height={300}>
                       <PieChart>
                         <Pie
                           data={ticketDistributionData}
                           cx="50%"
-                          cy="50%"
+                          cy="40%"
                           labelLine={false}
-                          label={({ name, value }) => `${name}: ${value}`}
-                          outerRadius={80}
+                          label={renderCustomLabel}
+                          outerRadius={70}
                           fill="#8884d8"
                           dataKey="value"
                         >
@@ -224,6 +245,13 @@ const TechnicianPerformance = () => {
                             borderRadius: '8px',
                             color: '#CCD0CF'
                           }}
+                          formatter={(value, name, props) => [`${value} tickets`, props.payload.name]}
+                        />
+                        <Legend 
+                          verticalAlign="bottom" 
+                          height={36}
+                          formatter={(value, entry) => `${entry.payload.name}: ${entry.payload.value}`}
+                          wrapperStyle={{ paddingTop: '20px' }}
                         />
                       </PieChart>
                     </ResponsiveContainer>
@@ -256,16 +284,20 @@ const TechnicianPerformance = () => {
                       <div className="pt-4 border-t" style={{ borderColor: '#253745' }}>
                         <div className="space-y-3">
                           <div className="flex justify-between items-center">
-                            <p style={{ color: '#9BA8AB' }}>Open Tickets</p>
-                            <p className="font-bold" style={{ color: '#ef4444' }}>{stats.openCount}</p>
-                          </div>
-                          <div className="flex justify-between items-center">
                             <p style={{ color: '#9BA8AB' }}>Resolved Tickets</p>
                             <p className="font-bold" style={{ color: '#10b981' }}>{stats.resolvedCount}</p>
                           </div>
                           <div className="flex justify-between items-center">
-                            <p style={{ color: '#9BA8AB' }}>Total Assigned</p>
-                            <p className="font-bold" style={{ color: '#CCD0CF' }}>{stats.totalAssigned}</p>
+                            <p style={{ color: '#9BA8AB' }}>In Progress Tickets</p>
+                            <p className="font-bold" style={{ color: '#f59e0b' }}>{stats.inProgressCount}</p>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <p style={{ color: '#9BA8AB' }}>Open Tickets</p>
+                            <p className="font-bold" style={{ color: '#ef4444' }}>{stats.openCount}</p>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <p style={{ color: '#9BA8AB' }}>Rejected Tickets</p>
+                            <p className="font-bold" style={{ color: '#8b5cf6' }}>{stats.rejectedCount}</p>
                           </div>
                         </div>
                       </div>

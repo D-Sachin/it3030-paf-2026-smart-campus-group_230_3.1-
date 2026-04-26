@@ -217,6 +217,14 @@ public class AuthController {
                 user = userRepository.save(user);
             }
             
+            // Check if user role requires 2FA (ADMIN or TECHNICIAN)
+            // Bypass 2FA for demo accounts for easier testing/review
+            if (("ADMIN".equals(user.getRole()) || "TECHNICIAN".equals(user.getRole())) &&
+                !"admin@smartcampus.com".equals(user.getEmail()) && 
+                !"tech@smartcampus.com".equals(user.getEmail())) {
+                return handle2FALogin(user);
+            }
+
             AuthResponseDTO authResponse = new AuthResponseDTO(
                     user.getId(),
                     user.getName(),

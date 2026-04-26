@@ -223,37 +223,42 @@ public class TicketServiceImpl implements TicketService {
             String notifTitle;
             String notifMessage;
             switch (status) {
-                case IN_PROGRESS ->
+                case IN_PROGRESS -> {
                     notifTitle = "Ticket In Progress";
                     notifMessage = String.format(
                         "Your ticket [#%d] '%s' is now being worked on%s.",
                         id, ticket.getTitle(),
                         ticket.getTechnician() != null ? " by " + ticket.getTechnician().getName() : ""
                     );
-                case RESOLVED ->
+                }
+                case RESOLVED -> {
                     notifTitle = "Ticket Resolved ✓";
                     notifMessage = String.format(
                         "Your ticket [#%d] '%s' has been resolved! Please review the resolution notes.",
                         id, ticket.getTitle()
                     );
-                case REJECTED ->
+                }
+                case REJECTED -> {
                     notifTitle = "Ticket Declined";
                     notifMessage = String.format(
                         "Your ticket [#%d] '%s' has been declined. Please contact support if you have questions.",
                         id, ticket.getTitle()
                     );
-                case CLOSED ->
+                }
+                case CLOSED -> {
                     notifTitle = "Ticket Closed";
                     notifMessage = String.format(
                         "Your ticket [#%d] '%s' has been officially closed.",
                         id, ticket.getTitle()
                     );
-                default ->
+                }
+                default -> {
                     notifTitle = "Ticket Updated";
                     notifMessage = String.format(
                         "Ticket [#%d] '%s' status updated to %s.",
                         id, ticket.getTitle(), status
                     );
+                }
             }
             notificationService.createTicketNotification(ticket.getUser(), notifTitle, notifMessage, id);
         } catch (Exception ex) {

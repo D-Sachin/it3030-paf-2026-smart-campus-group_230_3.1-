@@ -46,20 +46,28 @@ const ResourceList = () => {
   const [editingResource, setEditingResource] = useState(null);
 
   const isAdmin = user?.role === "ADMIN";
+  const hasActiveFilters = Object.values(activeFilters).some(
+    (value) => value !== "",
+  );
+  const hasActiveQuery = hasActiveFilters || searchTerm.trim() !== "";
 
-  // Load resources on mount and when pagination changes
+  // Keep listing in sync with pagination, filters, search term, and role.
   useEffect(() => {
     fetchResources();
-  }, [currentPage, pageSize]);
+  }, [currentPage, pageSize, searchTerm, activeFilters, isAdmin]);
 
   const fetchResources = async () => {
     setLoading(true);
     setError("");
     try {
-      const response = await resourceService.getAllResources(
-        currentPage,
-        pageSize,
-      );
+      const response = hasActiveQuery
+        ? await resourceService.advancedSearch(
+            { ...activeFilters, term: searchTerm.trim() },
+            currentPage,
+            pageSize,
+          )
+        : await resourceService.getAllResources(currentPage, pageSize);
+
       let data = response.data.data;
 
       // For non-admin users, filter to show only ACTIVE resources
@@ -78,47 +86,15 @@ const ResourceList = () => {
   };
 
   const handleSearch = async (term) => {
-    setLoading(true);
     setError("");
     setCurrentPage(0);
     setSearchTerm(term);
-    try {
-      // Use advanced search with both term and current filters
-      const response = await resourceService.advancedSearch(
-        { ...activeFilters, term },
-        0,
-        pageSize,
-      );
-      setResources(response.data.data);
-      setTotalPages(response.data.pagination.totalPages);
-    } catch (err) {
-      setError("Search failed. Please try again.");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleFilter = async (filters) => {
-    setLoading(true);
     setError("");
     setCurrentPage(0);
     setActiveFilters(filters);
-    try {
-      // Use advanced search with both filters and current search term
-      const response = await resourceService.advancedSearch(
-        { ...filters, term: searchTerm },
-        0,
-        pageSize,
-      );
-      setResources(response.data.data);
-      setTotalPages(response.data.pagination.totalPages);
-    } catch (err) {
-      setError("Filter failed. Please try again.");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleCreateClick = () => {
@@ -218,10 +194,7 @@ const ResourceList = () => {
 
       {/* Search Bar - Non-Admin Only */}
       {!isAdmin && (
-        <ResourceSearchBar
-          onSearch={handleSearch}
-          isLoading={loading}
-        />
+        <ResourceSearchBar onSearch={handleSearch} isLoading={loading} />
       )}
 
       {/* Messages */}

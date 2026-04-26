@@ -22,6 +22,7 @@ import BookingDetails from "./pages/Bookings/BookingDetails";
 import SettingsPage from "./pages/Admin/SettingsPage";
 import UserManagement from "./pages/Admin/UserManagement";
 import TechnicianPerformance from "./pages/Admin/TechnicianPerformance";
+import NotificationsPage from "./pages/Notifications/NotificationsPage";
 
 const AppLayout = () => {
   const { isAuthenticated } = useUser();
@@ -73,6 +74,7 @@ function App() {
           />
           <Route path="bookings/:id" element={<BookingDetails />} />
           <Route path="help" element={<HelpPage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
           <Route
             path="settings"
             element={

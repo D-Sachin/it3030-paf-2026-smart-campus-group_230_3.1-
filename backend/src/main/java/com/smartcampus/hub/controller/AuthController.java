@@ -54,13 +54,13 @@ public class AuthController {
 
         user = userRepository.save(user);
 
-        AuthResponseDTO response = AuthResponseDTO.builder()
-                .id(user.getId())
-                .name(user.getName())
-                .email(user.getEmail())
-                .role(user.getRole())
-                .token("mock-jwt-token-" + UUID.randomUUID().toString())
-                .build();
+        AuthResponseDTO response = new AuthResponseDTO(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getRole(),
+                "mock-jwt-token-" + UUID.randomUUID().toString()
+        );
 
         return ResponseEntity.ok(response);
     }
@@ -84,13 +84,13 @@ public class AuthController {
                 }
 
                 // For non-2FA roles (e.g., USER/STUDENT), return full auth response directly
-                AuthResponseDTO response = AuthResponseDTO.builder()
-                        .id(user.getId())
-                        .name(user.getName())
-                        .email(user.getEmail())
-                        .role(user.getRole())
-                        .token("mock-jwt-token-" + UUID.randomUUID().toString()) // Demo token
-                        .build();
+                AuthResponseDTO response = new AuthResponseDTO(
+                        user.getId(),
+                        user.getName(),
+                        user.getEmail(),
+                        user.getRole(),
+                        "mock-jwt-token-" + UUID.randomUUID().toString()
+                );
                 
                 return ResponseEntity.ok(response);
             }
@@ -117,21 +117,18 @@ public class AuthController {
 
             String qrCodeUrl = twoFactorService.getQrCodeUrl(secret, user.getEmail());
 
-            AuthResponseDTO response = AuthResponseDTO.builder()
-                    .twoFactorRequired(true)
-                    .twoFactorSetup(true)
-                    .qrCodeUrl(qrCodeUrl)
-                    .tempToken(tempToken)
-                    .build();
+            AuthResponseDTO response = new AuthResponseDTO(
+                    null, null, null, null, null,
+                    true, true, qrCodeUrl, tempToken
+            );
 
             return ResponseEntity.ok(response);
         } else {
             // Returning user: already has 2FA set up
-            AuthResponseDTO response = AuthResponseDTO.builder()
-                    .twoFactorRequired(true)
-                    .twoFactorSetup(false)
-                    .tempToken(tempToken)
-                    .build();
+            AuthResponseDTO response = new AuthResponseDTO(
+                    null, null, null, null, null,
+                    true, false, null, tempToken
+            );
 
             return ResponseEntity.ok(response);
         }
@@ -177,13 +174,13 @@ public class AuthController {
         // Clean up temp token and return full auth response
         twoFactorService.removeTempToken(request.getTempToken());
 
-        AuthResponseDTO response = AuthResponseDTO.builder()
-                .id(user.getId())
-                .name(user.getName())
-                .email(user.getEmail())
-                .role(user.getRole())
-                .token("mock-jwt-token-" + UUID.randomUUID().toString())
-                .build();
+        AuthResponseDTO response = new AuthResponseDTO(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getRole(),
+                "mock-jwt-token-" + UUID.randomUUID().toString()
+        );
 
         return ResponseEntity.ok(response);
     }
@@ -220,13 +217,13 @@ public class AuthController {
                 user = userRepository.save(user);
             }
             
-            AuthResponseDTO authResponse = AuthResponseDTO.builder()
-                    .id(user.getId())
-                    .name(user.getName())
-                    .email(user.getEmail())
-                    .role(user.getRole())
-                    .token("mock-jwt-token-" + UUID.randomUUID().toString()) // Demo token
-                    .build();
+            AuthResponseDTO authResponse = new AuthResponseDTO(
+                    user.getId(),
+                    user.getName(),
+                    user.getEmail(),
+                    user.getRole(),
+                    "mock-jwt-token-" + UUID.randomUUID().toString()
+            );
                     
             return ResponseEntity.ok(authResponse);
             

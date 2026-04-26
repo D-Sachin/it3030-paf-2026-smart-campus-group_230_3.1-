@@ -64,9 +64,7 @@ const ticketService = {
 
   // PUT update resolution notes
   updateResolutionNotes: (id, notes) => {
-    return apiClient.put(`${TICKETS_PATH}/${id}/resolution`, notes, {
-      headers: { "Content-Type": "text/plain" },
-    });
+    return apiClient.put(`${TICKETS_PATH}/${id}/resolution`, { notes });
   },
 
   // POST attach a single file to a ticket

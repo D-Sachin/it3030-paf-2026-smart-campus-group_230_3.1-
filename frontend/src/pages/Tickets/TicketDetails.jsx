@@ -117,8 +117,6 @@ const TicketDetails = () => {
           await ticketService.updateResolutionNotes(id, notes);
         } catch (err) {
           console.error('Error updating resolution notes:', err);
-          // If the backend specifically blocks us, we might still want to proceed with status update if the notes were the only issue
-          // but usually it's better to fail fast.
           throw err; 
         }
       } else {
@@ -129,7 +127,8 @@ const TicketDetails = () => {
       await fetchTicketDetails();
     } catch (err) {
       console.error('Error updating status:', err);
-      alert('Failed to update ticket status. Ensure you have the correct permissions.');
+      const errorMessage = err.response?.data?.message || 'Failed to update ticket status. Ensure you have the correct permissions.';
+      alert(errorMessage);
     } finally {
       setStatusUpdateLoading(false);
     }

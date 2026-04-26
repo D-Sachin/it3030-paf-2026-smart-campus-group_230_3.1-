@@ -155,7 +155,7 @@ public class NotificationServiceImpl implements NotificationService {
         if (ADMIN_ROLE.equals(normalizedRole)) {
             return notificationRepository.findByRecipientRoleOrderByCreatedAtDesc(normalizedRole);
         }
-
+        // For USER and TECHNICIAN — fetch by role + email for precise scoping
         String normalizedEmail = requireScopedEmail(email);
         return notificationRepository.findByRecipientRoleAndRecipientEmailIgnoreCaseOrderByCreatedAtDesc(normalizedRole, normalizedEmail);
     }
@@ -167,7 +167,7 @@ public class NotificationServiceImpl implements NotificationService {
         if (ADMIN_ROLE.equals(normalizedRole)) {
             return notificationRepository.countByRecipientRoleAndIsReadFalse(normalizedRole);
         }
-
+        // Technician and User: scope by role + email
         String normalizedEmail = requireScopedEmail(email);
         return notificationRepository.countByRecipientRoleAndRecipientEmailIgnoreCaseAndIsReadFalse(normalizedRole, normalizedEmail);
     }

@@ -20,4 +20,9 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     Optional<Notification> findByIdAndRecipientRole(Long id, String recipientRole);
 
     Optional<Notification> findByIdAndRecipientRoleAndRecipientEmailIgnoreCase(Long id, String recipientRole, String recipientEmail);
+
+    // For student (USER role) server-side notification lookup by email only
+    List<Notification> findByRecipientEmailIgnoreCaseOrderByCreatedAtDesc(String recipientEmail);
+
+    long countByRecipientEmailIgnoreCaseAndIsReadFalse(String recipientEmail);
 }

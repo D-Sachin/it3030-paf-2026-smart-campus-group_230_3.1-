@@ -4,6 +4,7 @@ import com.smartcampus.hub.dto.AssignTechnicianDTO;
 import com.smartcampus.hub.dto.AttachmentResponseDTO;
 import com.smartcampus.hub.dto.CommentRequestDTO;
 import com.smartcampus.hub.dto.CommentResponseDTO;
+import com.smartcampus.hub.dto.ResolutionNotesDTO;
 import com.smartcampus.hub.dto.StatusUpdateDTO;
 import com.smartcampus.hub.dto.TicketRequestDTO;
 import com.smartcampus.hub.dto.TicketResponseDTO;
@@ -108,10 +109,10 @@ public class TicketController {
         return ResponseEntity.ok(updatedTicket);
     }
 
-    // PUT /api/tickets/{id}/resolution — Add/update resolution notes (plain text body)
+    // PUT /api/tickets/{id}/resolution — Add/update resolution notes
     @PutMapping("/{id}/resolution")
-    public ResponseEntity<TicketResponseDTO> updateResolutionNotes(@PathVariable Long id, @RequestBody String notes) {
-        return ResponseEntity.ok(ticketService.updateResolutionNotes(id, notes));
+    public ResponseEntity<TicketResponseDTO> updateResolutionNotes(@PathVariable Long id, @Valid @RequestBody ResolutionNotesDTO dto) {
+        return ResponseEntity.ok(ticketService.updateResolutionNotes(id, dto.getNotes()));
     }
 
     // ── Attachments ──────────────────────────────────────────────

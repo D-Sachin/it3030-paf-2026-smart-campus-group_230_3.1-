@@ -43,6 +43,4 @@ public class TicketResponseDTO {
     private LocalDateTime resolvedAt;
     private String timeToFirstResponse;
     private String timeToResolution;
-
-    private List<StatusHistoryDTO> statusHistory;
 }

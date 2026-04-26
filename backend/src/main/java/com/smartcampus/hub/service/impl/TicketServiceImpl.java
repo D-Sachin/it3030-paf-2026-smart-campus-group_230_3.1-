@@ -40,7 +40,6 @@ public class TicketServiceImpl implements TicketService {
     private final CommentRepository commentRepository;
     private final NotificationService notificationService;
 
-    // POST /api/tickets — Create ticket; defaults status to OPEN, links to authenticated user
     @Override
     @Transactional
     public TicketResponseDTO createTicket(TicketRequestDTO dto) {
@@ -79,7 +78,6 @@ public class TicketServiceImpl implements TicketService {
         return mapToResponseDTO(savedTicket);
     }
 
-    // PUT /api/tickets/{id} — Edit fields; only owner can edit, only OPEN tickets allowed
     @Override
     @Transactional
     public TicketResponseDTO updateTicket(Long id, TicketRequestDTO dto) {
@@ -120,7 +118,6 @@ public class TicketServiceImpl implements TicketService {
         return mapToResponseDTO(ticketRepository.save(ticket));
     }
 
-    // GET /api/tickets — Returns all tickets sorted by createdAt DESC; supports dynamic filtering
     @Override
     @Transactional(readOnly = true)
     public List<TicketResponseDTO> getAllTickets(TicketStatus status, Priority priority, String category, String searchTerm, Long technicianId, LocalDateTime startDate, LocalDateTime endDate) {
@@ -139,7 +136,6 @@ public class TicketServiceImpl implements TicketService {
         return mapToResponseDTO(ticket);
     }
 
-    // GET /api/tickets/user/{userId} — Scoped to one student's tickets; same filters apply
     @Override
     @Transactional(readOnly = true)
     public List<TicketResponseDTO> getTicketsByUserId(Long userId, TicketStatus status, Priority priority, String category, String searchTerm, LocalDateTime startDate, LocalDateTime endDate) {
@@ -150,8 +146,6 @@ public class TicketServiceImpl implements TicketService {
                 .collect(Collectors.toList());
     }
 
-    // PUT /api/tickets/{id}/status — Status transition; ADMIN or assigned TECHNICIAN only
-    // Sets resolvedAt on RESOLVED/REJECTED; clears it on re-open; fires notification to submitter
     @Override
     @Transactional
     public TicketResponseDTO updateTicketStatus(Long id, TicketStatus status) {
@@ -170,9 +164,19 @@ public class TicketServiceImpl implements TicketService {
         User currentUser = userRepository.findByEmail(currentEmail)
                 .orElseThrow(() -> new RuntimeException("User not found: " + currentEmail));
 
-        // Authorization check
         String role = currentUser.getRole();
         boolean isAdmin = "ADMIN".equalsIgnoreCase(role);
+
+        // Prevent status changes on resolved or rejected tickets (except ADMIN closing them)
+        if ((ticket.getStatus() == TicketStatus.RESOLVED || ticket.getStatus() == TicketStatus.REJECTED)) {
+            // Allow ADMIN to close resolved/rejected tickets
+            if (!(isAdmin && status == TicketStatus.CLOSED)) {
+                throw new IllegalArgumentException("Cannot change status of a resolved or rejected ticket. Ticket is already " + ticket.getStatus() + 
+                    (isAdmin ? ". Only ADMIN can close this ticket." : "."));
+            }
+        }
+
+        // Authorization check
         boolean isTechnician = "TECHNICIAN".equalsIgnoreCase(role);
         boolean isAssignedTech = ticket.getTechnician() != null && ticket.getTechnician().getId().equals(currentUser.getId());
         boolean isUnassigned = ticket.getTechnician() == null;
@@ -218,8 +222,6 @@ public class TicketServiceImpl implements TicketService {
         return mapToResponseDTO(updatedTicket);
     }
 
-    // PUT /api/tickets/{id}/assign — ADMIN assigns any tech; TECHNICIAN can only self-assign
-    // Auto-sets assignedAt and transitions OPEN → IN_PROGRESS
     @Override
     @Transactional
     public TicketResponseDTO assignTechnician(Long id, Long technicianId) {
@@ -264,9 +266,6 @@ public class TicketServiceImpl implements TicketService {
         Ticket savedTicket = ticketRepository.save(ticket);
         return mapToResponseDTO(savedTicket);
     }
-
-    // POST /api/tickets/{id}/attachments — Upload file; max 3 per ticket; stored at app.upload.dir
-    // Filename gets timestamp prefix to avoid conflicts; public URL: /api/files/uploads/{fileName}
 
     @Value("${app.upload.dir}")
     private String uploadDir;
@@ -318,7 +317,6 @@ public class TicketServiceImpl implements TicketService {
         }
     }
 
-    // DELETE /api/tickets/{ticketId}/attachments/{attachmentId} — Deletes file from disk and DB
     @Override
     @Transactional
     public void deleteAttachment(Long attachmentId) {
@@ -337,7 +335,6 @@ public class TicketServiceImpl implements TicketService {
         attachmentRepository.delete(attachment);
     }
 
-    // POST /api/tickets/{id}/comments — Add comment; resolves user from SecurityContext or dto.userId
     @Override
     @Transactional
     public List<CommentResponseDTO> addComment(Long ticketId, CommentRequestDTO dto) {
@@ -387,7 +384,6 @@ public class TicketServiceImpl implements TicketService {
                 .collect(Collectors.toList());
     }
 
-    // PUT /api/comments/{commentId} — Edit comment content (author only)
     @Override
     @Transactional
     public void updateComment(Long commentId, CommentRequestDTO dto) {
@@ -414,7 +410,6 @@ public class TicketServiceImpl implements TicketService {
         commentRepository.save(comment);
     }
 
-    // DELETE /api/comments/{commentId} — Delete comment (author or ADMIN)
     @Override
     @Transactional
     public void deleteComment(Long commentId) {
@@ -443,9 +438,6 @@ public class TicketServiceImpl implements TicketService {
         commentRepository.delete(comment);
     }
 
-    // PUT /api/tickets/{id}/resolution — Add/overwrite resolution notes
-    // Auth: ADMIN always allowed; TECHNICIAN if assigned or ticket unassigned
-    // Overwrite protection: only ADMIN or original author can overwrite existing notes
     @Override
     @Transactional
     public TicketResponseDTO updateResolutionNotes(Long id, String notes) {
@@ -464,27 +456,17 @@ public class TicketServiceImpl implements TicketService {
                 .orElseThrow(() -> new RuntimeException("User not found: " + currentEmail));
 
         boolean isAdmin = "ADMIN".equalsIgnoreCase(currentUser.getRole());
-        boolean isTechnician = "TECHNICIAN".equalsIgnoreCase(currentUser.getRole());
         boolean isAssignedTech = ticket.getTechnician() != null && ticket.getTechnician().getId().equals(currentUser.getId());
-        boolean isUnassigned = ticket.getTechnician() == null;
 
-        // Allow Admin, Assigned Tech, or any Technician for an unassigned ticket
-        boolean canAddNotes = isAdmin || isAssignedTech || (isTechnician && isUnassigned);
-
-        if (!canAddNotes) {
+        if (!isAdmin && !isAssignedTech) {
             throw new RuntimeException("Only Admins or the assigned Technician can add resolution notes.");
         }
 
-        // Check if resolution notes already exist and if the current user is authorized to update them
+        // Check if resolution notes already exist
         if (ticket.getResolutionNotes() != null && !ticket.getResolutionNotes().isBlank()) {
-            boolean isOriginalAuthor = ticket.getResolutionNotesAddedBy() != null && 
-                                       ticket.getResolutionNotesAddedBy().getId().equals(currentUser.getId());
-            
-            if (!isAdmin && !isOriginalAuthor) {
-                throw new RuntimeException("Resolution notes have already been added by " + 
-                        (ticket.getResolutionNotesAddedBy() != null ? ticket.getResolutionNotesAddedBy().getEmail() : "another user") + 
-                        ". Only Admins or the original author can overwrite resolution notes.");
-            }
+            throw new RuntimeException("Resolution notes have already been added by " + 
+                    (ticket.getResolutionNotesAddedBy() != null ? ticket.getResolutionNotesAddedBy().getEmail() : "another user") + 
+                    ". Resolution notes cannot be overwritten.");
         }
 
         ticket.setResolutionNotes(notes);
@@ -494,8 +476,6 @@ public class TicketServiceImpl implements TicketService {
         return mapToResponseDTO(updatedTicket);
     }
 
-    // Dynamic filter builder — each param is optional; all applied as AND predicates
-    // Supports: userId, technicianId, status, priority, category, date range, searchTerm (ILIKE)
     private Specification<Ticket> getTicketSpecification(Long userId, Long technicianId, TicketStatus status, Priority priority, String category, String searchTerm, LocalDateTime startDate, LocalDateTime endDate) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -531,8 +511,6 @@ public class TicketServiceImpl implements TicketService {
         };
     }
 
-    // Maps Ticket entity → TicketResponseDTO
-    // Includes: core fields, user/tech names, attachments, comments, resolution data, SLA timestamps
     private TicketResponseDTO mapToResponseDTO(Ticket ticket) {
         return TicketResponseDTO.builder()
                 .id(ticket.getId())
@@ -590,8 +568,6 @@ public class TicketServiceImpl implements TicketService {
                 .build();
     }
 
-    // GET /api/tickets/stats/technician/{id} — Calculates dashboard metrics for a technician
-    // resolutionRate = (resolved / total) * 100 | avgHours = sum(resolvedAt-createdAt) / resolved
     @Override
     public TechnicianStatsDTO getTechnicianStats(Long technicianId) {
         List<Ticket> tickets = ticketRepository.findAll().stream()
@@ -599,8 +575,11 @@ public class TicketServiceImpl implements TicketService {
                 .toList();
 
         long totalAssigned = tickets.size();
+        // Count only tickets that were actually resolved (resolvedAt is set) and now are RESOLVED or CLOSED
+        // This excludes tickets that went directly to CLOSED without being RESOLVED first
         long resolvedCount = tickets.stream()
-                .filter(t -> t.getStatus() == TicketStatus.RESOLVED || t.getStatus() == TicketStatus.REJECTED)
+                .filter(t -> t.getResolvedAt() != null && 
+                           (t.getStatus() == TicketStatus.RESOLVED || t.getStatus() == TicketStatus.CLOSED))
                 .count();
         long inProgressCount = tickets.stream()
                 .filter(t -> t.getStatus() == TicketStatus.IN_PROGRESS)
@@ -611,12 +590,13 @@ public class TicketServiceImpl implements TicketService {
 
         double resolutionRate = totalAssigned > 0 ? (resolvedCount * 100.0) / totalAssigned : 0.0;
 
-        // Calculate average resolution time in hours
+        // Calculate average resolution time in hours (only from actually resolved tickets)
         double averageResolutionTimeHours = 0.0;
         if (resolvedCount > 0) {
             long totalHours = tickets.stream()
-                    .filter(t -> (t.getStatus() == TicketStatus.RESOLVED || t.getStatus() == TicketStatus.REJECTED) &&
-                            t.getCreatedAt() != null && t.getResolvedAt() != null)
+                    .filter(t -> t.getResolvedAt() != null && 
+                               (t.getStatus() == TicketStatus.RESOLVED || t.getStatus() == TicketStatus.CLOSED) &&
+                               t.getCreatedAt() != null)
                     .mapToLong(t -> java.time.Duration.between(t.getCreatedAt(), t.getResolvedAt()).toHours())
                     .sum();
             averageResolutionTimeHours = (double) totalHours / resolvedCount;

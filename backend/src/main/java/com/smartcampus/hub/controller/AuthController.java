@@ -4,6 +4,7 @@ import com.smartcampus.hub.dto.AuthResponseDTO;
 import com.smartcampus.hub.dto.LoginRequestDTO;
 import com.smartcampus.hub.dto.GoogleLoginRequest;
 import com.smartcampus.hub.dto.TwoFactorVerifyDTO;
+import com.smartcampus.hub.dto.RegisterRequestDTO;
 import com.smartcampus.hub.model.User;
 import com.smartcampus.hub.repository.UserRepository;
 import com.smartcampus.hub.service.TwoFactorService;
@@ -33,6 +34,36 @@ public class AuthController {
     private final UserRepository userRepository;
     private final TwoFactorService twoFactorService;
     private final RestTemplate restTemplate = new RestTemplate();
+
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequestDTO request) {
+        Optional<User> existingUser = userRepository.findByEmail(request.getEmail());
+        if (existingUser.isPresent()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Email is already taken.");
+        }
+
+        String role = (request.getRole() != null && !request.getRole().isBlank()) ? request.getRole().toUpperCase() : "USER";
+
+        User user = User.builder()
+                .name(request.getName())
+                .email(request.getEmail())
+                .password(request.getPassword())
+                .role(role)
+                .build();
+
+        user = userRepository.save(user);
+
+        AuthResponseDTO response = AuthResponseDTO.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .token("mock-jwt-token-" + UUID.randomUUID().toString())
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDTO loginRequest) {
@@ -184,7 +215,7 @@ public class AuthController {
                 user = User.builder()
                         .name(name != null ? name : "Google User")
                         .email(email)
-                        .role("STUDENT") // default role
+                        .role("USER") // default role
                         .build();
                 user = userRepository.save(user);
             }

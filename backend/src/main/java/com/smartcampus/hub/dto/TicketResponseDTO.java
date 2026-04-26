@@ -28,12 +28,16 @@ public class TicketResponseDTO {
     private LocalDateTime updatedAt;
     private String userName;
     private String technicianName;
+    private Long technicianId;
     private List<AttachmentResponseDTO> attachments;
     private List<CommentResponseDTO> comments;
 
     private String resourceLocation;
     private String preferredContactDetails;
     private String resolutionNotes;
+    private String resolutionNotesAddedByName;
+    private Long resolutionNotesAddedById;
+    private LocalDateTime resolutionNotesAddedAt;
 
     private LocalDateTime assignedAt;
     private LocalDateTime resolvedAt;

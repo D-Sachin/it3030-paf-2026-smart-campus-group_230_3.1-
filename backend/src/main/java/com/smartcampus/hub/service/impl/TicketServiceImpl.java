@@ -11,6 +11,7 @@ import com.smartcampus.hub.repository.AttachmentRepository;
 import com.smartcampus.hub.repository.CommentRepository;
 import com.smartcampus.hub.repository.TicketRepository;
 import com.smartcampus.hub.repository.UserRepository;
+import com.smartcampus.hub.service.NotificationService;
 import com.smartcampus.hub.service.TicketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,6 +38,7 @@ public class TicketServiceImpl implements TicketService {
     private final TicketRepository ticketRepository;
     private final UserRepository userRepository;
     private final CommentRepository commentRepository;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional
@@ -147,58 +149,77 @@ public class TicketServiceImpl implements TicketService {
     @Override
     @Transactional
     public TicketResponseDTO updateTicketStatus(Long id, TicketStatus status) {
-        try {
-            Ticket ticket = ticketRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + id));
+        Ticket ticket = ticketRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + id));
 
-            // Get current logged-in user
-            final String currentEmail;
-            Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-            if (principal instanceof UserDetails) {
-                currentEmail = ((UserDetails) principal).getUsername();
-            } else {
-                currentEmail = principal.toString();
-            }
-
-            User currentUser = userRepository.findByEmail(currentEmail)
-                    .orElseThrow(() -> new RuntimeException("User not found: " + currentEmail));
-
-            // Authorization check: Admin OR Assigned Technician
-            boolean isAdmin = "ADMIN".equalsIgnoreCase(currentUser.getRole());
-            boolean isAssignedTech = ticket.getTechnician() != null && ticket.getTechnician().getId().equals(currentUser.getId());
-
-            if (!isAdmin && !isAssignedTech) {
-                throw new RuntimeException("Only Admins or the assigned Technician can update ticket status.");
-            }
-
-            // Basic transition validation: only block NON-admins from re-opening terminal tickets
-            if (!isAdmin && (ticket.getStatus() == TicketStatus.CLOSED || ticket.getStatus() == TicketStatus.REJECTED)) {
-                throw new RuntimeException("Cannot change status of a " + ticket.getStatus() + " ticket.");
-            }
-
-            ticket.setStatus(status);
-
-            // SLA logic: Set resolvedAt when transitioning to terminal states
-            if (status == TicketStatus.RESOLVED || status == TicketStatus.REJECTED) {
-                ticket.setResolvedAt(LocalDateTime.now());
-            } else if (status == TicketStatus.OPEN || status == TicketStatus.IN_PROGRESS) {
-                // If reopened, clear resolved timestamp? (Standard practice for resolution SLA)
-                ticket.setResolvedAt(null);
-            }
-
-            Ticket updatedTicket = ticketRepository.save(ticket);
-            return mapToResponseDTO(updatedTicket);
-        } catch (Exception e) {
-            try {
-                java.nio.file.Files.writeString(
-                    java.nio.file.Paths.get("debug_status_error.log"), 
-                    "Error updating status for ticket " + id + ": " + e.getMessage() + "\n", 
-                    java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND
-                );
-                e.printStackTrace(new java.io.PrintStream(new java.io.FileOutputStream("debug_status_error.log", true)));
-            } catch (Exception ex) {}
-            throw e;
+        // Get current logged-in user
+        final String currentEmail;
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof UserDetails) {
+            currentEmail = ((UserDetails) principal).getUsername();
+        } else {
+            currentEmail = principal.toString();
         }
+
+        User currentUser = userRepository.findByEmail(currentEmail)
+                .orElseThrow(() -> new RuntimeException("User not found: " + currentEmail));
+
+        String role = currentUser.getRole();
+        boolean isAdmin = "ADMIN".equalsIgnoreCase(role);
+
+        // Prevent status changes on resolved or rejected tickets (except ADMIN closing them)
+        if ((ticket.getStatus() == TicketStatus.RESOLVED || ticket.getStatus() == TicketStatus.REJECTED)) {
+            // Allow ADMIN to close resolved/rejected tickets
+            if (!(isAdmin && status == TicketStatus.CLOSED)) {
+                throw new IllegalArgumentException("Cannot change status of a resolved or rejected ticket. Ticket is already " + ticket.getStatus() + 
+                    (isAdmin ? ". Only ADMIN can close this ticket." : "."));
+            }
+        }
+
+        // Authorization check
+        boolean isTechnician = "TECHNICIAN".equalsIgnoreCase(role);
+        boolean isAssignedTech = ticket.getTechnician() != null && ticket.getTechnician().getId().equals(currentUser.getId());
+        boolean isUnassigned = ticket.getTechnician() == null;
+
+        // Ensure we still keep the variable so the self-assign logic below works
+        boolean isTechnicianCanSelfAssign = isTechnician && isUnassigned && (status == TicketStatus.IN_PROGRESS || status == TicketStatus.RESOLVED);
+
+        // Allow any technician to update status (assigned to them, or unassigned ticket they pick up).
+        // The frontend UI already limits which action buttons are visible to the correct users.
+        boolean canUpdate = isAdmin || isAssignedTech || (isTechnician && isUnassigned);
+
+        if (!canUpdate) {
+            throw new RuntimeException("Only Admins or the assigned Technician can update ticket status.");
+        }
+
+        // IF technician is self-assigning
+        if (isTechnicianCanSelfAssign) {
+            ticket.setTechnician(currentUser);
+            if (ticket.getAssignedAt() == null) {
+                ticket.setAssignedAt(LocalDateTime.now());
+            }
+        }
+
+        ticket.setStatus(status);
+
+        // SLA logic: Set resolvedAt when transitioning to terminal states
+        if (status == TicketStatus.RESOLVED || status == TicketStatus.REJECTED) {
+            ticket.setResolvedAt(LocalDateTime.now());
+        } else if (status == TicketStatus.OPEN || status == TicketStatus.IN_PROGRESS) {
+            ticket.setResolvedAt(null);
+        }
+
+        Ticket updatedTicket = ticketRepository.save(ticket);
+
+        // Notify user about status change
+        notificationService.createTicketNotification(
+            ticket.getUser(),
+            "Ticket Updated",
+            "Ticket status updated to " + status + " for ticket #" + id,
+            id
+        );
+
+        return mapToResponseDTO(updatedTicket);
     }
 
     @Override
@@ -219,8 +240,12 @@ public class TicketServiceImpl implements TicketService {
         User currentUser = userRepository.findByEmail(currentEmail)
                 .orElseThrow(() -> new RuntimeException("Logged in user not found: " + currentEmail));
 
-        if (!"ADMIN".equalsIgnoreCase(currentUser.getRole())) {
-            throw new RuntimeException("Only Admins can assign technicians.");
+        // Authorization check: Admin OR Technician self-assigning
+        boolean isAdmin = "ADMIN".equalsIgnoreCase(currentUser.getRole());
+        boolean isSelfAssign = "TECHNICIAN".equalsIgnoreCase(currentUser.getRole()) && technicianId.equals(currentUser.getId());
+
+        if (!isAdmin && !isSelfAssign) {
+            throw new RuntimeException("Only Admins can assign technicians, or Technicians can self-assign.");
         }
 
         User technician = userRepository.findById(technicianId)
@@ -437,7 +462,16 @@ public class TicketServiceImpl implements TicketService {
             throw new RuntimeException("Only Admins or the assigned Technician can add resolution notes.");
         }
 
+        // Check if resolution notes already exist
+        if (ticket.getResolutionNotes() != null && !ticket.getResolutionNotes().isBlank()) {
+            throw new RuntimeException("Resolution notes have already been added by " + 
+                    (ticket.getResolutionNotesAddedBy() != null ? ticket.getResolutionNotesAddedBy().getEmail() : "another user") + 
+                    ". Resolution notes cannot be overwritten.");
+        }
+
         ticket.setResolutionNotes(notes);
+        ticket.setResolutionNotesAddedBy(currentUser);
+        ticket.setResolutionNotesAddedAt(LocalDateTime.now());
         Ticket updatedTicket = ticketRepository.save(ticket);
         return mapToResponseDTO(updatedTicket);
     }
@@ -490,6 +524,7 @@ public class TicketServiceImpl implements TicketService {
                 .updatedAt(ticket.getUpdatedAt())
                 .userName(ticket.getUser() != null ? ticket.getUser().getName() : "Unknown")
                 .technicianName(ticket.getTechnician() != null ? ticket.getTechnician().getName() : "Unassigned")
+                .technicianId(ticket.getTechnician() != null ? ticket.getTechnician().getId() : null)
                 .attachments(ticket.getAttachments() != null ? ticket.getAttachments().stream()
                         .map(att -> AttachmentResponseDTO.builder()
                                 .id(att.getId())
@@ -503,6 +538,9 @@ public class TicketServiceImpl implements TicketService {
                 .preferredContactDetails(ticket.getPreferredContactDetails())
                 .resourceLocation(ticket.getResourceLocation())
                 .resolutionNotes(ticket.getResolutionNotes())
+                .resolutionNotesAddedByName(ticket.getResolutionNotesAddedBy() != null ? ticket.getResolutionNotesAddedBy().getName() : null)
+                .resolutionNotesAddedById(ticket.getResolutionNotesAddedBy() != null ? ticket.getResolutionNotesAddedBy().getId() : null)
+                .resolutionNotesAddedAt(ticket.getResolutionNotesAddedAt())
                 .assignedAt(ticket.getAssignedAt())
                 .resolvedAt(ticket.getResolvedAt())
                 .timeToFirstResponse(calculateDuration(ticket.getCreatedAt(), ticket.getAssignedAt()))
@@ -529,4 +567,57 @@ public class TicketServiceImpl implements TicketService {
                 .createdAt(comment.getCreatedAt())
                 .build();
     }
+    @Override
+    public TechnicianStatsDTO getTechnicianStats(Long technicianId) {
+        List<Ticket> tickets = ticketRepository.findAll().stream()
+                .filter(t -> t.getTechnician() != null && t.getTechnician().getId().equals(technicianId))
+                .toList();
+
+        long totalAssigned = tickets.size();
+        
+        // Count Resolved and Closed together as completed/resolved
+        long resolvedCount = tickets.stream()
+                .filter(t -> t.getStatus() == TicketStatus.RESOLVED || t.getStatus() == TicketStatus.CLOSED)
+                .count();
+                
+        long inProgressCount = tickets.stream()
+                .filter(t -> t.getStatus() == TicketStatus.IN_PROGRESS)
+                .count();
+                
+        long openCount = tickets.stream()
+                .filter(t -> t.getStatus() == TicketStatus.OPEN)
+                .count();
+                
+        long rejectedCount = tickets.stream()
+                .filter(t -> t.getStatus() == TicketStatus.REJECTED)
+                .count();
+
+        double resolutionRate = totalAssigned > 0 ? (resolvedCount * 100.0) / totalAssigned : 0.0;
+
+        // Calculate average resolution time in hours (only for tickets that were actually RESOLVED or CLOSED with a timestamp)
+        double averageResolutionTimeHours = 0.0;
+        List<Ticket> resolvedTickets = tickets.stream()
+                .filter(t -> t.getResolvedAt() != null && 
+                           (t.getStatus() == TicketStatus.RESOLVED || t.getStatus() == TicketStatus.CLOSED) &&
+                           t.getCreatedAt() != null)
+                .toList();
+                
+        if (!resolvedTickets.isEmpty()) {
+            long totalHours = resolvedTickets.stream()
+                    .mapToLong(t -> java.time.Duration.between(t.getCreatedAt(), t.getResolvedAt()).toHours())
+                    .sum();
+            averageResolutionTimeHours = (double) totalHours / resolvedTickets.size();
+        }
+
+        return TechnicianStatsDTO.builder()
+                .totalAssigned(totalAssigned)
+                .resolvedCount(resolvedCount)
+                .inProgressCount(inProgressCount)
+                .openCount(openCount)
+                .rejectedCount(rejectedCount)
+                .resolutionRate(resolutionRate)
+                .averageResolutionTimeHours(averageResolutionTimeHours)
+                .build();
+    }
 }
+

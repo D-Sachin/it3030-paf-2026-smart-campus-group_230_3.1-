@@ -2,11 +2,18 @@ package com.smartcampus.hub.controller;
 
 import com.smartcampus.hub.model.User;
 import com.smartcampus.hub.repository.UserRepository;
+import com.smartcampus.hub.dto.UserProfileDTO;
+import com.smartcampus.hub.dto.AdminUserUpdateDTO;
+import com.smartcampus.hub.dto.PasswordChangeDTO;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -16,6 +23,89 @@ public class UserController {
 
     private final UserRepository userRepository;
 
+    @GetMapping("/profile")
+    public ResponseEntity<?> getUserProfile() {
+        String email = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Optional<User> userOptional = userRepository.findByEmail(email);
+
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+        User user = userOptional.get();
+        UserProfileDTO profile = UserProfileDTO.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .twoFactorEnabled(user.isTwoFactorEnabled())
+                .build();
+
+        return ResponseEntity.ok(profile);
+    }
+
+    @PutMapping("/profile")
+    public ResponseEntity<?> updateUserProfile(@RequestBody UserProfileDTO profileDTO) {
+        String email = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Optional<User> userOptional = userRepository.findByEmail(email);
+
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+        User user = userOptional.get();
+        
+        if (profileDTO.getName() != null && !profileDTO.getName().isBlank()) {
+            user.setName(profileDTO.getName());
+        }
+        
+        userRepository.save(user);
+
+        UserProfileDTO updatedProfile = UserProfileDTO.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .twoFactorEnabled(user.isTwoFactorEnabled())
+                .build();
+
+        return ResponseEntity.ok(updatedProfile);
+    }
+
+    @PutMapping("/profile/password")
+    public ResponseEntity<?> updatePassword(@Valid @RequestBody PasswordChangeDTO passwordChangeDTO) {
+        String email = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Optional<User> userOptional = userRepository.findByEmail(email);
+
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+        User user = userOptional.get();
+
+        if (user.getPassword() != null && !user.getPassword().equals(passwordChangeDTO.getOldPassword())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Incorrect old password.");
+        }
+
+        user.setPassword(passwordChangeDTO.getNewPassword());
+        userRepository.save(user);
+
+        return ResponseEntity.ok("Password updated successfully.");
+    }
+
+    @DeleteMapping("/profile")
+    public ResponseEntity<?> deleteOwnProfile() {
+        String email = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Optional<User> userOptional = userRepository.findByEmail(email);
+
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+        userRepository.delete(userOptional.get());
+        return ResponseEntity.ok("Account deleted successfully.");
+    }
+
     @GetMapping("/role/{role}")
     public ResponseEntity<List<UserSummaryDTO>> getUsersByRole(@PathVariable String role) {
         List<User> users = userRepository.findByRole(role);
@@ -23,6 +113,84 @@ public class UserController {
                 .map(user -> new UserSummaryDTO(user.getId(), user.getName(), user.getEmail()))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<UserProfileDTO>> getAllUsers() {
+        List<User> users = userRepository.findAll();
+        List<UserProfileDTO> dtos = users.stream()
+                .map(user -> UserProfileDTO.builder()
+                        .id(user.getId())
+                        .name(user.getName())
+                        .email(user.getEmail())
+                        .role(user.getRole())
+                        .twoFactorEnabled(user.isTwoFactorEnabled())
+                        .build())
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getUserById(@PathVariable Long id) {
+        Optional<User> userOptional = userRepository.findById(id);
+
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+        User user = userOptional.get();
+        UserProfileDTO profile = UserProfileDTO.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .twoFactorEnabled(user.isTwoFactorEnabled())
+                .build();
+
+        return ResponseEntity.ok(profile);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody AdminUserUpdateDTO updateDTO) {
+        Optional<User> userOptional = userRepository.findById(id);
+
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+        User user = userOptional.get();
+
+        if (updateDTO.getName() != null && !updateDTO.getName().isBlank()) {
+            user.setName(updateDTO.getName());
+        }
+
+        if (updateDTO.getRole() != null && !updateDTO.getRole().isBlank()) {
+            user.setRole(updateDTO.getRole().toUpperCase());
+        }
+
+        userRepository.save(user);
+
+        UserProfileDTO profile = UserProfileDTO.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .twoFactorEnabled(user.isTwoFactorEnabled())
+                .build();
+
+        return ResponseEntity.ok(profile);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+        Optional<User> userOptional = userRepository.findById(id);
+
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+        userRepository.deleteById(id);
+        return ResponseEntity.ok("User deleted successfully.");
     }
 
     // Inner DTO for simple user info

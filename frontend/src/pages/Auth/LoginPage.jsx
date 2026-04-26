@@ -356,7 +356,7 @@ const LoginPage = () => {
           <div className="max-w-md mx-auto w-full">
             <div className="mb-10 text-center lg:text-left">
               <h1 className="text-3xl font-black mb-3" style={{ color: '#CCD0CF' }}>Welcome Back</h1>
-              <p className="font-bold uppercase tracking-widest text-[10px]" style={{ color: '#4A5C6A' }}>Access your student or staff portal</p>
+              <p className="font-bold uppercase tracking-widest text-[10px]" style={{ color: '#4A5C6A' }}>Access your user or staff portal</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -486,7 +486,7 @@ const LoginPage = () => {
                   onMouseLeave={e => { e.currentTarget.style.borderColor = '#4A5C6A'; e.currentTarget.style.backgroundColor = '#253745'; }}
                 >
                   <LogIn className="w-4 h-4 text-emerald-500" />
-                  <span className="text-[10px] font-black uppercase tracking-tighter" style={{ color: '#CCD0CF' }}>Student</span>
+                  <span className="text-[10px] font-black uppercase tracking-tighter" style={{ color: '#CCD0CF' }}>User</span>
                 </button>
               </div>
             </div>

@@ -10,6 +10,7 @@ import com.smartcampus.hub.repository.UserRepository;
 import com.smartcampus.hub.service.TwoFactorService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -194,9 +195,14 @@ public class AuthController {
             String userInfoUrl = "https://www.googleapis.com/oauth2/v3/userinfo";
             HttpHeaders headers = new HttpHeaders();
             headers.setBearerAuth(request.getToken());
-            HttpEntity<String> entity = new HttpEntity<>("", headers);
+            HttpEntity<Void> entity = new HttpEntity<>(headers);
             
-            ResponseEntity<Map> response = restTemplate.exchange(userInfoUrl, HttpMethod.GET, entity, Map.class);
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                userInfoUrl,
+                HttpMethod.GET,
+                entity,
+                new ParameterizedTypeReference<Map<String, Object>>() {}
+            );
             Map<String, Object> userInfo = response.getBody();
             
             if (userInfo == null || !userInfo.containsKey("email")) {

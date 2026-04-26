@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Search, X } from "lucide-react";
 
 /**
@@ -39,6 +39,14 @@ const ResourceSearchBar = ({ onSearch, isLoading }) => {
     onSearch(searchTerm);
   };
 
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+  }, []);
+
   return (
     <div className="mb-8">
       {/* Search Bar */}
@@ -61,10 +69,13 @@ const ResourceSearchBar = ({ onSearch, isLoading }) => {
           }}
           onFocus={(e) => {
             e.currentTarget.style.borderColor = "#1c4f78";
-            e.currentTarget.style.boxShadow = "0 0 0 4px rgba(28, 79, 120, 0.1)";
+            e.currentTarget.style.boxShadow =
+              "0 0 0 4px rgba(28, 79, 120, 0.1)";
           }}
           onBlur={(e) => {
-            e.currentTarget.style.borderColor = searchTerm ? "#1c4f78" : "#253745";
+            e.currentTarget.style.borderColor = searchTerm
+              ? "#1c4f78"
+              : "#253745";
             e.currentTarget.style.boxShadow = "none";
           }}
         />

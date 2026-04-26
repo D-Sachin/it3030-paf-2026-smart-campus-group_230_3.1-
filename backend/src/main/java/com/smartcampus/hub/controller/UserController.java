@@ -38,7 +38,7 @@ public class UserController {
                 .name(user.getName())
                 .email(user.getEmail())
                 .role(user.getRole())
-                .twoFactorEnabled(user.isTwoFactorEnabled())
+            .twoFactorEnabled(Boolean.TRUE.equals(user.getTwoFactorEnabled()))
                 .build();
 
         return ResponseEntity.ok(profile);
@@ -66,7 +66,7 @@ public class UserController {
                 .name(user.getName())
                 .email(user.getEmail())
                 .role(user.getRole())
-                .twoFactorEnabled(user.isTwoFactorEnabled())
+            .twoFactorEnabled(Boolean.TRUE.equals(user.getTwoFactorEnabled()))
                 .build();
 
         return ResponseEntity.ok(updatedProfile);
@@ -124,7 +124,7 @@ public class UserController {
                         .name(user.getName())
                         .email(user.getEmail())
                         .role(user.getRole())
-                        .twoFactorEnabled(user.isTwoFactorEnabled())
+                .twoFactorEnabled(Boolean.TRUE.equals(user.getTwoFactorEnabled()))
                         .build())
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
@@ -144,7 +144,7 @@ public class UserController {
                 .name(user.getName())
                 .email(user.getEmail())
                 .role(user.getRole())
-                .twoFactorEnabled(user.isTwoFactorEnabled())
+            .twoFactorEnabled(Boolean.TRUE.equals(user.getTwoFactorEnabled()))
                 .build();
 
         return ResponseEntity.ok(profile);
@@ -175,7 +175,7 @@ public class UserController {
                 .name(user.getName())
                 .email(user.getEmail())
                 .role(user.getRole())
-                .twoFactorEnabled(user.isTwoFactorEnabled())
+            .twoFactorEnabled(Boolean.TRUE.equals(user.getTwoFactorEnabled()))
                 .build();
 
         return ResponseEntity.ok(profile);

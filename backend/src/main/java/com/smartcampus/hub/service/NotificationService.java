@@ -2,6 +2,8 @@ package com.smartcampus.hub.service;
 
 import com.smartcampus.hub.model.Booking;
 import com.smartcampus.hub.model.Notification;
+import com.smartcampus.hub.model.Ticket;
+import com.smartcampus.hub.model.User;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -41,7 +43,17 @@ public interface NotificationService {
 
     List<Notification> markAllAsRead(String role, String email);
 
-    Notification createTicketNotification(com.smartcampus.hub.model.User recipient, String title, String message, Long ticketId);
+    /** Generic ticket notification for status updates (legacy) */
+    Notification createTicketNotification(User recipient, String title, String message, Long ticketId);
+
+    /** Notify all ADMINs that a new ticket has been submitted */
+    void createAdminTicketCreatedNotification(Ticket ticket);
+
+    /** Notify a technician that a ticket has been assigned to them */
+    Notification createTechnicianAssignedNotification(User technician, Ticket ticket);
+
+    /** Notify ticket owner that a new comment was posted */
+    void createCommentNotification(User recipient, Ticket ticket, User commenter);
 
     void deleteAllNotifications(String role, String email);
 }

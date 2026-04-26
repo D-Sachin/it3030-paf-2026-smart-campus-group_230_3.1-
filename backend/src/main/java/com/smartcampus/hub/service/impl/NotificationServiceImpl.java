@@ -3,8 +3,11 @@ package com.smartcampus.hub.service.impl;
 import com.smartcampus.hub.enums.NotificationType;
 import com.smartcampus.hub.model.Booking;
 import com.smartcampus.hub.model.Notification;
+import com.smartcampus.hub.model.Ticket;
+import com.smartcampus.hub.model.User;
 import com.smartcampus.hub.repository.BookingRepository;
 import com.smartcampus.hub.repository.NotificationRepository;
+import com.smartcampus.hub.repository.UserRepository;
 import com.smartcampus.hub.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,6 +28,7 @@ public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final BookingRepository bookingRepository;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -262,6 +266,106 @@ public class NotificationServiceImpl implements NotificationService {
                 .build();
 
         return notificationRepository.save(notification);
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void createAdminTicketCreatedNotification(Ticket ticket) {
+        if (ticket == null) return;
+
+        List<User> admins = userRepository.findAll().stream()
+                .filter(u -> "ADMIN".equalsIgnoreCase(u.getRole()))
+                .toList();
+
+        for (User admin : admins) {
+            Notification notification = Notification.builder()
+                    .title("New Ticket Submitted")
+                    .message(String.format(
+                            "[#%d] %s - %s priority ticket submitted by %s.",
+                            ticket.getId(),
+                            ticket.getTitle(),
+                            ticket.getPriority(),
+                            ticket.getUser() != null ? ticket.getUser().getName() : "Unknown"
+                    ))
+                    .type(NotificationType.TICKET_CREATED)
+                    .recipientRole(ADMIN_ROLE)
+                    .recipientEmail(normalizeEmail(admin.getEmail()))
+                    .relatedEntityId(ticket.getId())
+                    .isRead(false)
+                    .build();
+            notificationRepository.save(notification);
+        }
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public Notification createTechnicianAssignedNotification(User technician, Ticket ticket) {
+        if (technician == null || ticket == null) return null;
+
+        Notification notification = Notification.builder()
+                .title("Ticket Assigned to You")
+                .message(String.format(
+                        "Ticket [#%d] '%s' has been assigned to you. Priority: %s.",
+                        ticket.getId(),
+                        ticket.getTitle(),
+                        ticket.getPriority()
+                ))
+                .type(NotificationType.TICKET_ASSIGNED)
+                .recipientRole("TECHNICIAN")
+                .recipientEmail(normalizeEmail(technician.getEmail()))
+                .relatedEntityId(ticket.getId())
+                .isRead(false)
+                .build();
+
+        return notificationRepository.save(notification);
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void createCommentNotification(User recipient, Ticket ticket, User commenter) {
+        if (recipient == null || ticket == null || commenter == null) return;
+        // Don't notify if the commenter IS the recipient
+        if (recipient.getId().equals(commenter.getId())) return;
+
+        String role = recipient.getRole() != null ? normalizeRole(recipient.getRole()) : USER_ROLE;
+        Notification notification = Notification.builder()
+                .title("New Comment on Your Ticket")
+                .message(String.format(
+                        "%s commented on ticket [#%d] '%s'.",
+                        commenter.getName(),
+                        ticket.getId(),
+                        ticket.getTitle()
+                ))
+                .type(NotificationType.TICKET_COMMENTED)
+                .recipientRole(role)
+                .recipientEmail(normalizeEmail(recipient.getEmail()))
+                .relatedEntityId(ticket.getId())
+                .isRead(false)
+                .build();
+
+        notificationRepository.save(notification);
+
+        // Also notify the assigned technician if they are different from recipient and commenter
+        if (ticket.getTechnician() != null
+                && !ticket.getTechnician().getId().equals(recipient.getId())
+                && !ticket.getTechnician().getId().equals(commenter.getId())) {
+            User tech = ticket.getTechnician();
+            Notification techNotification = Notification.builder()
+                    .title("New Comment on Assigned Ticket")
+                    .message(String.format(
+                            "%s commented on ticket [#%d] '%s'.",
+                            commenter.getName(),
+                            ticket.getId(),
+                            ticket.getTitle()
+                    ))
+                    .type(NotificationType.TICKET_COMMENTED)
+                    .recipientRole("TECHNICIAN")
+                    .recipientEmail(normalizeEmail(tech.getEmail()))
+                    .relatedEntityId(ticket.getId())
+                    .isRead(false)
+                    .build();
+            notificationRepository.save(techNotification);
+        }
     }
 
     @Override

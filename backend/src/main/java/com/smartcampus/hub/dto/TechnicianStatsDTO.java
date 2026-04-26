@@ -14,6 +14,7 @@ public class TechnicianStatsDTO {
     private Long resolvedCount;
     private Long inProgressCount;
     private Long openCount;
+    private Long rejectedCount;
     private Double resolutionRate;
     private Double averageResolutionTimeHours;
 }

@@ -34,6 +34,21 @@ public class NotificationController {
         }
     }
 
+    @GetMapping("/count")
+    public ResponseEntity<Map<String, Object>> getUnreadCount(
+            @RequestHeader(value = "X-User-Role", required = false) String userRole,
+            @RequestHeader(value = "X-User-Email", required = false) String userEmail
+    ) {
+        try {
+            String normalizedRole = requireRole(userRole);
+            String normalizedEmail = normalizeEmail(userEmail);
+            long unreadCount = notificationService.getUnreadCountForRecipient(normalizedRole, normalizedEmail);
+            return ResponseEntity.ok(buildResponse(true, "Unread count retrieved", null, unreadCount));
+        } catch (IllegalArgumentException ex) {
+            return buildError(ex.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
     @PutMapping("/{id}/read")
     public ResponseEntity<Map<String, Object>> markAsRead(
             @PathVariable(name = "id") Long id,

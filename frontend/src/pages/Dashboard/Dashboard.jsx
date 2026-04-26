@@ -25,14 +25,39 @@ const Dashboard = () => {
     loading: true
   });
 
+  const [techStats, setTechStats] = useState({
+    totalAssigned: 0,
+    resolvedCount: 0,
+    inProgressCount: 0,
+    openCount: 0,
+    resolutionRate: 0,
+    averageResolutionTimeHours: 0,
+    loading: true
+  });
+
   useEffect(() => {
     const fetchStats = async () => {
       try {
         let response;
         if (user.role === 'ADMIN' || user.role === 'TECHNICIAN') {
-          response = await ticketService.getAllTickets({ size: 50 });
+          response = await ticketService.getAllTickets({ 
+            size: 50,
+            technicianId: user.role === 'TECHNICIAN' ? user.id : undefined 
+          });
         } else {
           response = await ticketService.getTicketsByUserId(user.id);
+        }
+
+        if (user.role === 'TECHNICIAN') {
+          try {
+            const techStatsRes = await ticketService.getTechnicianStats(user.id);
+            if (techStatsRes.data) {
+              setTechStats({ ...techStatsRes.data, loading: false });
+            }
+          } catch (techErr) {
+            console.error("Error fetching tech stats:", techErr);
+            setTechStats(prev => ({ ...prev, loading: false }));
+          }
         }
 
         const resourcesRes = await resourceService.getAllResources(0, 1);
@@ -153,12 +178,56 @@ const Dashboard = () => {
             <div className="mt-4">
               <span className="text-sm font-bold uppercase tracking-wider" style={{ color: '#9BA8AB' }}>{card.label}</span>
               <div className="text-3xl font-extrabold mt-1" style={{ color: '#CCD0CF' }}>
-                {stats.loading ? '...' : card.value}
+                {stats.loading ? '...' : (card.id === 'incidentTickets' && user.role === 'TECHNICIAN' ? stats.totalTickets : card.value)}
               </div>
             </div>
           </Link>
         ))}
       </div>
+
+      {/* Technician Analytics Section */}
+      {user.role === 'TECHNICIAN' && !techStats.loading && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in">
+          <div className="md:col-span-1 rounded-2xl p-6 relative overflow-hidden" style={{ backgroundColor: '#11212D', border: '1px solid #2d70a3' }}>
+            <div className="relative z-10">
+              <h3 className="text-xs font-black uppercase tracking-[0.2em]" style={{ color: '#2d70a3' }}>Resolution Rate</h3>
+              <div className="mt-4 flex items-end gap-2">
+                <span className="text-4xl font-black" style={{ color: '#CCD0CF' }}>{Number(techStats.resolutionRate).toFixed(1)}%</span>
+                <span className="text-xs font-bold mb-1" style={{ color: '#9BA8AB' }}>success</span>
+              </div>
+              <div className="mt-4 w-full h-2 bg-gray-800 rounded-full overflow-hidden">
+                <div 
+                  className="h-full transition-all duration-1000" 
+                  style={{ width: `${Math.min(100, Number(techStats.resolutionRate)).toFixed(1)}%`, backgroundColor: '#10b981' }}
+                ></div>
+              </div>
+            </div>
+            <TrendingUp className="absolute -right-4 -bottom-4 w-24 h-24 opacity-5 rotate-12" />
+          </div>
+
+          <div className="md:col-span-1 rounded-2xl p-6" style={{ backgroundColor: '#11212D', border: '1px solid #4A5C6A' }}>
+            <h3 className="text-xs font-black uppercase tracking-[0.2em]" style={{ color: '#9BA8AB' }}>Efficiency</h3>
+            <div className="mt-4 flex items-end gap-2">
+              <span className="text-4xl font-black" style={{ color: '#CCD0CF' }}>{Number(techStats.averageResolutionTimeHours).toFixed(2)}</span>
+              <span className="text-xs font-bold mb-1" style={{ color: '#9BA8AB' }}>avg. hours / fix</span>
+            </div>
+            <div className="mt-4 flex gap-1">
+              {[1, 2, 3, 4, 5].map(i => (
+                <div key={i} className="h-1 flex-1 rounded-full" style={{ backgroundColor: i <= 3 ? '#2d70a3' : '#253745' }}></div>
+              ))}
+            </div>
+          </div>
+
+          <div className="md:col-span-1 rounded-2xl p-6" style={{ backgroundColor: '#11212D', border: '1px solid #4A5C6A' }}>
+            <h3 className="text-xs font-black uppercase tracking-[0.2em]" style={{ color: '#9BA8AB' }}>Monthly Highs</h3>
+            <div className="mt-4 flex items-end gap-2">
+              <span className="text-4xl font-black" style={{ color: '#CCD0CF' }}>{techStats.resolvedCount}</span>
+              <span className="text-xs font-bold mb-1" style={{ color: '#9BA8AB' }}>tickets cleared</span>
+            </div>
+            <p className="text-[10px] mt-4 font-bold" style={{ color: '#4A5C6A' }}>TOP 15% OF CAMPUS OPS</p>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">

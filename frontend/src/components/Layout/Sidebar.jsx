@@ -9,7 +9,9 @@ import {
   HelpCircle,
   LogOut,
   ChevronLeft,
-  Menu
+  Menu,
+  Users,
+  BarChart3
 } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
 
@@ -18,9 +20,11 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/', roles: ['ADMIN', 'TECHNICIAN', 'USER'] },
-    { icon: Building2, label: 'Resources', path: '/resources', roles: ['ADMIN', 'TECHNICIAN', 'USER'] },
-    { icon: CalendarCheck, label: 'Bookings', path: '/bookings', roles: ['ADMIN', 'TECHNICIAN', 'USER'] },
+    { icon: Building2, label: 'Resources', path: '/resources', roles: ['ADMIN', 'USER'] },
+    { icon: CalendarCheck, label: 'Bookings', path: '/bookings', roles: ['ADMIN', 'USER'] },
     { icon: Ticket, label: 'Incidents', path: '/tickets', roles: ['ADMIN', 'TECHNICIAN', 'USER'] },
+    { icon: Users, label: 'Users', path: '/users', roles: ['ADMIN'] },
+    { icon: BarChart3, label: 'Technician Performance', path: '/technician-performance', roles: ['ADMIN'] },
     { icon: Settings, label: 'Settings', path: '/settings', roles: ['ADMIN'] },
   ];
 

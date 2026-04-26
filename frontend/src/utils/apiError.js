@@ -26,7 +26,7 @@ export const getApiErrorMessage = (error, fallbackMessage = "Request failed") =>
   }
 
   if (!error?.response) {
-    return "Cannot reach server. Please check backend is running on port 8081.";
+    return "Cannot reach server. Please check backend is running on port 8080.";
   }
 
   return fallbackMessage;

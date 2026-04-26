@@ -69,8 +69,9 @@ const TopBar = () => {
   const initials = getInitials(user.name);
 
   const avatarBg = user.role === 'ADMIN' ? '#1c4f78' : user.role === 'TECHNICIAN' ? '#b45309' : '#15803d';
-  const canUseNotifications = ['ADMIN', 'USER'].includes(user?.role);
+  const canUseNotifications = ['ADMIN', 'TECHNICIAN', 'USER'].includes(user?.role);
   const isAdmin = user?.role === 'ADMIN';
+  const isTechnician = user?.role === 'TECHNICIAN';
   const isStudent = user?.role === 'USER';
 
   useEffect(() => {
@@ -146,7 +147,7 @@ const TopBar = () => {
     setNotificationError("");
 
     try {
-      if (isAdmin) {
+      if (isAdmin || isTechnician) {
         const response = await notificationService.getNotifications();
         const items = response.data?.data || [];
         const serverUnreadCount = Number(response.data?.unreadCount);
@@ -239,8 +240,7 @@ const TopBar = () => {
   const handleNotificationClick = async (notification) => {
     try {
       let nextUnreadCount = unreadCount;
-
-      if (!notification.isRead && isAdmin) {
+      if (!notification.isRead && (isAdmin || isTechnician)) {
         const response = await notificationService.markAsRead(notification.id);
         const serverUnreadCount = Number(response.data?.unreadCount);
         nextUnreadCount = Number.isFinite(serverUnreadCount) ? serverUnreadCount : Math.max(0, unreadCount - 1);
@@ -259,7 +259,15 @@ const TopBar = () => {
       }
 
       if (notification.relatedEntityId) {
-        navigate(`/bookings/${notification.relatedEntityId}`);
+        // Redirection logic
+        if (notification.type?.startsWith('BOOKING')) {
+          navigate(`/bookings/${notification.relatedEntityId}`);
+        } else if (notification.type === 'TICKET_UPDATED') {
+          navigate(`/tickets/${notification.relatedEntityId}`);
+        } else {
+          // Fallback or generic redirection
+          navigate(`/tickets/${notification.relatedEntityId}`);
+        }
       }
 
       if (!notification.isRead) {
@@ -274,7 +282,7 @@ const TopBar = () => {
 
   const handleMarkAllAsRead = async () => {
     try {
-      if (isAdmin) {
+      if (isAdmin || isTechnician) {
         const response = await notificationService.markAllAsRead();
         const serverUnreadCount = Number(response.data?.unreadCount);
         setNotifications((prev) => prev.map((item) => ({ ...item, isRead: true })));
@@ -292,6 +300,22 @@ const TopBar = () => {
       }
     } catch (error) {
       setNotificationError("Failed to mark notifications as read.");
+    }
+  };
+
+  const handleClearAll = async () => {
+    try {
+      if (isAdmin || isTechnician) {
+        await notificationService.deleteAllNotifications();
+        setNotifications([]);
+        setUnreadCount(0);
+      } else if (isStudent) {
+        saveStudentReadMap({});
+        setNotifications([]);
+        setUnreadCount(0);
+      }
+    } catch (error) {
+      setNotificationError("Failed to clear notifications.");
     }
   };
 
@@ -382,13 +406,22 @@ const TopBar = () => {
                       </span>
                     )}
                   </div>
-                  <button 
-                    onClick={handleMarkAllAsRead}
-                    className="text-[10px] font-black uppercase tracking-widest hover:opacity-80 transition-opacity"
-                    style={{ color: '#1c4f78' }}
-                  >
-                    Mark all read
-                  </button>
+                    <div className="flex items-center gap-3">
+                      <button 
+                        onClick={handleMarkAllAsRead}
+                        className="text-[10px] font-black uppercase tracking-widest hover:opacity-80 transition-opacity"
+                        style={{ color: '#1c4f78' }}
+                      >
+                        Mark all read
+                      </button>
+                      <span className="h-3 w-[1px]" style={{ backgroundColor: '#253745' }}></span>
+                      <button 
+                        onClick={handleClearAll}
+                        className="text-[10px] font-black uppercase tracking-widest hover:opacity-80 transition-opacity text-red-500"
+                      >
+                        Clear all
+                      </button>
+                    </div>
                 </div>
                 
                 <div className="max-h-[480px] overflow-y-auto custom-scrollbar">

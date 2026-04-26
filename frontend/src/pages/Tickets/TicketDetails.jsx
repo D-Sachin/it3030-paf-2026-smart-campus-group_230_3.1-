@@ -11,6 +11,10 @@ import {
   Download, 
   Paperclip, 
   MessageSquare,
+  X,
+  ChevronDown,
+  Lock,
+  AlertTriangle,
   ShieldCheck,
   Send,
   Loader2,
@@ -24,8 +28,7 @@ import {
   UserPlus,
   UserCheck,
   Pencil,
-  X,
-  ChevronDown
+  History
 } from 'lucide-react';
 import ticketService from '../../services/ticketService';
 import CommentSection from '../../components/Tickets/CommentSection';
@@ -34,13 +37,14 @@ import { getPriorityColor, getStatusColor } from '../../utils/ticketUtils';
 
 const TicketDetails = () => {
   const { user: currentUser } = useUser();
-  const { id } = useParams();
+  const { id } = useParams();       // ticket ID from URL (e.g. /tickets/14)
   const navigate = useNavigate();
-  
+
+  // ── State ──────────────────────────────────────────────
   const [ticket, setTicket] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [technicians, setTechnicians] = useState([]);
+  const [technicians, setTechnicians] = useState([]);    // populate assign dropdown
   const [isAssigning, setIsAssigning] = useState(false);
   const [selectedTechId, setSelectedTechId] = useState("");
   const [statusUpdateLoading, setStatusUpdateLoading] = useState(false);
@@ -48,20 +52,25 @@ const TicketDetails = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editSaving, setEditSaving] = useState(false);
   const [editForm, setEditForm] = useState({});
-  const [viewingImageUrl, setViewingImageUrl] = useState(null);
+  const [viewingImageUrl, setViewingImageUrl] = useState(null); // lightbox image
   const [editExistingAttachments, setEditExistingAttachments] = useState([]);
   const [editNewAttachments, setEditNewAttachments] = useState([]);
 
-  const isAdmin = currentUser?.role === 'ADMIN';
-  const isTechnician = currentUser?.role === 'TECHNICIAN';
+  // ── Role & Permission Flags ─────────────────────────────
+  // toUpperCase() guards against inconsistent casing from the DB
+  const isAdmin = currentUser?.role?.toUpperCase() === 'ADMIN';
+  const isTechnician = currentUser?.role?.toUpperCase() === 'TECHNICIAN';
   const isOwner = ticket && currentUser && (ticket.userId === currentUser.id || ticket.userEmail === currentUser.email);
-  const canEdit = isOwner && ticket?.status === 'OPEN';
+  const canEdit = isOwner && ticket?.status === 'OPEN'; // only owner can edit, only when OPEN
 
+  // ── Data Fetching ────────────────────────────────────────
+  // Load ticket + technician list on mount and whenever ticket ID changes
   useEffect(() => {
     fetchTicketDetails();
     fetchTechnicians();
   }, [id]);
 
+  // GET /api/tickets/{id} — full ticket object including comments, attachments, resolution data
   const fetchTicketDetails = async () => {
     try {
       setLoading(true);
@@ -76,6 +85,7 @@ const TicketDetails = () => {
     }
   };
 
+  // GET /api/users?role=TECHNICIAN — used to populate the 'Assign Technician' dropdown
   const fetchTechnicians = async () => {
     try {
       const response = await ticketService.getUsersByRole("TECHNICIAN");
@@ -85,18 +95,30 @@ const TicketDetails = () => {
     }
   };
 
+  // ── Status Update ────────────────────────────────────────
+  // For RESOLVED/REJECTED: prompts for resolution notes first, then updates status
+  // For other statuses: directly calls PUT /api/tickets/{id}/status
   const handleStatusChange = async (newStatus) => {
     try {
       if (newStatus === "RESOLVED" || newStatus === "REJECTED") {
-        const promptMsg = newStatus === "RESOLVED" ? "Enter resolution notes:" : "Enter rejection reason:";
-        const notes = prompt(promptMsg) || "";
-        if (!notes.trim()) {
-          alert("Notes are required for final status transitions.");
-          return;
-        }
+        const isReResolving = ticket.resolutionNotes && ticket.resolutionNotes.trim() !== "";
+        const promptMsg = isReResolving 
+          ? `Overwriting existing ${newStatus === "RESOLVED" ? 'resolution notes' : 'rejection reason'}:\n"${ticket.resolutionNotes}"\n\nEnter new details:`
+          : (newStatus === "RESOLVED" ? "Enter resolution notes (optional):" : "Enter rejection reason:");
+        
+        const defaultNotes = isReResolving ? ticket.resolutionNotes : (newStatus === "RESOLVED" ? "Resolved by technician." : "No reason provided.");
+        const notes = window.prompt(promptMsg, defaultNotes);
+        
+        // If user cancelled prompt, stop
+        if (notes === null) return;
         
         setStatusUpdateLoading(true);
-        await ticketService.updateResolutionNotes(id, notes);
+        try {
+          await ticketService.updateResolutionNotes(id, notes);
+        } catch (err) {
+          console.error('Error updating resolution notes:', err);
+          throw err; 
+        }
       } else {
         setStatusUpdateLoading(true);
       }
@@ -105,12 +127,14 @@ const TicketDetails = () => {
       await fetchTicketDetails();
     } catch (err) {
       console.error('Error updating status:', err);
-      alert('Failed to update ticket status. Ensure you have the correct permissions.');
+      const errorMessage = err.response?.data?.message || 'Failed to update ticket status. Ensure you have the correct permissions.';
+      alert(errorMessage);
     } finally {
       setStatusUpdateLoading(false);
     }
   };
 
+  // PUT /api/tickets/{id}/assign — calls assignTechnician; auto-sets status to IN_PROGRESS
   const handleAssignTechnician = async (techId) => {
     if (!techId) return;
     
@@ -127,6 +151,8 @@ const TicketDetails = () => {
     }
   };
 
+  // ── Comment Actions ────────────────────────────────────────
+  // Author-only edit; Admin or author delete (enforced both here + backend)
   const handleUpdateComment = async (commentId, newContent) => {
     try {
       await ticketService.updateComment(commentId, newContent);
@@ -137,6 +163,7 @@ const TicketDetails = () => {
     }
   };
 
+  // DELETE /api/tickets/{id}/comments/{commentId} — requires confirmation dialog
   const handleDeleteComment = async (commentId) => {
     if (!window.confirm("Permanently delete this progress update?")) return;
     try {
@@ -148,6 +175,8 @@ const TicketDetails = () => {
     }
   };
 
+  // ── Attachment Helpers ──────────────────────────────────────
+  // Detect image files by extension (for lightbox vs download link)
   const isImageFile = (fileName) => {
     if (!fileName) return false;
     const ext = fileName.split('.').pop().toLowerCase();
@@ -157,7 +186,9 @@ const TicketDetails = () => {
   const resolveFileUrl = (url) => {
     if (!url) return '';
     if (url.startsWith('http')) return url;
-    return `http://localhost:8080${url}`;
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+    const host = baseUrl.split('/api')[0];
+    return `${host}${url}`;
   };
 
   const ImagePreview = ({ file, className }) => {
@@ -171,6 +202,7 @@ const TicketDetails = () => {
     return <img src={previewUrl} alt={file.name} className={className} />;
   };
 
+  // POST /api/tickets/{id}/comments — adds comment, then refreshes full ticket
   const handleAddComment = async (content) => {
     try {
       setCommentSubmitting(true);
@@ -184,6 +216,7 @@ const TicketDetails = () => {
     }
   };
 
+  // Triggers browser download for any attachment via GET /api/files/uploads/{fileName}
   const handleDownloadAttachment = async (attachment) => {
     try {
       const response = await ticketService.downloadAttachment(attachment.fileName);
@@ -201,6 +234,8 @@ const TicketDetails = () => {
     }
   };
 
+  // ── Edit Modal ─────────────────────────────────────────────
+  // Populates editForm with current ticket values before opening modal
   const openEditModal = () => {
     setEditForm({
       title: ticket.title,
@@ -491,7 +526,7 @@ const TicketDetails = () => {
                 <option value="IN_PROGRESS">IN PROGRESS</option>
                 <option value="RESOLVED">RESOLVED</option>
                 <option value="CLOSED">CLOSED</option>
-                <option value="REJECTED">REJECTED</option>
+                {isAdmin && <option value="REJECTED">REJECTED</option>}
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: 'currentColor' }} />
               {statusUpdateLoading && <Loader2 className="w-4 h-4 animate-spin" style={{ color: '#1c4f78' }} />}
@@ -645,40 +680,132 @@ const TicketDetails = () => {
             </div>
           </div>
 
-          {(isAdmin || isTechnician) && ticket.status !== 'CLOSED' && ticket.status !== 'REJECTED' && (
+          {/* Status Transition Actions */}
+          {((currentUser?.role?.toUpperCase() === 'ADMIN') || (currentUser?.role?.toUpperCase() === 'TECHNICIAN' && (!ticket.technicianId || ticket.technicianId == currentUser.id))) && 
+           (ticket.status !== 'CLOSED' && ticket.status !== 'REJECTED') && (
             <div className="rounded-2xl p-6 shadow-xl" style={{ backgroundColor: '#253745', border: '1px solid #4A5C6A' }}>
               <h3 className="text-lg font-bold mb-6 flex items-center gap-2" style={{ color: '#CCD0CF' }}>
                 <Zap className="w-5 h-5 text-amber-500" />
                 Actions
               </h3>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {ticket.status === 'OPEN' && (
-                  <button onClick={() => handleStatusChange('IN_PROGRESS')} className="flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all hover:bg-white/5" style={{ borderColor: '#4A5C6A' }}>
-                    <Play className="w-6 h-6 text-blue-500" />
-                    <span className="text-[10px] font-bold uppercase" style={{ color: '#9BA8AB' }}>Start Work</span>
+                  <button
+                    onClick={() => handleStatusChange('IN_PROGRESS')}
+                    className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed transition-all duration-300 group hover:border-blue-500/50 hover:bg-blue-500/5"
+                    style={{ borderColor: '#2A3C46' }}
+                  >
+                    <div className="p-3 rounded-full bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
+                      <Play className="w-6 h-6 text-blue-500" />
+                    </div>
+                    <span className="mt-2 text-[10px] font-bold uppercase tracking-wider transition-colors" style={{ color: '#9BA8AB' }}>
+                      Start Work
+                    </span>
                   </button>
                 )}
-                {(ticket.status === 'IN_PROGRESS' || ticket.status === 'OPEN') && (
+
+                {ticket.status === 'IN_PROGRESS' && (
                   <>
-                    <button onClick={() => handleStatusChange('RESOLVED')} className="flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all hover:bg-white/5" style={{ borderColor: '#4A5C6A' }}>
-                      <CheckCircle className="w-6 h-6 text-emerald-500" />
-                      <span className="text-[10px] font-bold uppercase" style={{ color: '#9BA8AB' }}>Resolve</span>
-                    </button>
-                    <button onClick={() => handleStatusChange('REJECTED')} className="flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all hover:bg-white/5" style={{ borderColor: '#4A5C6A' }}>
-                      <XCircle className="w-6 h-6 text-red-500" />
-                      <span className="text-[10px] font-bold uppercase" style={{ color: '#9BA8AB' }}>Reject</span>
+                    <button
+                      onClick={() => handleStatusChange('RESOLVED')}
+                      className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed transition-all duration-300 group hover:border-green-500/50 hover:bg-green-500/5"
+                      style={{ borderColor: '#2A3C46' }}
+                    >
+                      <div className="p-3 rounded-full bg-green-500/10 group-hover:bg-green-500/20 transition-colors">
+                        <CheckCircle className="w-6 h-6 text-green-500" />
+                      </div>
+                      <span className="mt-2 text-[10px] font-bold uppercase tracking-wider transition-colors" style={{ color: '#9BA8AB' }}>
+                        Mark Resolved
+                      </span>
                     </button>
                   </>
                 )}
-                {ticket.status === 'RESOLVED' && (
-                  <button onClick={() => handleStatusChange('CLOSED')} className="col-span-2 flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all hover:bg-primary-500/10" style={{ borderColor: '#4A5C6A' }}>
-                    <Archive className="w-6 h-6" style={{ color: '#9BA8AB' }} />
-                    <span className="text-[10px] font-bold uppercase" style={{ color: '#9BA8AB' }}>Close Ticket Permanently</span>
-                  </button>
+
+
+
+                {currentUser?.role === 'ADMIN' && (ticket.status !== 'CLOSED' && ticket.status !== 'REJECTED') && (
+                  <>
+                    <button
+                      onClick={() => handleStatusChange('CLOSED')}
+                      className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed transition-all duration-300 group hover:border-purple-500/50 hover:bg-purple-500/5"
+                      style={{ borderColor: '#2A3C46' }}
+                    >
+                      <div className="p-3 rounded-full bg-purple-500/10 group-hover:bg-purple-500/20 transition-colors">
+                        <Lock className="w-6 h-6 text-purple-500" />
+                      </div>
+                      <span className="mt-2 text-[10px] font-bold uppercase tracking-wider transition-colors" style={{ color: '#9BA8AB' }}>
+                        Close Ticket
+                      </span>
+                    </button>
+
+                    <button
+                      onClick={() => handleStatusChange('REJECTED')}
+                      className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed transition-all duration-300 group hover:border-red-500/50 hover:bg-red-500/5"
+                      style={{ borderColor: '#2A3C46' }}
+                    >
+                      <div className="p-3 rounded-full bg-red-500/10 group-hover:bg-red-500/20 transition-colors">
+                        <AlertTriangle className="w-6 h-6 text-red-500" />
+                      </div>
+                      <span className="mt-2 text-[10px] font-bold uppercase tracking-wider transition-colors" style={{ color: '#9BA8AB' }}>
+                        Reject
+                      </span>
+                    </button>
+                  </>
                 )}
               </div>
             </div>
           )}
+
+          <div className="rounded-2xl p-6 shadow-xl" style={{ backgroundColor: '#253745', border: '1px solid #4A5C6A' }}>
+            <h3 className="text-lg font-bold mb-6 flex items-center gap-2" style={{ color: '#CCD0CF' }}>
+              <History className="w-5 h-5" style={{ color: '#1c4f78' }} />
+              Status History
+            </h3>
+            
+            {(() => {
+              // Build a status timeline from existing ticket SLA timestamp fields
+              const timeline = [];
+              if (ticket.createdAt) {
+                timeline.push({ status: 'OPEN', timestamp: ticket.createdAt, actor: ticket.userName || 'System' });
+              }
+              if (ticket.assignedAt) {
+                timeline.push({ status: 'IN_PROGRESS', timestamp: ticket.assignedAt, actor: ticket.technicianName || 'Technician' });
+              }
+              if (ticket.resolvedAt) {
+                timeline.push({ status: ticket.status === 'REJECTED' ? 'REJECTED' : 'RESOLVED', timestamp: ticket.resolvedAt, actor: ticket.technicianName || ticket.userName || 'System' });
+              }
+
+              const dotColor = (status) => {
+                if (status === 'RESOLVED') return '#10b981';
+                if (status === 'REJECTED') return '#ef4444';
+                if (status === 'IN_PROGRESS') return '#3b82f6';
+                return '#f59e0b';
+              };
+
+              return timeline.length > 0 ? (
+                <div className="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:w-0.5 before:bg-gray-700/50">
+                  {timeline.map((entry, idx) => (
+                    <div key={idx} className="relative pl-12">
+                      <div className="absolute left-3 top-0 w-4 h-4 rounded-full border-4 border-[#253745] z-10" style={{ backgroundColor: dotColor(entry.status) }} />
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-bold px-2 py-0.5 rounded-md border" style={{ color: '#CCD0CF', borderColor: '#4A5C6A', backgroundColor: '#11212D' }}>
+                          {entry.status.replace('_', ' ')}
+                        </span>
+                        <span className="text-[10px] font-bold" style={{ color: '#4A5C6A' }}>
+                          {new Date(entry.timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <p className="text-xs font-medium" style={{ color: '#9BA8AB' }}>
+                        By <span style={{ color: '#CCD0CF' }}>{entry.actor}</span>
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center italic text-sm" style={{ color: '#4A5C6A' }}>No status changes recorded</p>
+              );
+            })()}
+          </div>
 
           <div className="rounded-2xl p-6 shadow-xl" style={{ backgroundColor: '#253745', border: '1px solid #4A5C6A' }}>
             <h3 className="text-lg font-bold mb-6 flex items-center gap-2" style={{ color: '#CCD0CF' }}>

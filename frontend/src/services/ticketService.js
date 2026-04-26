@@ -64,9 +64,7 @@ const ticketService = {
 
   // PUT update resolution notes
   updateResolutionNotes: (id, notes) => {
-    return apiClient.put(`${TICKETS_PATH}/${id}/resolution`, notes, {
-      headers: { "Content-Type": "text/plain" },
-    });
+    return apiClient.put(`${TICKETS_PATH}/${id}/resolution`, { notes });
   },
 
   // POST attach a single file to a ticket
@@ -112,6 +110,11 @@ const ticketService = {
   // DELETE an attachment from a ticket
   deleteAttachment: (ticketId, attachmentId) => {
     return apiClient.delete(`${TICKETS_PATH}/${ticketId}/attachments/${attachmentId}`);
+  },
+
+  // GET technician statistics
+  getTechnicianStats: (technicianId) => {
+    return apiClient.get(`${TICKETS_PATH}/stats/technician/${technicianId}`);
   },
 };
 

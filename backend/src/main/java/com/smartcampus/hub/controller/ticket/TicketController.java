@@ -4,6 +4,7 @@ import com.smartcampus.hub.dto.AssignTechnicianDTO;
 import com.smartcampus.hub.dto.AttachmentResponseDTO;
 import com.smartcampus.hub.dto.CommentRequestDTO;
 import com.smartcampus.hub.dto.CommentResponseDTO;
+import com.smartcampus.hub.dto.ResolutionNotesDTO;
 import com.smartcampus.hub.dto.StatusUpdateDTO;
 import com.smartcampus.hub.dto.TicketRequestDTO;
 import com.smartcampus.hub.dto.TicketResponseDTO;
@@ -28,12 +29,16 @@ public class TicketController {
         this.ticketService = ticketService;
     }
 
+    // ── Ticket CRUD ──────────────────────────────────────────────
+
+    // POST /api/tickets — Create a new incident ticket (role: USER)
     @PostMapping
     public ResponseEntity<TicketResponseDTO> createTicket(@Valid @RequestBody TicketRequestDTO ticketRequestDTO) {
         TicketResponseDTO createdTicket = ticketService.createTicket(ticketRequestDTO);
         return new ResponseEntity<>(createdTicket, HttpStatus.CREATED);
     }
 
+    // GET /api/tickets — Filters: status, priority, category, searchTerm, technicianId, startDate, endDate
     @GetMapping
     public ResponseEntity<List<TicketResponseDTO>> getAllTickets(
             @RequestParam(required = false) TicketStatus status,
@@ -47,10 +52,13 @@ public class TicketController {
         return ResponseEntity.ok(tickets);
     }
 
+    // GET /api/tickets/{id} — Get single ticket by ID
     @GetMapping("/{id}")
     public ResponseEntity<TicketResponseDTO> getTicketById(@PathVariable Long id) {
         return ResponseEntity.ok(ticketService.getTicketById(id));
     }
+
+    // GET /api/tickets/user/{userId} — Get all tickets for a specific student (same filters apply)
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<TicketResponseDTO>> getTicketsByUserId(
             @PathVariable Long userId,
@@ -64,6 +72,7 @@ public class TicketController {
         return ResponseEntity.ok(tickets);
     }
 
+    // PUT /api/tickets/{id} — Edit ticket fields (only owner, only OPEN tickets)
     @PutMapping("/{id}")
     public ResponseEntity<TicketResponseDTO> updateTicket(
             @PathVariable Long id,
@@ -71,22 +80,27 @@ public class TicketController {
         return ResponseEntity.ok(ticketService.updateTicket(id, ticketRequestDTO));
     }
 
+    // ── Technician Updates ───────────────────────────────────────
+
+    // PUT /api/tickets/{id}/status — Transition status (ADMIN or assigned TECHNICIAN only)
     @PutMapping("/{id}/status")
     public ResponseEntity<TicketResponseDTO> updateTicketStatus(
             @PathVariable Long id,
             @Valid @RequestBody StatusUpdateDTO statusUpdateDTO) {
         try {
+            // Debug log: audits every status change request
             java.nio.file.Files.writeString(
-                java.nio.file.Paths.get("debug_controller.log"), 
-                "Received status update request for ticket " + id + " to " + statusUpdateDTO.getStatus() + "\n", 
+                java.nio.file.Paths.get("debug_controller.log"),
+                "Received status update request for ticket " + id + " to " + statusUpdateDTO.getStatus() + "\n",
                 java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND
             );
         } catch (Exception e) {}
-        
+
         TicketResponseDTO updatedTicket = ticketService.updateTicketStatus(id, statusUpdateDTO.getStatus());
         return ResponseEntity.ok(updatedTicket);
     }
 
+    // PUT /api/tickets/{id}/assign — Assign technician (ADMIN assigns any; TECHNICIAN self-assigns)
     @PutMapping("/{id}/assign")
     public ResponseEntity<TicketResponseDTO> assignTechnician(
             @PathVariable Long id,
@@ -95,11 +109,15 @@ public class TicketController {
         return ResponseEntity.ok(updatedTicket);
     }
 
+    // PUT /api/tickets/{id}/resolution — Add/update resolution notes
     @PutMapping("/{id}/resolution")
-    public ResponseEntity<TicketResponseDTO> updateResolutionNotes(@PathVariable Long id, @RequestBody String notes) {
-        return ResponseEntity.ok(ticketService.updateResolutionNotes(id, notes));
+    public ResponseEntity<TicketResponseDTO> updateResolutionNotes(@PathVariable Long id, @Valid @RequestBody ResolutionNotesDTO dto) {
+        return ResponseEntity.ok(ticketService.updateResolutionNotes(id, dto.getNotes()));
     }
 
+    // ── Attachments ──────────────────────────────────────────────
+
+    // POST /api/tickets/{id}/attachments — Upload file (max 3 per ticket, multipart/form-data)
     @PostMapping("/{id}/attachments")
     public ResponseEntity<AttachmentResponseDTO> uploadAttachment(
             @PathVariable Long id,
@@ -108,6 +126,7 @@ public class TicketController {
         return ResponseEntity.ok(response);
     }
 
+    // DELETE /api/tickets/{ticketId}/attachments/{attachmentId} — Remove attachment from disk + DB
     @DeleteMapping("/{ticketId}/attachments/{attachmentId}")
     public ResponseEntity<Void> deleteAttachment(
             @PathVariable Long ticketId,
@@ -116,6 +135,9 @@ public class TicketController {
         return ResponseEntity.noContent().build();
     }
 
+    // ── Comments ─────────────────────────────────────────────────
+
+    // POST /api/tickets/{id}/comments — Add comment (any authenticated user)
     @PostMapping("/{id}/comments")
     public ResponseEntity<List<CommentResponseDTO>> addComment(
             @PathVariable Long id,
@@ -124,6 +146,7 @@ public class TicketController {
         return ResponseEntity.ok(comments);
     }
 
+    // PUT /api/comments/{commentId} — Edit comment (author only)
     @PutMapping("/comments/{commentId}")
     public ResponseEntity<Void> updateComment(
             @PathVariable Long commentId,
@@ -132,9 +155,18 @@ public class TicketController {
         return ResponseEntity.ok().build();
     }
 
+    // DELETE /api/comments/{commentId} — Delete comment (author or ADMIN)
     @DeleteMapping("/comments/{commentId}")
     public ResponseEntity<Void> deleteComment(@PathVariable Long commentId) {
         ticketService.deleteComment(commentId);
         return ResponseEntity.noContent().build();
+    }
+
+    // ── Statistics ───────────────────────────────────────────────
+
+    // GET /api/tickets/stats/technician/{id} — Resolution rate, avg hours/fix, counts (used in dashboard)
+    @GetMapping("/stats/technician/{id}")
+    public ResponseEntity<com.smartcampus.hub.dto.TechnicianStatsDTO> getTechnicianStats(@PathVariable Long id) {
+        return ResponseEntity.ok(ticketService.getTechnicianStats(id));
     }
 }

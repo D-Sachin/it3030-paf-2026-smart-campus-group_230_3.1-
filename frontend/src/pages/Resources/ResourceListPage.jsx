@@ -183,19 +183,12 @@ const ResourceList = () => {
         </div>
       </div>
 
-      {/* Filter Bar - Admin Only */}
-      {isAdmin && (
-        <ResourceFilterBar
-          onFilter={handleFilter}
-          onSearch={handleSearch}
-          isLoading={loading}
-        />
-      )}
-
-      {/* Search Bar - Non-Admin Only */}
-      {!isAdmin && (
-        <ResourceSearchBar onSearch={handleSearch} isLoading={loading} />
-      )}
+      {/* Filter Bar - Available to All Users */}
+      <ResourceFilterBar
+        onFilter={handleFilter}
+        onSearch={handleSearch}
+        isLoading={loading}
+      />
 
       {/* Messages */}
       {success && (
